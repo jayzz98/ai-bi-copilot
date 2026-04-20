@@ -25,6 +25,9 @@ from datetime import datetime, timedelta
 
 st.set_page_config(page_title="AI BI Copilot", layout="wide")
 
+# Cloud detection (True if running on Streamlit Community Cloud)
+IS_CLOUD = "STREAMLIT_SERVER_PORT" in os.environ
+
 # ================= AUTH & SUBSCRIPTION SYSTEM =================
 AUTH_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'auth.db')
 
@@ -589,7 +592,9 @@ elif data_source_type == "Database Connection":
                     engine = create_engine(f"mysql+pymysql://{credentials}@{db_host}:{port}/{db_name}")
                 else:
                     port = db_port if db_port else "1433"
-                    engine = create_engine(f"mssql+pyodbc://{credentials}@{db_host}:{port}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server")
+                    # In cloud use FreeTDS (from packages.txt), locally use the official MS driver
+                    driver_name = "FreeTDS" if IS_CLOUD else "ODBC+Driver+17+for+SQL+Server"
+                    engine = create_engine(f"mssql+pyodbc://{credentials}@{db_host}:{port}/{db_name}?driver={driver_name}")
                 
                 count_query = f"SELECT COUNT(*) FROM {db_table}"
                 total_rows = pd.read_sql(count_query, engine).iloc[0, 0]
