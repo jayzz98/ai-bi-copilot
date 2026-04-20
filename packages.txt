@@ -1,0 +1,5 @@
+unixodbc-dev
+# Additional drivers for SQL Server (FreeTDS is a common open-source alternative on Linux)
+freetds-dev
+freetds-bin
+tdsodbc
