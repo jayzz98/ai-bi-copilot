@@ -277,7 +277,7 @@ if not st.session_state.authenticated:
     st.markdown("""
     <div style="text-align: center; padding: 40px 0 20px 0;">
         <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
-            <span style="color: #FF4B91 !important;">AI </span><span>BI Copilot</span>
+            <span style="color: #D53F8C !important;">AI </span><span>BI Copilot</span>
         </div>
         
     </div>
@@ -347,10 +347,10 @@ if not _sub_active:
     st.markdown(f"""
     <div style="text-align: center; padding: 20px 0 30px 0;">
         <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
-            <span style="color: #FF4B91 !important;">AI </span><span>BI Copilot</span>
+            <span style="color: #D53F8C !important;">AI </span><span>BI Copilot</span>
         </div>
         <div style="margin-top: 10px; padding: 6px 16px; background: rgba(193, 74, 138, 0.1); border-radius: 20px; display: inline-block;">
-            <span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #FF4B91; font-weight: 600;">
+            <span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #D53F8C; font-weight: 600;">
                 \U0001f4cb Subscription Status: INACTIVE
             </span>
         </div>
@@ -538,7 +538,7 @@ with open('style.css', 'r', encoding='utf-8') as f:
 st.markdown('''
 <div class="hero-header-section">
     <div class="main-title">
-        <span style="color: #FF4B91 !important;">AI </span><span class="title-dark">BI Copilot</span>
+        <span style="color: #D53F8C !important;">AI </span><span class="title-dark">BI Copilot</span>
     </div>
 </div>
 ''', unsafe_allow_html=True)
@@ -1469,7 +1469,7 @@ with data_container:
             st.session_state.chat_history = []
 
         # ================= NLQ =================
-        st.markdown("<h3 style='margin-top: -85px; margin-bottom: 0px; font-weight: 800; font-family: Outfit, sans-serif;'><span style='color: #FF4B91 !important;'>AI</span> <span style='color: #000000;'>Copilot</span> Insights</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top: -85px; margin-bottom: 0px; font-weight: 800; font-family: Outfit, sans-serif;'><span style='color: #D53F8C !important;'>AI</span> <span style='color: #000000;'>Copilot</span> Insights</h3>", unsafe_allow_html=True)
         with st.form("ask_form", border=False):
             col1, col2 = st.columns([5, 1])
             with col1:
