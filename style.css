@@ -705,9 +705,9 @@ hr,
 
 .stTabs [aria-selected="true"] {
     background: transparent !important;
-    color: #047857 !important;
-    /* Dark Emerald for contrast */
-    border-bottom: 3px solid #047857 !important;
+    color: #000000 !important;
+    /* Black for active state */
+    border-bottom: 3px solid #000000 !important;
 }
 
 .stTabs [data-baseweb="tab"]:hover {
@@ -754,13 +754,15 @@ hr,
 [data-testid="stFileUploadDropzone"] div,
 [data-testid="stFileUploadDropzone"] span,
 [data-testid="stFileUploadDropzone"] small,
-[data-testid="stFileUploader"] div {
+[data-testid="stFileUploader"] section div,
+[data-testid="stFileUploader"] section span,
+[data-testid="stFileUploader"] section small {
     color: #334155 !important;
     -webkit-text-fill-color: #334155 !important;
 }
 
-/* Fix invisible SVG icons inside the file uploader */
-[data-testid="stFileUploader"] svg {
+/* Fix invisible SVG icons inside the file uploader dropzone */
+[data-testid="stFileUploader"] section svg {
     stroke: #334155 !important;
     fill: #334155 !important;
 }
@@ -775,6 +777,15 @@ hr,
     background: rgba(255, 255, 255, 0.9);
     border-color: #FF9A9E;
     box-shadow: 0 10px 30px rgba(255, 154, 158, 0.1);
+}
+
+/* Fix: Uploaded file name/size text must be dark on the light file card */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] span,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] small,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] div,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] p {
+    color: #1a202c !important;
+    -webkit-text-fill-color: #1a202c !important;
 }
 
 /* ===== EXPANDER ===== */

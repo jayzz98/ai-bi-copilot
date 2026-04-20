@@ -908,23 +908,80 @@ with data_container:
 
     with tab_dashboard:
         render_kpis()
-        
-        # Auto-generate Charts (2-col grid for 10 Insights)
-        st.subheader("Automated Analytics Dashboard (10 Smart Views)")
-        
-        def _apply_theme(f):
-            if f:
-                f.update_layout(plot_bgcolor='#0a0c14', paper_bgcolor='#0a0c14', 
-                                font=dict(color='#f0f2f5', family='Inter, sans-serif'), 
-                                title_font=dict(size=14, color='#f0f2f5', family='Outfit, sans-serif'), 
-                                xaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'), 
-                                yaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'), 
-                                margin=dict(l=20, r=20, t=50, b=20))
-            return f
 
-        dash_c1, dash_c2 = st.columns(2)
-        
-        # Defining maximally diverse fields to prevent redundant charts
+        # ================= PREMIUM EXECUTIVE DASHBOARD =================
+        # Clean color palette for charts
+        CHART_COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#A855F7']
+        GRADIENT_COLORS = ['#6366F1', '#818CF8', '#A78BFA', '#C4B5FD']
+        POSITIVE_COLOR = '#22C55E'
+        NEGATIVE_COLOR = '#F43F5E'
+        ACCENT_COLOR = '#6366F1'
+        ACCENT_SECONDARY = '#EC4899'
+
+        def _label(col_name):
+            """Format column names into clean readable labels."""
+            return col_name.replace('_', ' ').strip().title()
+
+        def _fmt_value(val, col_name=''):
+            """Format numeric values with appropriate prefix/suffix."""
+            money_kw = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost', 'income']
+            is_money = any(k in col_name.lower() for k in money_kw)
+            if pd.isna(val):
+                return "N/A"
+            if abs(val) >= 1_000_000_000:
+                return f"${val/1_000_000_000:,.1f}B" if is_money else f"{val/1_000_000_000:,.1f}B"
+            elif abs(val) >= 1_000_000:
+                return f"${val/1_000_000:,.1f}M" if is_money else f"{val/1_000_000:,.1f}M"
+            elif abs(val) >= 1_000:
+                return f"${val/1_000:,.1f}K" if is_money else f"{val/1_000:,.1f}K"
+            else:
+                return f"${val:,.2f}" if is_money else f"{val:,.0f}"
+
+        def _apply_premium_theme(fig, title="", show_legend=True, height=400):
+            """Apply a clean, professional dark theme to any plotly figure."""
+            if not fig:
+                return fig
+            fig.update_layout(
+                title=dict(
+                    text=title,
+                    font=dict(size=15, color='#E2E8F0', family='Outfit, sans-serif'),
+                    x=0.02, y=0.96
+                ),
+                plot_bgcolor='rgba(15, 17, 28, 0.95)',
+                paper_bgcolor='rgba(15, 17, 28, 0.95)',
+                font=dict(color='#CBD5E1', family='Inter, sans-serif', size=11),
+                xaxis=dict(
+                    gridcolor='rgba(255,255,255,0.04)',
+                    zerolinecolor='rgba(255,255,255,0.06)',
+                    title_font=dict(size=11, color='#94A3B8'),
+                    tickfont=dict(size=10, color='#94A3B8'),
+                    showline=False
+                ),
+                yaxis=dict(
+                    gridcolor='rgba(255,255,255,0.04)',
+                    zerolinecolor='rgba(255,255,255,0.06)',
+                    title_font=dict(size=11, color='#94A3B8'),
+                    tickfont=dict(size=10, color='#94A3B8'),
+                    showline=False
+                ),
+                margin=dict(l=50, r=30, t=60, b=50),
+                height=height,
+                showlegend=show_legend,
+                legend=dict(
+                    font=dict(size=10, color='#94A3B8'),
+                    bgcolor='rgba(0,0,0,0)',
+                    bordercolor='rgba(0,0,0,0)'
+                ),
+                hoverlabel=dict(
+                    bgcolor='#1E293B',
+                    font_color='#F1F5F9',
+                    bordercolor='rgba(99,102,241,0.3)',
+                    font_size=12
+                )
+            )
+            return fig
+
+        # Prepare dimension and metric references
         d1 = dimension_cols[0] if len(dimension_cols) > 0 else None
         d2 = dimension_cols[1] if len(dimension_cols) > 1 else d1
         d3 = dimension_cols[2] if len(dimension_cols) > 2 else d2
@@ -935,104 +992,340 @@ with data_container:
         m4 = numeric_cols[3] if len(numeric_cols) > 3 else m2
         dt = date_cols[0] if len(date_cols) > 0 else None
 
-        with dash_c1:
-            # 1. Trend or Top Pie (Uses dt/d1 and m1)
+        # ── SECTION 1: Trend / Time Series ──────────────────────────
+        st.markdown("""
+        <div style="margin: 20px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">📈 Trend Analysis</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Performance over time</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        trend_c1, trend_c2 = st.columns(2)
+
+        with trend_c1:
             try:
                 if dt:
-                    tmp = df.groupby(dt)[m1].sum().reset_index()
-                    fig = _apply_theme(px.area(tmp, x=dt, y=m1, title=f"1. Trend of {m1.title()}"))
+                    # Monthly trend - aggregate by month for clean view
+                    tmp = df.copy()
+                    tmp['_month'] = tmp[dt].dt.to_period('M').astype(str)
+                    agg = tmp.groupby('_month')[m1].sum().reset_index()
+                    agg = agg.sort_values('_month')
+                    # Keep last 24 months max for readability
+                    if len(agg) > 24:
+                        agg = agg.tail(24)
+                    fig = px.line(agg, x='_month', y=m1, markers=True)
+                    fig.update_traces(
+                        line=dict(color=ACCENT_COLOR, width=2.5),
+                        marker=dict(size=6, color=ACCENT_COLOR, line=dict(width=1, color='#fff'))
+                    )
+                    # Add area fill
+                    fig.update_traces(fill='tozeroy', fillcolor='rgba(99,102,241,0.08)')
+                    fig = _apply_premium_theme(fig, title=f"Monthly {_label(m1)} Trend", show_legend=False)
+                    fig.update_layout(xaxis_title="Month", yaxis_title=_label(m1))
+                    # Rotate x-axis labels for readability
+                    fig.update_layout(xaxis=dict(tickangle=-45))
+                    st.plotly_chart(fig, use_container_width=True)
                 elif d1:
-                    tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(10, m1)
-                    fig = _apply_theme(px.pie(tmp, names=d1, values=m1, hole=0.4, title=f"1. Top {d1.title()} by {m1.title()}"))
-                else:
-                    fig = _apply_theme(px.line(df, y=m1, title=f"1. Sequence of {m1.title()}"))
-                if fig: st.plotly_chart(fig, use_container_width=True)
-            except: pass
-
-            # 3. Bottom Performers (Uses d3 and m3)
-            try:
-                if d3:
-                    tmp = df.groupby(d3)[m3].sum().reset_index().nsmallest(10, m3)
-                    fig = px.bar(tmp, x=m3, y=d3, orientation='h', title=f"3. Bottom {d3.title()} on {m3.title()}")
-                    fig.update_traces(marker_color='#ff4b4b')
-                    fig = _apply_theme(fig)
+                    # No date column — show top 8 categories as clean bar
+                    tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(8, m1)
+                    tmp = tmp.sort_values(m1, ascending=True)
+                    fig = px.bar(tmp, x=m1, y=d1, orientation='h')
+                    fig.update_traces(marker_color=ACCENT_COLOR, marker_line_width=0)
+                    # Add value labels
+                    fig.update_traces(text=[_fmt_value(v, m1) for v in tmp[m1]], textposition='outside', textfont=dict(size=10, color='#94A3B8'))
+                    fig = _apply_premium_theme(fig, title=f"Top 8 {_label(d1)} by {_label(m1)}", show_legend=False)
+                    fig.update_layout(xaxis_title=_label(m1), yaxis_title="")
                     st.plotly_chart(fig, use_container_width=True)
             except: pass
 
-            # 5. Box Plot / Variance (Uses d4 and m2)
+        with trend_c2:
             try:
-                if d4:
-                    tmp = df.nlargest(1000, m2)
-                    fig = _apply_theme(px.box(tmp, x=d4, y=m2, color=d4, title=f"5. Variance of {m2.title()} over {d4.title()}"))
+                if dt and m2 != m1:
+                    # Second metric trend
+                    tmp = df.copy()
+                    tmp['_month'] = tmp[dt].dt.to_period('M').astype(str)
+                    agg = tmp.groupby('_month')[m2].sum().reset_index()
+                    agg = agg.sort_values('_month')
+                    if len(agg) > 24:
+                        agg = agg.tail(24)
+                    fig = px.area(agg, x='_month', y=m2)
+                    fig.update_traces(
+                        line=dict(color=ACCENT_SECONDARY, width=2),
+                        fillcolor='rgba(236,72,153,0.08)'
+                    )
+                    fig = _apply_premium_theme(fig, title=f"Monthly {_label(m2)} Trend", show_legend=False)
+                    fig.update_layout(xaxis_title="Month", yaxis_title=_label(m2))
+                    fig.update_layout(xaxis=dict(tickangle=-45))
+                    st.plotly_chart(fig, use_container_width=True)
+                elif dt:
+                    # Yearly summary if only one metric
+                    tmp = df.copy()
+                    tmp['_year'] = tmp[dt].dt.year
+                    agg = tmp.groupby('_year')[m1].sum().reset_index()
+                    agg = agg.sort_values('_year')
+                    fig = px.bar(agg, x='_year', y=m1)
+                    fig.update_traces(marker_color=ACCENT_SECONDARY, marker_line_width=0)
+                    fig.update_traces(text=[_fmt_value(v, m1) for v in agg[m1]], textposition='outside', textfont=dict(size=10, color='#94A3B8'))
+                    fig = _apply_premium_theme(fig, title=f"Yearly {_label(m1)} Summary", show_legend=False)
+                    fig.update_layout(xaxis_title="Year", yaxis_title=_label(m1))
+                    st.plotly_chart(fig, use_container_width=True)
+                elif d2 and d2 != d1:
+                    tmp = df.groupby(d2)[m1].sum().reset_index().nlargest(8, m1)
+                    tmp = tmp.sort_values(m1, ascending=False)
+                    fig = px.bar(tmp, x=d2, y=m1)
+                    fig.update_traces(marker_color=ACCENT_SECONDARY, marker_line_width=0)
+                    fig.update_traces(text=[_fmt_value(v, m1) for v in tmp[m1]], textposition='outside', textfont=dict(size=10, color='#94A3B8'))
+                    fig = _apply_premium_theme(fig, title=f"Top 8 {_label(d2)} by {_label(m1)}", show_legend=False)
+                    fig.update_layout(xaxis_title=_label(d2), yaxis_title=_label(m1))
+                    fig.update_layout(xaxis=dict(tickangle=-30))
                     st.plotly_chart(fig, use_container_width=True)
             except: pass
 
-            # 7. Distribution Histogram (Uses m4)
+        # ── SECTION 2: Composition & Breakdown ──────────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">🍩 Composition & Breakdown</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">How values are distributed</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        comp_c1, comp_c2 = st.columns(2)
+
+        with comp_c1:
+            # Donut Chart — Top categories by primary metric
             try:
-                fig = _apply_theme(px.histogram(df.sample(min(5000, len(df))), x=m4, nbins=30, title=f"7. Distribution of {m4.title()}"))
+                if d1:
+                    tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(6, m1)
+                    # Group remaining as "Others" if there are more
+                    total = df[m1].sum()
+                    shown = tmp[m1].sum()
+                    if total > 0 and (total - shown) / total > 0.01:
+                        others_row = pd.DataFrame({d1: ['Others'], m1: [total - shown]})
+                        tmp = pd.concat([tmp, others_row], ignore_index=True)
+                    fig = px.pie(tmp, names=d1, values=m1, hole=0.55, color_discrete_sequence=CHART_COLORS)
+                    fig.update_traces(
+                        textposition='outside',
+                        textinfo='label+percent',
+                        textfont=dict(size=11, color='#CBD5E1'),
+                        pull=[0.03] * len(tmp),
+                        marker=dict(line=dict(color='#0F111C', width=2))
+                    )
+                    fig = _apply_premium_theme(fig, title=f"{_label(m1)} by {_label(d1)}", show_legend=False)
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with comp_c2:
+            # Pie Chart — Different dimension
+            try:
+                target_d = d2 if d2 and d2 != d1 else (d3 if d3 and d3 != d1 else d1)
+                target_m = m2 if m2 != m1 else m1
+                if target_d:
+                    tmp = df.groupby(target_d)[target_m].sum().reset_index().nlargest(6, target_m)
+                    total = df[target_m].sum()
+                    shown = tmp[target_m].sum()
+                    if total > 0 and (total - shown) / total > 0.01:
+                        others_row = pd.DataFrame({target_d: ['Others'], target_m: [total - shown]})
+                        tmp = pd.concat([tmp, others_row], ignore_index=True)
+                    fig = px.pie(tmp, names=target_d, values=target_m, color_discrete_sequence=CHART_COLORS[3:])
+                    fig.update_traces(
+                        textposition='outside',
+                        textinfo='label+percent',
+                        textfont=dict(size=11, color='#CBD5E1'),
+                        marker=dict(line=dict(color='#0F111C', width=2))
+                    )
+                    fig = _apply_premium_theme(fig, title=f"{_label(target_m)} Share by {_label(target_d)}", show_legend=False)
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        # ── SECTION 3: Rankings & Comparisons ───────────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">🏆 Top & Bottom Performers</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Best and worst performing categories</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        rank_c1, rank_c2 = st.columns(2)
+
+        with rank_c1:
+            # Top 8 — Clean horizontal bar
+            try:
+                rank_d = d1 if d1 else d2
+                if rank_d:
+                    tmp = df.groupby(rank_d)[main_metric].sum().reset_index().nlargest(8, main_metric)
+                    tmp = tmp.sort_values(main_metric, ascending=True)
+                    fig = px.bar(tmp, x=main_metric, y=rank_d, orientation='h', color_discrete_sequence=[POSITIVE_COLOR])
+                    fig.update_traces(
+                        text=[_fmt_value(v, main_metric) for v in tmp[main_metric]],
+                        textposition='outside',
+                        textfont=dict(size=10, color='#94A3B8'),
+                        marker_line_width=0
+                    )
+                    fig = _apply_premium_theme(fig, title=f"🟢 Top 8 {_label(rank_d)} by {_label(main_metric)}", show_legend=False, height=380)
+                    fig.update_layout(xaxis_title=_label(main_metric), yaxis_title="")
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with rank_c2:
+            # Bottom 8 — Red-toned horizontal bar
+            try:
+                rank_d = d1 if d1 else d2
+                if rank_d:
+                    tmp = df.groupby(rank_d)[main_metric].sum().reset_index()
+                    tmp = tmp[tmp[main_metric] > 0].nsmallest(8, main_metric)
+                    tmp = tmp.sort_values(main_metric, ascending=False)
+                    fig = px.bar(tmp, x=main_metric, y=rank_d, orientation='h', color_discrete_sequence=[NEGATIVE_COLOR])
+                    fig.update_traces(
+                        text=[_fmt_value(v, main_metric) for v in tmp[main_metric]],
+                        textposition='outside',
+                        textfont=dict(size=10, color='#94A3B8'),
+                        marker_line_width=0
+                    )
+                    fig = _apply_premium_theme(fig, title=f"🔴 Bottom 8 {_label(rank_d)} by {_label(main_metric)}", show_legend=False, height=380)
+                    fig.update_layout(xaxis_title=_label(main_metric), yaxis_title="")
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        # ── SECTION 4: Column Chart & Distribution ──────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">📊 Distribution & Volume</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Data spread and frequency</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        dist_c1, dist_c2 = st.columns(2)
+
+        with dist_c1:
+            # Clean Column Chart — second dimension or second metric
+            try:
+                chart_d = d2 if d2 and d2 != d1 else d1
+                chart_m = m2 if m2 != m1 else m1
+                if chart_d:
+                    tmp = df.groupby(chart_d)[chart_m].sum().reset_index().nlargest(10, chart_m)
+                    tmp = tmp.sort_values(chart_m, ascending=False)
+                    fig = px.bar(tmp, x=chart_d, y=chart_m, color_discrete_sequence=[ACCENT_COLOR])
+                    fig.update_traces(
+                        text=[_fmt_value(v, chart_m) for v in tmp[chart_m]],
+                        textposition='outside',
+                        textfont=dict(size=9, color='#94A3B8'),
+                        marker_line_width=0
+                    )
+                    fig = _apply_premium_theme(fig, title=f"{_label(chart_m)} by {_label(chart_d)} (Top 10)", show_legend=False)
+                    fig.update_layout(
+                        xaxis_title=_label(chart_d),
+                        yaxis_title=_label(chart_m),
+                        xaxis=dict(tickangle=-30)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with dist_c2:
+            # Distribution Histogram — clean & readable
+            try:
+                sample = df[m1].dropna()
+                if len(sample) > 5000:
+                    sample = sample.sample(5000)
+                fig = px.histogram(sample, x=m1, nbins=25, color_discrete_sequence=['#8B5CF6'])
+                fig.update_traces(marker_line_width=0.5, marker_line_color='#0F111C', opacity=0.85)
+                fig = _apply_premium_theme(fig, title=f"Distribution of {_label(m1)}", show_legend=False)
+                fig.update_layout(
+                    xaxis_title=_label(m1),
+                    yaxis_title="Frequency",
+                    bargap=0.03
+                )
                 st.plotly_chart(fig, use_container_width=True)
             except: pass
 
-            # 9. Funnel Chart (Uses d2 and m1)
-            try:
-                if d2:
-                    tmp = df.groupby(d2)[m1].sum().reset_index().nlargest(6, m1)
-                    fig = _apply_theme(px.funnel(tmp, x=m1, y=d2, title=f"9. {m1.title()} Pipeline across {d2.title()}"))
-                    st.plotly_chart(fig, use_container_width=True)
-            except: pass
+        # ── SECTION 5: Multi-Metric Comparison ──────────────────────
+        if len(numeric_cols) >= 2:
+            st.markdown("""
+            <div style="margin: 25px 0 10px 0;">
+                <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">⚖️ Multi-Metric Comparison</span>
+                <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Side-by-side metric analysis</span>
+            </div>
+            """, unsafe_allow_html=True)
 
-        with dash_c2:
-            # 2. Top Performers (Uses d2 and m2)
-            try:
-                if d2:
-                    tmp = df.groupby(d2)[m2].sum().reset_index().nlargest(10, m2)
-                    fig = px.bar(tmp, x=d2, y=m2, text_auto='.2s', title=f"2. Top 10 {d2.title()} on {m2.title()}")
-                    fig = _apply_theme(fig)
-                    st.plotly_chart(fig, use_container_width=True)
-            except: pass
+            multi_c1, multi_c2 = st.columns(2)
 
-            # 4. Correlation / Scatter (Uses m1 and m3)
-            try:
-                if len(numeric_cols) > 1:
-                    fig = px.scatter(df.sample(min(2000, len(df))), x=m1, y=m3, color=d1, title=f"4. Correlation: {m1.title()} vs {m3.title()}")
-                    fig = _apply_theme(fig)
-                    st.plotly_chart(fig, use_container_width=True)
-            except: pass
-
-            # 6. Treemap (Hierarchy) (Uses d1, d3, values=m4)
-            try:
-                if len(dimension_cols) > 1 and len(df) > 0:
-                    tmp = df.groupby([d1, d3])[m4].sum().reset_index()
-                    tmp = tmp[tmp[m4] > 0]
-                    tmp = tmp.nlargest(20, m4)
-                    if len(tmp) > 0:
-                        fig = _apply_theme(px.treemap(tmp, path=[d1, d3], values=m4, title=f"6. Hierarchy: {d1.title()} → {d3.title()} on {m4.title()}"))
+            with multi_c1:
+                # Grouped bar — two metrics across a dimension
+                try:
+                    compare_d = d1 if d1 else d2
+                    if compare_d and m1 != m2:
+                        tmp = df.groupby(compare_d).agg({m1: 'sum', m2: 'sum'}).reset_index()
+                        tmp = tmp.nlargest(8, m1)
+                        fig = px.bar(
+                            tmp, x=compare_d, y=[m1, m2],
+                            barmode='group',
+                            color_discrete_sequence=[ACCENT_COLOR, ACCENT_SECONDARY],
+                            labels={m1: _label(m1), m2: _label(m2)}
+                        )
+                        fig.update_traces(marker_line_width=0)
+                        fig = _apply_premium_theme(fig, title=f"{_label(m1)} vs {_label(m2)} by {_label(compare_d)}", show_legend=True)
+                        fig.update_layout(
+                            xaxis_title="",
+                            yaxis_title="Value",
+                            xaxis=dict(tickangle=-30),
+                            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+                        )
                         st.plotly_chart(fig, use_container_width=True)
-            except: pass
+                except: pass
 
-            # 8. Donut Chart (Uses d4 and m2)
-            try:
-                if d4 and d4 != d1:
-                    tmp = df.groupby(d4)[m2].sum().reset_index().nlargest(8, m2)
-                    fig = _apply_theme(px.pie(tmp, names=d4, values=m2, hole=0.5, title=f"8. Market Segment: {d4.title()} ({m2.title()})"))
-                    st.plotly_chart(fig, use_container_width=True)
-                elif len(numeric_cols) > 1:
-                    tmp = df.nlargest(100, m2)
-                    fig = _apply_theme(px.line(tmp.reset_index(), y=m3, title=f"8. Track of {m3.title()} over top volume"))
-                    st.plotly_chart(fig, use_container_width=True)
-            except: pass
+            with multi_c2:
+                # Scatter / Correlation
+                try:
+                    scatter_m1 = m1
+                    scatter_m2 = m3 if m3 != m1 else m2
+                    if scatter_m1 != scatter_m2:
+                        sample = df[[scatter_m1, scatter_m2]].dropna()
+                        if len(sample) > 1500:
+                            sample = sample.sample(1500)
+                        fig = px.scatter(
+                            sample, x=scatter_m1, y=scatter_m2,
+                            color_discrete_sequence=[ACCENT_COLOR],
+                            opacity=0.5
+                        )
+                        fig.update_traces(marker=dict(size=5, line=dict(width=0)))
+                        fig = _apply_premium_theme(fig, title=f"Correlation: {_label(scatter_m1)} vs {_label(scatter_m2)}", show_legend=False)
+                        fig.update_layout(
+                            xaxis_title=_label(scatter_m1),
+                            yaxis_title=_label(scatter_m2)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                except: pass
 
-            # 10. Density Heatmap (Uses d2, d3 and m1)
-            try:
-                if d2 and d3 and d2 != d3:
-                    tmp = df.sample(min(5000, len(df)))
-                    fig = _apply_theme(px.density_heatmap(tmp, x=d2, y=d3, z=m1, histfunc="sum", title=f"10. Density: {d2.title()} vs {d3.title()}"))
-                    st.plotly_chart(fig, use_container_width=True)
-                elif len(numeric_cols) > 1:
-                    tmp = df.sample(min(3000, len(df)))
-                    fig = _apply_theme(px.density_heatmap(tmp, x=m1, y=m3, title=f"10. Density Heatmap: {m1.title()} vs {m3.title()}"))
-                    st.plotly_chart(fig, use_container_width=True)
-            except: pass
+        # ── SECTION 6: Data Summary Table ───────────────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">📋 Data Summary Table</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Key aggregated metrics at a glance</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        try:
+            summary_d = d1 if d1 else d2
+            if summary_d:
+                # Build a clean summary table with top categories
+                metrics_to_show = [m for m in business_metrics[:4] if m in df.columns]
+                if not metrics_to_show:
+                    metrics_to_show = numeric_cols[:4]
+                agg_dict = {m: ['sum', 'mean', 'count'] for m in metrics_to_show[:2]}
+                if len(metrics_to_show) > 2:
+                    for m in metrics_to_show[2:]:
+                        agg_dict[m] = ['sum']
+
+                summary = df.groupby(summary_d).agg(agg_dict).reset_index()
+                # Flatten multi-level columns
+                summary.columns = [f"{col[0]}_{col[1]}" if col[1] else col[0] for col in summary.columns]
+                summary.columns = [c.replace('_sum', ' (Total)').replace('_mean', ' (Avg)').replace('_count', ' (Count)').replace('_', ' ').strip().title() for c in summary.columns]
+                # Sort by first total column
+                sort_col = [c for c in summary.columns if '(Total)' in c]
+                if sort_col:
+                    summary = summary.sort_values(sort_col[0], ascending=False)
+                summary = summary.head(15)
+                st.dataframe(summary, use_container_width=True, hide_index=True)
+        except: pass
 
     with tab_copilot:
         render_kpis()
