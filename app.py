@@ -277,7 +277,7 @@ if not st.session_state.authenticated:
     st.markdown("""
     <div style="text-align: center; padding: 40px 0 20px 0;">
         <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
-            <span style="color: #C14A8A;">AI </span><span>BI Copilot</span>
+            <span style="color: #C14A8A !important;">AI </span><span>BI Copilot</span>
         </div>
         
     </div>
@@ -347,7 +347,7 @@ if not _sub_active:
     st.markdown(f"""
     <div style="text-align: center; padding: 20px 0 30px 0;">
         <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
-            <span style="color: #C14A8A;">AI </span><span>BI Copilot</span>
+            <span style="color: #C14A8A !important;">AI </span><span>BI Copilot</span>
         </div>
         <div style="margin-top: 10px; padding: 6px 16px; background: rgba(193, 74, 138, 0.1); border-radius: 20px; display: inline-block;">
             <span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #C14A8A; font-weight: 600;">
@@ -538,7 +538,7 @@ with open('style.css', 'r', encoding='utf-8') as f:
 st.markdown('''
 <div class="hero-header-section">
     <div class="main-title">
-        <span class="title-pink">AI </span><span class="title-dark">BI Copilot</span>
+        <span style="color: #C14A8A !important;">AI </span><span class="title-dark">BI Copilot</span>
     </div>
 </div>
 ''', unsafe_allow_html=True)
