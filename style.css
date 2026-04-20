@@ -1,0 +1,872 @@
+/* ===== ROOT VARIABLES (PROFESSIONAL LIGHT THEME) ===== */
+:root {
+    --accent-primary: #FF9A9E;
+    /* soft pink */
+    --accent-secondary: #E2F0CB;
+    /* soft pale green */
+    --accent-tertiary: #32c8dc;
+    /* soft cyan */
+    --accent-glow: rgba(255, 154, 158, 0.4);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --glass-hover: rgba(255, 255, 255, 0.95);
+    --surface-light: #fcf9fa;
+    --text-primary: #000000;
+    /* Absolute Black for 100% visibility */
+    --text-secondary: #1A202C;
+    /* Deep Slate */
+    --card-radius: 28px;
+    --pill-radius: 50px;
+    --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --soft-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    --glass-background: rgba(255, 255, 255, 0.85);
+}
+
+/* ===== KEYFRAME ANIMATIONS ===== */
+@keyframes bgDrift {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes meshFloat {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(10vw, 5vh) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-5vw, 15vh) scale(0.9);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+@keyframes bubbleBounce {
+
+    0%,
+    100% {
+        transform: translateY(0) scaleY(1);
+        animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    50% {
+        transform: translateY(-40px) scaleY(1.02);
+        animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    /* Subtle squash removed for even smoother flow */
+}
+
+@keyframes bubbleShadow {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.15;
+    }
+
+    50% {
+        transform: scale(0.75);
+        opacity: 0.08;
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes orbFloat {
+    0% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+
+    50% {
+        transform: translate(15vw, 10vh) rotate(180deg);
+    }
+
+    100% {
+        transform: translate(0, 0) rotate(360deg);
+    }
+}
+
+@keyframes softPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+    }
+
+    50% {
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.25);
+    }
+}
+
+/* ===== GLOBAL BACKGROUND (STATIC CLEAN) ===== */
+.stApp {
+    background: #fdfafb !important;
+    /* Soft minimal green-white */
+}
+
+.stApp .main {
+    background: transparent !important;
+}
+
+/* ===== NATIVE HERO HEADER (Replaces Absolute) ===== */
+.hero-header-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: -20px;
+    /* small negative to keep it compact but content stays below bubble */
+    margin-top: -40px;
+    /* no z-index to allow mix-blend-mode */
+}
+
+/* ===== 3D HERO BUBBLE (UPDATED TO PINK/PURPLE VIBRANT) ===== */
+.hero-bubble-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    width: 600px;
+    z-index: -1;
+}
+
+.hero-bubble {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    /* Gradient updated to match pink/purple/cyan video asset */
+    background: radial-gradient(circle at 30% 30%,
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 154, 158, 0.95) 15%,
+            rgba(213, 63, 140, 0.9) 35%,
+            rgba(123, 104, 238, 0.9) 70%,
+            rgba(45, 20, 80, 0.8) 100%);
+    box-shadow:
+        inset 10px 10px 30px rgba(255, 255, 255, 0.9),
+        inset -15px -20px 40px rgba(213, 63, 140, 0.4),
+        inset -5px -40px 60px rgba(80, 20, 60, 0.5),
+        0 30px 60px rgba(213, 63, 140, 0.2);
+    /* Soft pink glow */
+    border: none !important;
+    /* Pure "4K" glass (No border) */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: relative;
+    animation: bubbleBounce 5s infinite ease-in-out;
+}
+
+/* Bouncing Shadow Underneath */
+.hero-bubble-container::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    /* Moved slightly more down for better separation */
+    width: 80px;
+    height: 15px;
+    background: radial-gradient(ellipse at center, rgba(213, 63, 140, 0.15) 0%, transparent 75%);
+    border-radius: 50%;
+    z-index: -1;
+    animation: bubbleShadow 5s infinite ease-in-out;
+}
+
+/* Hard glossy highlight */
+.hero-bubble::after {
+    content: '';
+    position: absolute;
+    top: 8%;
+    left: 15%;
+    width: 45%;
+    height: 25%;
+    border-radius: 50%;
+    background: linear-gradient(110deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+    transform: rotate(-15deg);
+    filter: blur(1px);
+}
+
+/* Sharp Mirrored Reflection */
+.hero-bubble-reflection {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 25%,
+            rgba(255, 255, 255, 0.9) 0%,
+            rgba(255, 180, 220, 0.85) 20%,
+            rgba(213, 63, 140, 0.8) 45%,
+            rgba(50, 150, 200, 0.7) 75%,
+            /* Hint of the cyan bottom */
+            rgba(80, 20, 50, 0.6) 100%);
+    transform: scaleY(-1) translateY(0px);
+    /* Flip upside down */
+    opacity: 0.25;
+    mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 40%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 40%);
+    filter: blur(2px);
+    margin-top: 5px;
+}
+
+/* Ensure content floats below the bubble */
+.block-container {
+    padding-top: 0.1rem !important;
+    /* Pull up towards top of screen */
+    padding-bottom: 0.1rem !important;
+    max-width: 1000px !important;
+    position: relative;
+    z-index: 10;
+}
+
+/* ===== MAIN TITLE ===== */
+.main-title {
+    position: relative;
+    text-align: center;
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0px;
+    /* Spacing reduced for compactness */
+}
+
+.stApp .title-pink {
+    color: #C14A8A !important;
+    -webkit-text-fill-color: #C14A8A !important;
+    /* AI Logo Pink */
+}
+
+.stApp .title-dark {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    /* Absolute Black */
+}
+
+/* ===== REMOVE STREAMLIT DEFAULTS ===== */
+header {
+    background: transparent !important;
+}
+
+#MainMenu {
+    visibility: hidden;
+}
+
+footer {
+    visibility: hidden;
+}
+
+/* ===== GLASS SIDEBAR (LOGO PINK MATCHING REFERENCE) ===== */
+[data-testid="stSidebar"] {
+    background: #D283B1 !important;
+    /* Lighter pink background */
+    backdrop-filter: blur(40px) saturate(2);
+    -webkit-backdrop-filter: blur(40px) saturate(2);
+    border-right: 1px solid rgba(255, 154, 158, 0.1) !important;
+    box-shadow: none !important;
+    min-width: 250px !important;
+    max-width: 250px !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stVerticalBlock"] {
+    gap: 0.5rem !important;
+}
+
+/* White text for pink sidebar background */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] span {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Sidebar HEADERS stay black for contrast */
+[data-testid="stSidebar"] h1,
+[data-testid="stSidebar"] h2,
+[data-testid="stSidebar"] h3,
+[data-testid="stSidebar"] .stMarkdown h1,
+[data-testid="stSidebar"] .stMarkdown h2,
+[data-testid="stSidebar"] .stMarkdown h3 {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+[data-testid="stSidebar"] .stCaption,
+[data-testid="stSidebar"] p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+h1,
+h2,
+h3,
+.stMarkdown h1,
+.stMarkdown h2,
+.stMarkdown h3 {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em;
+    color: #2F1160 !important;
+    /* Deep Midnight Purple */
+    -webkit-text-fill-color: #2F1160 !important;
+}
+
+h1,
+.stMarkdown h1 {
+    font-size: 2.6rem !important;
+}
+
+/* ===== HIGHLIGHTS ===== */
+.title-accent {
+    background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ===== GLOBAL BODY TEXT (FIX FOR INVISIBLE LABELS/CAPTIONS) ===== */
+.stApp p,
+.stApp label,
+.stApp span,
+.stApp .stMarkdown,
+.stApp .stCaption {
+    color: #2D3748 !important;
+    /* Dark Charcoal for strong readability */
+    -webkit-text-fill-color: #2D3748 !important;
+}
+
+/* Exempt metric gradients and accents from the global black overwrite if needed */
+.title-accent {
+    -webkit-text-fill-color: transparent !important;
+}
+
+/* ===== CLEAN PROFESSIONAL INPUT FIELDS (DEFINED TYPING AREA) ===== */
+div[data-baseweb="input"],
+div[data-baseweb="select"] {
+    background: transparent !important;
+}
+
+/* ===== NUCLEAR: KILL ALL BORDERS ON INPUT/SELECT ===== */
+[data-testid="stTextInput"],
+[data-testid="stTextInput"] > div,
+[data-testid="stTextInput"] > div > div,
+[data-testid="stSelectbox"],
+[data-testid="stSelectbox"] > div,
+[data-testid="stSelectbox"] > div > div,
+div[data-baseweb="input"],
+div[data-baseweb="input"] > div,
+div[data-baseweb="input"] > div > div,
+div[data-baseweb="input"] div,
+div[data-baseweb="select"],
+div[data-baseweb="select"] > div,
+div[data-baseweb="select"] > div > div,
+div[data-baseweb="select"] div {
+    border: 0 !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-color: transparent !important;
+    outline: 0 !important;
+    outline-width: 0 !important;
+    box-shadow: none !important;
+}
+
+div[data-baseweb="input"] > div,
+div[data-baseweb="select"] > div {
+    background-color: #0a0c14 !important;
+    border-radius: 12px !important;
+    transition: var(--transition-smooth);
+}
+
+div[data-baseweb="input"] > div:focus-within,
+div[data-baseweb="select"]:focus-within > div {
+    background-color: #0a0c14 !important;
+}
+
+[data-testid="stSidebar"] div[data-baseweb="input"] > div,
+[data-testid="stSidebar"] div[data-baseweb="input"] {
+    background-color: #ffffff !important;
+}
+
+div[data-baseweb="input"] input {
+    background-color: transparent !important;
+    border: 0 !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    padding: 0.2rem 0.5rem;
+}
+
+/* Force placeholder to be readable on dark bg */
+div[data-baseweb="input"] input::placeholder {
+    color: rgba(255, 255, 255, 0.5) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Sidebar inputs have white background, so they need black text */
+[data-testid="stSidebar"] div[data-baseweb="input"] input {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+[data-testid="stSidebar"] div[data-baseweb="input"] input::placeholder {
+    color: rgba(0, 0, 0, 0.5) !important;
+    -webkit-text-fill-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* dropdown list */
+ul[role="listbox"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 20px !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: blur(25px);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.08) !important;
+}
+
+ul[role="listbox"] li {
+    color: var(--text-primary) !important;
+}
+
+ul[role="listbox"] li:hover {
+    background: #f0f4f8 !important;
+    color: #1a202c !important;
+}
+
+/* ===== ALL BUTTONS — PILL SHAPED ===== */
+.stButton button {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid rgba(50, 200, 150, 0.15) !important;
+    border-radius: var(--pill-radius) !important;
+    color: var(--text-primary) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    padding: 0.6rem 0.5rem !important;
+    transition: var(--transition-smooth);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03) !important;
+    backdrop-filter: blur(10px);
+}
+
+/* Fix for Sidebar Buttons Squashing / Contextual Tab Visibility */
+[data-testid="stSidebar"] div[data-testid="column"] .stButton button {
+    padding: 0.4rem 0.8rem !important;
+    font-size: 0.85rem !important;
+    min-height: 32px !important;
+    white-space: nowrap !important;
+    border: none !important;
+    /* Green border removed */
+    background: rgba(255, 255, 255, 0.8) !important;
+    color: #1A202C !important;
+    font-weight: 600 !important;
+}
+
+.stButton button:hover {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: #B2FFB7 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(178, 255, 183, 0.2) !important;
+}
+
+/* Specific hover for Primary/Themed buttons */
+button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #8cff90 0%, #b9fdb6 100%) !important;
+    /* Slightly darker themed gradient */
+    box-shadow: 0 8px 30px rgba(154, 255, 158, 0.6) !important;
+    color: #ffffff !important;
+}
+
+.stButton button:active {
+    transform: translateY(0px);
+}
+
+/* ===== ALL BUTTONS — PILL SHAPED (DEFAULT / INACTIVE) ===== */
+.stButton button {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: var(--pill-radius) !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05) !important;
+    transition: var(--transition-smooth);
+}
+
+.stButton button p {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+.stButton button:hover {
+    background: #fdfdfd !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(-1px);
+}
+
+/* ===== PRIMARY ACTION BUTTONS ===== */
+.stApp .stButton button[kind="primary"],
+.stApp .stButton button[kind="primary"]:active,
+.stApp .stButton button[kind="primary"]:focus {
+    background: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    padding: 0.8rem 1.5rem !important;
+}
+
+.stApp .stButton button[kind="primary"] p {
+    background: transparent !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 !important;
+}
+
+.stApp .stButton button[kind="primary"]:hover {
+    background: #111111 !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* ===== ASK BUTTON (FORM SUBMIT) ===== */
+.stApp [data-testid="stFormSubmitButton"] button,
+.stApp [data-testid="stFormSubmitButton"] button:focus,
+.stApp [data-testid="stFormSubmitButton"] button:active {
+    background: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    padding: 0.8rem 1.5rem !important;
+}
+
+.stApp [data-testid="stFormSubmitButton"] button p {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 !important;
+}
+
+.stApp [data-testid="stFormSubmitButton"] button:hover {
+    background: #111111 !important;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4) !important;
+    transform: translateY(-1px);
+}
+
+/* ===== KPI / METRIC CONTAINERS ===== */
+[data-testid="metric-container"] {
+    background: transparent !important;
+    /* Transparent like the screenshot */
+    border: none !important;
+    box-shadow: none !important;
+    animation: fadeInUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    padding: 0 !important;
+    margin-right: 2rem !important;
+}
+
+[data-testid="metric-container"] [data-testid="stMetricValue"],
+[data-testid="metric-container"] [data-testid="stMetricValue"] span,
+[data-testid="metric-container"] [data-testid="stMetricValue"] div {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 800 !important;
+    /* Bold numbers only */
+    font-size: 3.5rem !important;
+    color: #059669 !important;
+    /* Vivid Emerald Green */
+    -webkit-text-fill-color: #059669 !important;
+    letter-spacing: -0.04em !important;
+    white-space: nowrap !important;
+}
+
+[data-testid="metric-container"] [data-testid="stMetricLabel"] {
+    color: #000000 !important;
+    /* ALL BLACK */
+    font-weight: 600 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 1rem !important;
+    letter-spacing: -0.01em;
+    margin-bottom: -10px !important;
+}
+
+/* ===== INSIGHT CARDS (AUTONOMOUS INSIGHTS AREA) ===== */
+.insight-card {
+    background: #000000 !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: var(--card-radius);
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 32px rgba(255, 255, 255, 0.1) !important;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+    line-height: 1.8;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    font-size: 0.95rem;
+    animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.insight-card p,
+.insight-card span,
+.insight-card div {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+
+.insight-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    background: #111111 !important;
+}
+
+.insight-card .insight-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: #ffffff !important;
+    display: inline-block;
+    margin-bottom: 6px;
+    text-transform: capitalize;
+}
+
+/* ===== DATAFRAME ===== */
+[data-testid="stDataFrame"] {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(15px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: var(--soft-shadow);
+    overflow: hidden;
+    animation: fadeInUp 0.8s ease-out both;
+}
+
+[data-testid="stDataFrame"] table {
+    color: var(--text-primary) !important;
+}
+
+/* ===== DIVIDERS ===== */
+hr,
+[data-testid="stMarkdownDivider"] {
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.08), transparent) !important;
+    margin: 2.5rem 0 !important;
+}
+
+/* ===== SUBHEADERS ===== */
+.stMarkdown h2,
+.stMarkdown h3 {
+    color: var(--text-primary) !important;
+    margin-top: 1.5rem;
+    font-weight: 800 !important;
+}
+
+/* ===== TABS ===== */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 12px;
+    background: transparent;
+    border-bottom: none !important;
+    /* Removes the line between bubble and AI Copilot & Insights */
+    padding-bottom: 0;
+}
+
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    border-radius: 12px 12px 0 0 !important;
+    color: var(--text-secondary) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    padding: 12px 24px !important;
+    border: none !important;
+    transition: var(--transition-smooth);
+}
+
+.stTabs [aria-selected="true"] {
+    background: transparent !important;
+    color: #047857 !important;
+    /* Dark Emerald for contrast */
+    border-bottom: 3px solid #047857 !important;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--text-primary) !important;
+    background: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ===== PROGRESS BAR ===== */
+.stProgress>div>div>div>div {
+    background: linear-gradient(90deg, #FF9A9E, #FECFEF) !important;
+    border-radius: 10px;
+}
+
+.stProgress div div {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 10px;
+}
+
+/* Progress bar text */
+.stProgress p,
+.stProgress [data-testid="stMarkdownContainer"] p {
+    color: #2D3748 !important;
+    -webkit-text-fill-color: #2D3748 !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+}
+
+/* ===== FILE UPLOADER ===== */
+[data-testid="stFileUploader"] {
+    background: rgba(255, 255, 255, 0.6);
+    border: 2px dashed rgba(255, 154, 158, 0.4);
+    border-radius: 20px;
+    padding: 12px;
+    /* Smoosh the uploader for better fit */
+    backdrop-filter: blur(10px);
+    transition: var(--transition-smooth);
+}
+
+[data-testid="stFileUploadDropzone"],
+[data-testid="stFileUploader"] section {
+    background: transparent !important;
+}
+
+[data-testid="stFileUploadDropzone"] div,
+[data-testid="stFileUploadDropzone"] span,
+[data-testid="stFileUploadDropzone"] small,
+[data-testid="stFileUploader"] div {
+    color: #334155 !important;
+    -webkit-text-fill-color: #334155 !important;
+}
+
+/* Fix invisible SVG icons inside the file uploader */
+[data-testid="stFileUploader"] svg {
+    stroke: #334155 !important;
+    fill: #334155 !important;
+}
+
+[data-testid="stFileUploader"] button {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+[data-testid="stFileUploader"]:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #FF9A9E;
+    box-shadow: 0 10px 30px rgba(255, 154, 158, 0.1);
+}
+
+/* ===== EXPANDER ===== */
+.streamlit-expanderHeader {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600;
+    color: var(--text-primary) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02) !important;
+    transition: var(--transition-smooth);
+}
+
+.streamlit-expanderHeader:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-color: #FFB7B2 !important;
+}
+
+/* ===== ALERTS / INFO / SUCCESS ===== */
+[data-testid="stAlert"] {
+    border-radius: 18px !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    backdrop-filter: blur(15px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.03) !important;
+    font-family: 'Inter', sans-serif !important;
+    color: #1A202C !important;
+    /* HIGH CONTRAST DARK SLATE */
+}
+
+[data-testid="stAlert"] p {
+    color: #1A202C !important;
+    /* Force paragraph text to be dark */
+    font-weight: 500;
+}
+
+.stSuccess {
+    background: rgba(226, 240, 203, 0.4) !important;
+    border-left: 4px solid #B5EAD7 !important;
+}
+
+.stInfo {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border-left: 4px solid #FFB7B2 !important;
+}
+
+/* ===== CAPTION ===== */
+.stCaption,
+[data-testid="stCaption"],
+.stCaption p,
+.stApp [data-testid="stCaptionContainer"] p,
+.stApp [data-testid="stCaptionContainer"] span {
+    color: #1A202C !important;
+    /* Dark slate for captions - easily visible */
+    -webkit-text-fill-color: #1A202C !important;
+    font-size: 0.85rem !important;
+    font-style: italic;
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* ===== PLOTLY CHART CONTAINER ===== */
+[data-testid="stPlotlyChart"] {
+    border-radius: var(--card-radius);
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: var(--soft-shadow);
+    animation: fadeInUp 0.8s ease-out both;
+    padding: 10px;
+}
+
+/* ===== SPINNER ===== */
+.stSpinner div {
+    border-top-color: #FF9A9E !important;
+}

@@ -1,0 +1,17 @@
+{
+		"version": "1.0.0.0",
+		"author": {"name":"Jaykumar Kadao","email":"jaykadao99210@gmail.com"},
+		"resources": [
+			{
+				"resourceId": "rId0",
+				"sourceType": 5,
+				"file": "resources/aICopilot139529B979A14605BDD09BCA3CA85025.pbiviz.json"
+			}
+		],
+		"visual": {"name":"aICopilot","displayName":"AICopilot","guid":"aICopilot139529B979A14605BDD09BCA3CA85025","visualClassName":"Visual","version":"1.0.0.0","description":"AI BI Copilot","supportUrl":"http://localhost","gitHubUrl":""},
+		"metadata": {
+			"pbivizjson": {
+				"resourceId": "rId0"
+			}
+		}
+	}

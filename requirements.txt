@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+plotly
+openai
+Pillow
+duckdb
+sqlalchemy
+psutil
+pyodbc
+requests
+streamlit-lottie
+pymysql

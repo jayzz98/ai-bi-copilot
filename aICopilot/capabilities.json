@@ -1,0 +1,105 @@
+import React, { useState, useEffect } from 'react';
+
+// 1. MOCK DATA: This simulates the JSON returned from your Power BI DAX query
+const mockPowerBiData = [
+  { id: 1, location: "Sitabuldi Station", uptime_percent: 99.5, active_sessions: 12, max_capacity: 15 },
+  { id: 2, location: "Dharampeth Hub", uptime_percent: 88.2, active_sessions: 4, max_capacity: 10 },
+  { id: 3, location: "MIHAN SEZ", uptime_percent: 100.0, active_sessions: 20, max_capacity: 20 },
+  { id: 4, location: "Wardhaman Nagar", uptime_percent: 92.1, active_sessions: 0, max_capacity: 8 }
+];
+
+export default function CustomDashboardInsights() {
+  const [data, setData] = useState([]);
+  const [insights, setInsights] = useState([]);
+
+  // Simulate fetching data from your backend
+  useEffect(() => {
+    setData(mockPowerBiData);
+    generateAlgorithmicInsights(mockPowerBiData);
+  }, []);
+
+  // 2. THE ALGORITHMIC ENGINE: Rule-based logic running on the frontend
+  const generateAlgorithmicInsights = (dataset) => {
+    const generatedInsights = [];
+
+    dataset.forEach(station => {
+      // Rule 1: Uptime critical alert
+      if (station.uptime_percent < 90) {
+        generatedInsights.push({
+          type: "critical",
+          text: `🚨 Uptime Alert: ${station.location} has dropped below 90% availability (${station.uptime_percent}%).`
+        });
+      }
+
+      // Rule 2: Utilization warning (running at max capacity)
+      if (station.active_sessions === station.max_capacity) {
+        generatedInsights.push({
+          type: "warning",
+          text: `⚡ High Demand: ${station.location} is currently operating at 100% capacity.`
+        });
+      }
+
+      // Rule 3: Dead zone detection (working fine, but zero usage)
+      if (station.uptime_percent > 90 && station.active_sessions === 0) {
+        generatedInsights.push({
+          type: "info",
+          text: `ℹ️ Underutilized: ${station.location} is online but currently has zero active charging sessions.`
+        });
+      }
+    });
+
+    setInsights(generatedInsights);
+  };
+
+  return (
+    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
+      <h2>Real-Time Network Dashboard</h2>
+      
+      {/* 3. RENDER THE INSIGHTS (The "Smart Narrative" Box) */}
+      <div style={{ 
+        backgroundColor: '#f8f9fa', 
+        padding: '15px', 
+        borderRadius: '8px', 
+        marginBottom: '20px',
+        borderLeft: '4px solid #007bff'
+      }}>
+        <h3>Automated Insights</h3>
+        {insights.length === 0 ? (
+          <p>System operating normally. No alerts.</p>
+        ) : (
+          <ul style={{ listStyleType: 'none', padding: 0 }}>
+            {insights.map((insight, index) => (
+              <li key={index} style={{ 
+                padding: '8px 0',
+                color: insight.type === 'critical' ? '#dc3545' : 
+                       insight.type === 'warning' ? '#ffc107' : '#0dcaf0'
+              }}>
+                {insight.text}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* 4. RENDER THE RAW DATA TILE */}
+      <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ borderBottom: '2px solid #ccc' }}>
+            <th>Location</th>
+            <th>Uptime (%)</th>
+            <th>Sessions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(row => (
+            <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
+              <td style={{ padding: '8px 0' }}>{row.location}</td>
+              <td>{row.uptime_percent}%</td>
+              <td>{row.active_sessions} / {row.max_capacity}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}

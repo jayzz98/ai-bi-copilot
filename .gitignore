@@ -1,0 +1,27 @@
+# Python
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Databases
+auth.db
+
+# Large Data (Optional, but recommended if using external storage)
+# car_prices.csv
+# pharma-data.csv
+
+# Local/Temp Files
+*.log
+update_temp.py
+fix_indent_copilot.py
+refactor.py
+shift_bubble.py
