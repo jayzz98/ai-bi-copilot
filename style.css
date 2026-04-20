@@ -250,9 +250,10 @@
     /* Spacing reduced for compactness */
 }
 
-.stApp .title-pink {
+.stApp .title-pink, .pink-ai {
     color: #D53F8C !important;
     -webkit-text-fill-color: #D53F8C !important;
+    opacity: 1 !important;
 }
 
 .stApp .title-dark {
@@ -344,10 +345,10 @@ h1,
 }
 
 /* ===== GLOBAL BODY TEXT (FIX FOR INVISIBLE LABELS/CAPTIONS) ===== */
-.stApp p,
-.stApp label,
-.stApp .stMarkdown,
-.stApp .stCaption {
+.stApp p:not(.pink-ai),
+.stApp label:not(.pink-ai),
+.stApp .stMarkdown:not(.pink-ai),
+.stApp .stCaption:not(.pink-ai) {
     color: #2D3748 !important;
     /* Dark Charcoal for strong readability */
     -webkit-text-fill-color: #2D3748 !important;
