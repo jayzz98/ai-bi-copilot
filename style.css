@@ -779,15 +779,14 @@ hr,
     box-shadow: 0 10px 30px rgba(255, 154, 158, 0.1);
 }
 
-/* Fix: Uploaded file name/size text must be dark on the light file card */
-[data-testid="stSidebar"] [data-testid="stFileUploader"] *,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] span,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] small,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] div,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] p,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] label {
-    color: #000000 !important;
-    -webkit-text-fill-color: #000000 !important;
+/* Fix: Uploaded file name/size text must be white on the dark file card */
+[data-testid="stUploadedFile"] div,
+[data-testid="stUploadedFile"] span,
+[data-testid="stUploadedFile"] small,
+[data-testid="stUploadedFile"] p,
+[data-testid="stUploadedFile"] * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
 }
 
 /* ===== EXPANDER ===== */
