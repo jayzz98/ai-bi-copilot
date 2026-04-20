@@ -780,12 +780,14 @@ hr,
 }
 
 /* Fix: Uploaded file name/size text must be dark on the light file card */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] *,
 [data-testid="stSidebar"] [data-testid="stFileUploader"] span,
 [data-testid="stSidebar"] [data-testid="stFileUploader"] small,
 [data-testid="stSidebar"] [data-testid="stFileUploader"] div,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] p {
-    color: #1a202c !important;
-    -webkit-text-fill-color: #1a202c !important;
+[data-testid="stSidebar"] [data-testid="stFileUploader"] p,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] label {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 
 /* ===== EXPANDER ===== */
