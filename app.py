@@ -169,6 +169,10 @@ def _activate_key(email, key):
 # Initialize auth database
 _init_auth_db()
 
+# ================= OWNER BYPASS =================
+OWNER_EMAILS = ["jaykadao99210@gmail.com"]
+OWNER_SECRET_KEY = "jayz-owner-2024"
+
 # Session defaults for auth
 if 'authenticated' not in st.session_state:
     st.session_state.authenticated = False
@@ -176,6 +180,15 @@ if 'user_email' not in st.session_state:
     st.session_state.user_email = None
 if 'sub_expiry' not in st.session_state:
     st.session_state.sub_expiry = None
+
+# Auto-login for owner via query param (e.g. ?key=jayz-owner-2024)
+try:
+    _qp = st.query_params
+    if _qp.get("key") == OWNER_SECRET_KEY and not st.session_state.authenticated:
+        st.session_state.authenticated = True
+        st.session_state.user_email = OWNER_EMAILS[0]
+except:
+    pass
 
 
 # ================= VIDEO EMBED FUNCTION =================
@@ -333,6 +346,10 @@ if not st.session_state.authenticated:
 # ================= SUBSCRIPTION CHECK =================
 _sub_active, _sub_expiry, _is_premium, _trial_used = _check_sub(st.session_state.user_email)
 st.session_state.sub_expiry = _sub_expiry
+
+# Owner bypass — skip subscription gate entirely
+if st.session_state.user_email and st.session_state.user_email.lower().strip() in OWNER_EMAILS:
+    _sub_active = True
 
 if not _sub_active:
     st.markdown('<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
