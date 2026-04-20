@@ -556,6 +556,37 @@ if (!doc.getElementById('ag-cursor-sprinkles')) {
 with open('style.css', 'r', encoding='utf-8') as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+# Critical inline overrides (guaranteed to load, no caching issues)
+st.markdown("""
+<style>
+/* FORCE: Uploaded file name/size = WHITE */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] li *,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] li div,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] li span,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] li small,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] li p,
+[data-testid="stUploadedFile"] *,
+[data-testid="stFileUploader"] [data-testid="stUploadedFile"] * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+/* FORCE: Tab text = BLACK */
+.stTabs [data-baseweb="tab"] *,
+.stTabs [data-baseweb="tab"] p,
+.stTabs [data-baseweb="tab"] span,
+.stTabs [data-baseweb="tab"],
+.stTabs [aria-selected="true"],
+.stTabs [aria-selected="true"] p,
+.stTabs [aria-selected="true"] span {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+.stTabs [aria-selected="true"] {
+    border-bottom: 3px solid #000000 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 # Native Flow Flex Header (With MP4 Video)
 st.markdown('''

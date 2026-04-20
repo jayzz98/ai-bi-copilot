@@ -761,10 +761,7 @@ hr,
 
 [data-testid="stFileUploadDropzone"] div,
 [data-testid="stFileUploadDropzone"] span,
-[data-testid="stFileUploadDropzone"] small,
-[data-testid="stFileUploader"] section div,
-[data-testid="stFileUploader"] section span,
-[data-testid="stFileUploader"] section small {
+[data-testid="stFileUploadDropzone"] small {
     color: #334155 !important;
     -webkit-text-fill-color: #334155 !important;
 }
