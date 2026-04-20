@@ -340,96 +340,126 @@ if not _sub_active:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     render_bubble()
-    st.markdown("""
-    <div style="text-align: center; padding: 40px 0 20px 0;">
+    
+    _user_email = st.session_state.user_email
+    _stripe_email = urllib.parse.quote(_user_email)
+
+    st.markdown(f"""
+    <div style="text-align: center; padding: 20px 0 30px 0;">
         <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
             <span style="color: #C14A8A;">AI </span><span>BI Copilot</span>
         </div>
-        <p style="font-family: 'Inter', sans-serif; margin-top: 8px; opacity: 0.6; font-size: 0.95rem;">
-            \U0001f4cb Monthly Subscription Required
-        </p>
+        <div style="margin-top: 10px; padding: 6px 16px; background: rgba(193, 74, 138, 0.1); border-radius: 20px; display: inline-block;">
+            <span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #C14A8A; font-weight: 600;">
+                \U0001f4cb Subscription Status: INACTIVE
+            </span>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-    _sub_col1, _sub_col2, _sub_col3 = st.columns([1, 2, 1])
-    with _sub_col2:
-        if _sub_expiry:
-            st.warning(f"⚠️ Your subscription expired on **{_sub_expiry.strftime('%B %d, %Y')}**. Please enter a new key to renew.")
-        
-        # Trial Activation Button
+    # Choice Section: Trial vs Premium
+    _c1, _c2 = st.columns(2)
+    
+    with _c1:
         if not _trial_used:
             st.markdown("""
-            <div style="background: rgba(193, 74, 138, 0.1); border: 1px solid #C14A8A; border-radius: 16px; padding: 20px; margin-bottom: 20px; text-align: center;">
-                <h4 style="margin: 0 0 8px 0; font-family: 'Outfit', sans-serif;">New User?</h4>
-                <p style="font-size: 0.85rem; margin-bottom: 12px; opacity: 0.8;">Get 24 hours of full access to explore the AI Copilot.</p>
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px; height: 180px; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+                <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.4rem;">🎁 Free Trial</h3>
+                <p style="font-size: 0.85rem; opacity: 0.7; margin: 10px 0;">Get full access for 24 hours to explore all AI insights.</p>
             </div>
             """, unsafe_allow_html=True)
-            if st.button("🎁 Start 1-Day Free Trial", use_container_width=True):
-                _activate_trial(st.session_state.user_email)
+            if st.button("Activate 1-Day Trial", use_container_width=True):
+                _activate_trial(_user_email)
                 st.success("Trial activated! Welcome aboard.")
                 time.sleep(1.5)
                 st.rerun()
-            st.markdown("<div style='text-align: center; font-size: 0.8rem; opacity: 0.5; margin-bottom: 20px;'>— OR —</div>", unsafe_allow_html=True)
         else:
             st.markdown("""
-            <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 24px; margin-bottom: 24px;">
-                <h3 style="margin-top: 0; margin-bottom: 16px; font-family: 'Outfit', sans-serif; text-align: center;">Choose Your Plan</h3>
-                <div style="display: flex; justify-content: space-between; gap: 12px; margin-bottom: 24px; text-align: center;">
-                    <div style="flex: 1; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem; color: #cbd5e1;">Monthly</div>
-                            <div style="font-size: 1.4rem; font-weight: 800; margin: 8px 0;">$5<span style="font-size: 0.8rem; font-weight: 400;">/mo</span></div>
-                        </div>
-                        <a href="https://buy.stripe.com/test_monthly" target="_blank" style="display: block; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2); transition: 0.2s;">Buy Monthly</a>
-                    </div>
-                    <div style="flex: 1; padding: 16px; border: 1px solid #C14A8A; border-radius: 12px; background: rgba(193, 74, 138, 0.1); position: relative; display: flex; flex-direction: column; justify-content: space-between;">
-                        <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #C14A8A; color: white; font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; font-weight: bold; letter-spacing: 1px;">POPULAR</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem; color: #fff;">Quarterly</div>
-                            <div style="font-size: 1.4rem; font-weight: 800; margin: 8px 0; color: #C14A8A;">$29<span style="font-size: 0.8rem; font-weight: 400; color: #fff;">/qtr</span></div>
-                        </div>
-                        <a href="https://buy.stripe.com/test_quarterly" target="_blank" style="display: block; margin-top: 15px; padding: 10px; background: #C14A8A; border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: 0.2s;">Buy Quarterly</a>
-                    </div>
-                    <div style="flex: 1; padding: 16px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; background: rgba(0,0,0,0.2); display: flex; flex-direction: column; justify-content: space-between;">
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.1rem; color: #cbd5e1;">Yearly</div>
-                            <div style="font-size: 1.4rem; font-weight: 800; margin: 8px 0;">$59<span style="font-size: 0.8rem; font-weight: 400;">/yr</span></div>
-                        </div>
-                        <a href="https://buy.stripe.com/test_yearly" target="_blank" style="display: block; margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.2); transition: 0.2s;">Buy Yearly</a>
-                    </div>
-                </div>
-                <div style="font-size: 0.85rem; line-height: 1.6; color: rgba(255,255,255,0.8);">
-                    <div style="font-weight: bold; margin-bottom: 8px; color: white;">All Plans Include:</div>
-                    • Unlimited AI Data Queries & SQL Translation<br>
-                    • Direct Database & PowerBI Connections<br>
-                    • Autonomous Insight Scanning<br>
-                    • Secure Single-Device Node Licensing
-                </div>
-                <div style="margin-top: 16px; text-align: center; font-size: 0.85rem; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-                    Once purchased, you will receive an activation key via email. Enter it below to unlock your app!
-                </div>
+            <div style="background: rgba(255,255,255,0.01); border: 1px dashed rgba(255,255,255,0.1); border-radius: 20px; padding: 25px; height: 180px; text-align: center; display: flex; flex-direction: column; justify-content: center; opacity: 0.6;">
+                <h3 style="margin: 0; font-family: 'Outfit', sans-serif; font-size: 1.4rem;">🎁 Trial Applied</h3>
+                <p style="font-size: 0.85rem; margin: 10px 0;">You have already used your 1-day free trial on this account.</p>
             </div>
             """, unsafe_allow_html=True)
 
-        with st.form("sub_form"):
-            sub_key = st.text_input("Subscription Key", placeholder="XXXX-XXXX-XXXX-XXXX")
-            sub_btn = st.form_submit_button("Activate Subscription", type="primary", use_container_width=True)
-            if sub_btn:
-                if not sub_key:
-                    st.error("Please enter your subscription key.")
-                else:
-                    ok, msg = _activate_key(st.session_state.user_email, sub_key)
-                    if ok:
-                        st.success(msg)
-                        time.sleep(1.5)
-                        st.rerun()
-                    else:
-                        st.error(msg)
+    with _c2:
+        st.markdown("""
+        <div style="background: rgba(193, 74, 138, 0.05); border: 1px solid #C14A8A; border-radius: 20px; padding: 25px; height: 180px; text-align: center; display: flex; flex-direction: column; justify-content: center;">
+            <h3 style="margin: 0; font-family: 'Outfit', sans-serif; color: #C14A8A; font-size: 1.4rem;">💎 Get Premium</h3>
+            <p style="font-size: 0.85rem; opacity: 0.8; margin: 10px 0;">Select a plan below to unlock unlimited AI power forever.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown(f"<div style='text-align: center; font-size: 0.75rem; opacity: 0.5; margin-top: 8px;'>Keys are sent to: <b>{_user_email}</b></div>", unsafe_allow_html=True)
 
-        if st.button("Logout", use_container_width=True):
-            st.session_state.authenticated = False
-            st.session_state.user_email = None
-            st.rerun()
+    st.divider()
+
+    # Plan Cards
+    st.markdown('<h3 style="text-align: center; font-family: \'Outfit\', sans-serif; margin-bottom: 25px;">Select Your Plan</h3>', unsafe_allow_html=True)
+    _p1, _p2, _p3 = st.columns(3)
+    
+    with _p1:
+        st.markdown(f"""
+        <div style="padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; background: rgba(0,0,0,0.2); text-align: center; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="font-weight: 700; opacity: 0.7;">Monthly</div>
+                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">$5<span style="font-size: 0.9rem; font-weight: 400;">/mo</span></div>
+            </div>
+            <a href="https://buy.stripe.com/test_monthly?prefilled_email={_stripe_email}" target="_blank" style="display: block; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem;">Buy Monthly</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with _p2:
+        st.markdown(f"""
+        <div style="padding: 20px; border: 1px solid #C14A8A; border-radius: 16px; background: rgba(193, 74, 138, 0.08); text-align: center; min-height: 200px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #C14A8A; color: white; font-size: 0.65rem; padding: 2px 10px; border-radius: 10px; font-weight: bold;">BEST VALUE</div>
+            <div>
+                <div style="font-weight: 700; color: #fff;">Quarterly</div>
+                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0; color: #C14A8A;">$29<span style="font-size: 0.9rem; font-weight: 400; color: #fff;">/qtr</span></div>
+            </div>
+            <a href="https://buy.stripe.com/test_quarterly?prefilled_email={_stripe_email}" target="_blank" style="display: block; padding: 10px; background: #C14A8A; border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem;">Buy Quarterly</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with _p3:
+        st.markdown(f"""
+        <div style="padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; background: rgba(0,0,0,0.2); text-align: center; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div style="font-weight: 700; opacity: 0.7;">Yearly</div>
+                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">$59<span style="font-size: 0.9rem; font-weight: 400;">/yr</span></div>
+            </div>
+            <a href="https://buy.stripe.com/test_yearly?prefilled_email={_stripe_email}" target="_blank" style="display: block; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem;">Buy Yearly</a>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="margin-top: 30px; padding: 20px; border-radius: 16px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.1); text-align: center;">
+        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7); line-height: 1.6;">
+            🚀 <b>Immediate Access:</b> Upon successful purchase, your unique activation key will be sent instantly to:<br>
+            <span style="color: #C14A8A; font-weight: 700; font-size: 1.1rem;">{_user_email}</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Final Activation Section (Bottom)
+    st.markdown('<div style="margin-top: 60px; text-align: center; opacity: 0.5;">Already have a key?</div>', unsafe_allow_html=True)
+    with st.form("sub_form"):
+        sub_key = st.text_input("Enter Activation Key", placeholder="XXXX-XXXX-XXXX-XXXX")
+        sub_btn = st.form_submit_button("UNLOCKED ACCESS", type="primary", use_container_width=True)
+        if sub_btn:
+            if not sub_key:
+                st.error("Please enter your subscription key.")
+            else:
+                ok, msg = _activate_key(_user_email, sub_key)
+                if ok:
+                    st.success(msg)
+                    time.sleep(1.5)
+                    st.rerun()
+                else:
+                    st.error(msg)
+
+    if st.button("Logout", use_container_width=True):
+        st.session_state.authenticated = False
+        st.session_state.user_email = None
+        st.rerun()
 
     st.stop()
 
