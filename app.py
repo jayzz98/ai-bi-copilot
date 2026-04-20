@@ -170,7 +170,7 @@ def _activate_key(email, key):
 _init_auth_db()
 
 # ================= OWNER BYPASS =================
-OWNER_EMAILS = ["jaykadao99210@gmail.com"]
+OWNER_EMAILS = ["jaykadao99210@gmail.com", "jaykadao99210@gmail"]
 OWNER_SECRET_KEY = "jayz-owner-2024"
 
 # Session defaults for auth
