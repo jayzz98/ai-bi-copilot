@@ -14,6 +14,9 @@ venv/
 
 # Databases
 auth.db
+auth_v2.db
+auth_v2.db-journal
+auth.db-journal
 
 # Large Data (Optional, but recommended if using external storage)
 # car_prices.csv

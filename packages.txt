@@ -1,2 +1,4 @@
 freetds-bin
 freetds-dev
+unixodbc-dev
+libsqlite3-dev

@@ -23,17 +23,20 @@ import socket
 import uuid as _uuid_mod
 from datetime import datetime, timedelta
 
+# Build Version
+APP_VERSION = "v1.6 - Nuclear Fix"
+
 st.set_page_config(page_title="AI BI Copilot", layout="wide")
 
 # Cloud detection (True if running on Streamlit Community Cloud)
 IS_CLOUD = "STREAMLIT_SERVER_PORT" in os.environ
 
 # ================= AUTH & SUBSCRIPTION SYSTEM =================
-AUTH_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'auth.db')
+AUTH_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'auth_v2.db')
 
 def _auth_conn():
     conn = sqlite3.connect(AUTH_DB_PATH)
-    conn.execute("PRAGMA journal_mode=WAL")
+    # conn.execute("PRAGMA journal_mode=DELETE")
     return conn
 
 def _init_auth_db():
@@ -488,7 +491,7 @@ if not _sub_active:
 
 client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
-    api_key="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"
+    api_key=st.secrets.get("NVIDIA_API_KEY", "no_key_found")
 )
 
 # ================= UI: ELYSIUM AI STYLE — PREMIUM EDITION =================
@@ -559,16 +562,54 @@ with open('style.css', 'r', encoding='utf-8') as f:
 # Critical inline overrides (guaranteed to load, no caching issues)
 st.markdown("""
 <style>
-/* FORCE: Uploaded file name/size = WHITE */
-[data-testid="stSidebar"] [data-testid="stFileUploader"] li *,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] li div,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] li span,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] li small,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] li p,
-[data-testid="stUploadedFile"] *,
-[data-testid="stFileUploader"] [data-testid="stUploadedFile"] * {
+/* FORCE: File Uploader = BLACK Background Inside */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] > section {
+    background-color: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+}
+/* TEXT INSIDE THE BOX = WHITE */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] section *,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] section div div {
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
+}
+/* BROWSE BUTTON INSIDE THE BOX */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] button {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 1px solid #ffffff !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover * {
+    background-color: transparent !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+/* NUCLEAR: Force all uploaded file text and icons to black */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] div,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] span,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] p,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] small,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+
+/* NUCLEAR: Force the remove button to be invisible background */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] button {
+    background-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] button svg {
+    fill: #000000 !important;
+    color: #000000 !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] button:hover svg {
+    fill: #ff0000 !important;
 }
 /* FORCE: Tab text = BLACK */
 .stTabs [data-baseweb="tab"] *,
@@ -581,8 +622,13 @@ st.markdown("""
     color: #000000 !important;
     -webkit-text-fill-color: #000000 !important;
 }
-.stTabs [aria-selected="true"] {
-    border-bottom: 3px solid #000000 !important;
+/* FORCE: Hide all dividers and horizontal lines */
+hr, [data-testid="stMarkdownDivider"] {
+    display: none !important;
+}
+/* FORCE: Reset spacing to natural flow */
+div[data-testid="stVerticalBlock"] {
+    gap: 1rem !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -605,6 +651,7 @@ _status_label = "💎 Premium Subscriber" if _is_premium else "Free User"
 _display_expiry = _sub_expiry.strftime('%b %d, %Y') if _sub_expiry else 'N/A'
 st.sidebar.markdown(f"""
 <div style="padding: 10px 0 14px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+    <div style="font-size: 0.65rem; opacity: 0.5; color: #000000; font-weight: 800;">{APP_VERSION}</div>
     <div style="font-size: 0.75rem; opacity: 0.6;">Logged in as</div>
     <div style="font-weight: 700; font-size: 0.9rem; margin-top: 2px;">{st.session_state.user_email}</div>
     <div style="font-size: 0.82rem; margin-top: 6px; font-weight: 600; color: {'#C14A8A' if _is_premium else '#ffffff'};">{_status_label}</div>
@@ -934,7 +981,7 @@ with data_container:
     data_prep_container.empty()
 
     # ================= TABS =================
-    tab_copilot, tab_dashboard = st.tabs(["🧠 AI Copilot & Insights", "📊 Executive Dashboard"])
+    tab_copilot, tab_dashboard = st.tabs([" AI Copilot & Insights", " Executive Dashboard"])
 
     def render_kpis():
         # ================= KPI =================
@@ -958,7 +1005,8 @@ with data_container:
                 </div>
                 """, unsafe_allow_html=True)
 
-        st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid rgba(255,154,158,0.2);'>", unsafe_allow_html=True)
+        # Divider removed for tighter UI
+        # st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid rgba(255,154,158,0.2);'>", unsafe_allow_html=True)
 
     with tab_dashboard:
         render_kpis()
@@ -1383,8 +1431,10 @@ with data_container:
 
     with tab_copilot:
         render_kpis()
-        # Reduced vertical space
-        st.write("<div style='margin-bottom: -15px;'></div>", unsafe_allow_html=True)
+        # Reset spacing to natural alignment
+        st.markdown("""<style>
+        [data-testid="stButton"] { margin-top: 0px; }
+        </style>""", unsafe_allow_html=True)
 
         # ================= AUTONOMOUS INSIGHT =================
         if st.button("Run Autonomous Insight Scan", type="primary"):
@@ -1532,7 +1582,8 @@ with data_container:
                     """, unsafe_allow_html=True)
 
         # Custom tight divider to save vertical space
-        st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid rgba(255,154,158,0.2);'>", unsafe_allow_html=True)    
+        # Divider removed to lift bottom content
+        # st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid rgba(255,154,158,0.2);'>", unsafe_allow_html=True)    
         # ================= ⭐ SMART BI ENGINE =================
 
         SYNONYMS={
@@ -1816,7 +1867,13 @@ with data_container:
             st.session_state.chat_history = []
 
         # ================= NLQ =================
-        st.markdown("<h3 style='margin-top: -85px; margin-bottom: 0px; font-weight: 800; font-family: Outfit, sans-serif;'><span class='pink-ai' style='color: #D53F8C !important;'>AI</span> <span style='color: #000000;'>Copilot</span> Insights</h3>", unsafe_allow_html=True)
+        st.markdown("""
+        <h3 style='margin-top: 0px; margin-bottom: 0px; font-weight: 800; font-family: Outfit, sans-serif;'>
+        <span class='pink-ai' style='color: #D53F8C !important;'>AI</span> 
+        <span style='color: #000000 !important;'>Copilot</span> 
+        <span style='color: #000000 !important;'>Insights</span>
+        </h3>
+        """, unsafe_allow_html=True)
         with st.form("ask_form", border=False):
             col1, col2 = st.columns([5, 1])
             with col1:
@@ -1843,389 +1900,672 @@ with data_container:
                 st.session_state.chat_history = []
                 st.rerun()
 
+        # =====================================================================
+        # ============== ⭐ UPGRADED INTELLIGENCE ENGINE BELOW ================
+        # =====================================================================
+
         def _build_schema_context():
-            """Build a rich schema context string with sample values and stats for the LLM."""
+            """Build an ultra-rich schema context with statistics, value distributions,
+            and data-type metadata so the LLM never has to guess column names or types."""
             data_profile = understand_data_structure()
             schema_lines = []
+
             for col in df.columns:
-                col_type = "Numeric" if col in numeric_cols else "Date" if col in date_cols else "Text/Categorical"
-                line = f"- {col} ({col_type})"
+                if col in numeric_cols:
+                    col_type = "NUMERIC"
+                elif col in date_cols:
+                    col_type = "DATE/TIMESTAMP"
+                else:
+                    col_type = "TEXT/CATEGORICAL"
+
+                line = f"  • {col}  [{col_type}]"
+
                 if col in data_profile["sample_values"]:
                     info = data_profile["sample_values"][col]
-                    examples = ', '.join(info['examples'][:8])
-                    line += f"  [Unique values: {info['unique_count']}. Examples: {examples}]"
+                    examples_str = " | ".join(info["examples"][:12])
+                    line += f"\n      unique_count={info['unique_count']}  sample_values=[{examples_str}]"
+
                 if col in data_profile["column_domains"]:
                     dom = data_profile["column_domains"][col]
-                    if 'min_date' in dom:
-                        line += f"  [Range: {dom['min_date']} to {dom['max_date']}]"
+                    if "min_date" in dom:
+                        line += f"\n      date_range=[{dom['min_date']}  →  {dom['max_date']}]"
                     else:
-                        line += f"  [Min: {dom['min']:.2f}, Max: {dom['max']:.2f}, Avg: {dom['avg']:.2f}, Sum: {dom['sum']:.2f}]"
-                schema_lines.append(line)
-            return "\n".join(schema_lines), data_profile
+                        line += (
+                            f"\n      min={dom['min']:,.2f}  max={dom['max']:,.2f}"
+                            f"  avg={dom['avg']:,.2f}  total_sum={dom['sum']:,.2f}"
+                            f"  null_count={dom['nulls']}"
+                        )
 
-        def _build_llm_prompt(question, agg, schema_str, error_context=None):
-            """Build the LLM prompt for SQL generation."""
+                schema_lines.append(line)
+
+            schema_str = "\n".join(schema_lines)
+
+            # Extra: build a top-5 value frequency table for each dimension (helps string matching)
+            freq_lines = []
+            for col in dimension_cols[:8]:
+                try:
+                    top_vals = df[col].value_counts().head(5)
+                    pairs = "  |  ".join([f'"{v}" ({c:,})' for v, c in top_vals.items()])
+                    freq_lines.append(f"  • {col}: {pairs}")
+                except:
+                    pass
+            freq_str = "\n".join(freq_lines) if freq_lines else "  (none)"
+
+            return schema_str, freq_str, data_profile
+
+        def _build_llm_prompt(question, agg, schema_str, freq_str="", error_context=None):
+            """Build an expert-level LLM prompt for DuckDB SQL generation with
+            few-shot examples, comprehensive rules, and self-repair on errors."""
+
+            # --- Conversation history ---
             history_str = ""
             if st.session_state.chat_history:
-                history_str = "\n=== PREVIOUS CONVERSATION HISTORY (Use for follow-up context) ===\n"
-                for q_past, sql_past in st.session_state.chat_history[-5:]:
-                    history_str += f"Q: \"{q_past}\"\nSQL: {sql_past}\n---\n"
-                history_str += "If the new question references 'that', 'those', 'this', 'it', 'same', 'them', 'previous', or implies continuation, modify the most recent Past SQL to fulfill the new request. If it is a completely new topic, write a fresh query.\n"
+                history_str = "\n=== CONVERSATION HISTORY (use for follow-up resolution) ===\n"
+                for q_past, sql_past in st.session_state.chat_history[-6:]:
+                    history_str += f'Q: "{q_past}"\nSQL: {sql_past}\n---\n'
+                history_str += (
+                    "RULE: If the new question uses pronouns like 'it', 'that', 'those', 'same', "
+                    "'them', 'previous', or any implicit reference — treat it as a follow-up and "
+                    "MODIFY the most recent SQL. If it is a clearly new topic, write a fresh query.\n"
+                )
 
+            # --- Error repair section ---
             error_section = ""
             if error_context:
                 error_section = f"""
-    === PREVIOUS ATTEMPT FAILED ===
-    The SQL you generated previously was:
-    {error_context['sql']}
+=== PREVIOUS ATTEMPT FAILED — SELF-REPAIR MODE ===
+Failed SQL:
+{error_context['sql']}
 
-    It failed with this error:
-    {error_context['error']}
+Error message:
+{error_context['error']}
 
-    Please fix the SQL to avoid this error. Common fixes:
-    - Check column names match exactly (case-sensitive)
-    - Ensure GROUP BY includes all non-aggregated columns
-    - Ensure FROM data is present
-    - Do not use columns that don't exist
-    - For string comparisons use ILIKE instead of = for flexibility
-    ========================
-    """
+Diagnosis checklist — fix ALL that apply:
+1. Column name typo → match EXACT names from the schema above (lowercase + underscores).
+2. Missing FROM data → always required.
+3. Aggregate without GROUP BY → add GROUP BY for every non-aggregated SELECT column.
+4. String literal case mismatch → use ILIKE '%value%' for flexible matching.
+5. Non-existent column → only use columns listed in the schema.
+6. Ambiguous column in GROUP BY → alias it or qualify it.
+7. ORDER BY column not in SELECT → add it to SELECT or remove ORDER BY.
+8. DISTINCT COUNT → use COUNT(DISTINCT col) syntax in DuckDB.
+=================================================
+"""
 
-            prompt = f"""You are an elite Data Analyst and DuckDB SQL expert powering an AI BI Copilot application.
-    You have a DuckDB table named 'data' with {len(df)} rows and the following schema:
+            # --- Few-shot examples (concrete, tested) ---
+            few_shot = """
+=== FEW-SHOT EXAMPLES (study these before writing your query) ===
 
-    {schema_str}
+Q: "total sales by country"
+SQL: SELECT country, SUM(sales) AS total_sales FROM data GROUP BY country ORDER BY total_sales DESC
 
-    {history_str}
-    {error_section}
+Q: "top 5 products by revenue"
+SQL: SELECT productline, SUM(sales) AS total_revenue FROM data GROUP BY productline ORDER BY total_revenue DESC LIMIT 5
 
-    User's natural language question: "{question}"
-    User's selected aggregation override: "{agg}"
+Q: "average order value per customer"
+SQL: SELECT customername, AVG(sales) AS avg_order_value FROM data GROUP BY customername ORDER BY avg_order_value DESC
 
-    === INTELLIGENCE RULES ===
+Q: "how many orders in 2004"
+SQL: SELECT COUNT(*) AS order_count FROM data WHERE EXTRACT(YEAR FROM orderdate) = 2004
 
-    1. SCHEMA FIDELITY: Use ONLY columns from the schema above. Never invent columns. Match column names EXACTLY (they are lowercase with underscores).
+Q: "monthly sales trend"
+SQL: SELECT EXTRACT(YEAR FROM orderdate) AS yr, EXTRACT(MONTH FROM orderdate) AS mo, SUM(sales) AS monthly_sales FROM data GROUP BY yr, mo ORDER BY yr, mo
 
-    2. QUERY STRUCTURE: ALWAYS include 'FROM data'. NEVER use SELECT *. Always name columns explicitly.
+Q: "which country had the highest profit margin"
+SQL: SELECT country, SUM(sales) / NULLIF(COUNT(*), 0) AS avg_margin FROM data GROUP BY country ORDER BY avg_margin DESC LIMIT 1
 
-    3. GROUP BY RULE: If your SELECT has ANY aggregate function (COUNT, SUM, AVG, MIN, MAX) alongside a non-aggregated column, you MUST GROUP BY every non-aggregated column. This is non-negotiable.
+Q: "sales by product line and year"
+SQL: SELECT productline, EXTRACT(YEAR FROM orderdate) AS yr, SUM(sales) AS total_sales FROM data GROUP BY productline, yr ORDER BY yr, total_sales DESC
 
-    4. NATURAL LANGUAGE UNDERSTANDING:
-       - "show me X" → SELECT the relevant columns, possibly with aggregation
-       - "how many" / "count" / "number of" → use COUNT()
-       - "total" / "sum" / "overall" → use SUM()
-       - "average" / "avg" / "mean" → use AVG()
-       - "top N" → ORDER BY ... DESC LIMIT N
-       - "bottom N" / "worst N" / "lowest N" → ORDER BY ... ASC LIMIT N
-       - "best" / "highest" / "most" → ORDER BY ... DESC LIMIT 1
-       - "worst" / "lowest" / "least" → ORDER BY ... ASC LIMIT 1
-       - "by" / "per" / "for each" / "across" → GROUP BY that dimension
-       - "between X and Y" → WHERE col BETWEEN X AND Y
-       - "greater than" / "more than" / "above" → WHERE col > value
-       - "less than" / "below" / "under" → WHERE col < value
-       - "trend" / "over time" → GROUP BY date/time column, ORDER BY date
-       - "compare" / "comparison" / "vs" → SELECT both items with their metrics
-       - "growth" / "change" / "difference" → compute difference or percentage change
-       - "distribution" → GROUP BY with COUNT
-       - "correlation" → SELECT both numeric columns
-       - "percentage" / "share" / "proportion" → compute ratio with window function or subquery
+Q: "show me orders where status is shipped"
+SQL: SELECT * FROM data WHERE status ILIKE 'shipped' LIMIT 100
 
-    5. STRING MATCHING: When filtering by text values (e.g., country='USA'), use ILIKE for case-insensitive matching. If the user mentions a value, find the closest match from the sample values shown in the schema.
+Q: "compare sales vs quantity by product"
+SQL: SELECT productline, SUM(sales) AS total_sales, SUM(quantityordered) AS total_quantity FROM data GROUP BY productline ORDER BY total_sales DESC
 
-    6. DATE HANDLING: For date columns, use EXTRACT(YEAR FROM col), EXTRACT(MONTH FROM col), etc. For "monthly trend" use EXTRACT(MONTH FROM date_col). For "yearly" use EXTRACT(YEAR FROM date_col).
+Q: "bottom 3 cities by total revenue"
+SQL: SELECT city, SUM(sales) AS total_revenue FROM data GROUP BY city ORDER BY total_revenue ASC LIMIT 3
 
-    7. AGGREGATION OVERRIDE: If the user selected an aggregation override that is NOT 'None (show raw data)', apply that aggregation to the primary metric column.
+Q: "percentage share of each product line in total sales"
+SQL: SELECT productline, SUM(sales) AS product_sales, ROUND(100.0 * SUM(sales) / SUM(SUM(sales)) OVER (), 2) AS pct_share FROM data GROUP BY productline ORDER BY product_sales DESC
 
-    8. ORDERING: Always add meaningful ORDER BY. For aggregated results, order by the aggregate DESC unless the user asks for bottom/worst/lowest.
+Q: "year over year growth in sales"
+SQL: SELECT yr, total_sales, LAG(total_sales) OVER (ORDER BY yr) AS prev_year_sales, ROUND(100.0 * (total_sales - LAG(total_sales) OVER (ORDER BY yr)) / NULLIF(LAG(total_sales) OVER (ORDER BY yr), 0), 2) AS yoy_growth_pct FROM (SELECT EXTRACT(YEAR FROM orderdate) AS yr, SUM(sales) AS total_sales FROM data GROUP BY yr) ORDER BY yr
 
-    9. ALIASES: Give columns readable aliases using AS (e.g., SUM(sales) AS total_sales).
+Q: "count distinct customers per country"
+SQL: SELECT country, COUNT(DISTINCT customername) AS unique_customers FROM data GROUP BY country ORDER BY unique_customers DESC
 
-    10. LIMIT: For questions asking to "list" or "show all", limit to 100 rows max. For top/bottom questions, use the specified N.
+Q: "orders placed in the last quarter of 2003"
+SQL: SELECT * FROM data WHERE EXTRACT(YEAR FROM orderdate) = 2003 AND EXTRACT(MONTH FROM orderdate) IN (10, 11, 12) LIMIT 100
+============================================================
+"""
 
-    11. MULTI-COLUMN QUESTIONS: If the user asks about multiple metrics (e.g., "sales and profit by country"), include ALL requested metrics in the SELECT.
+            prompt = f"""You are an elite Senior Data Analyst and DuckDB SQL expert powering an enterprise-grade AI BI Copilot.
+Your job is to translate the user's natural language question into a single, perfectly correct DuckDB SQL query.
+You must NEVER hallucinate column names — use ONLY the exact columns defined in the schema below.
 
-    12. WHEN UNSURE: If the question is ambiguous, prefer the interpretation that gives the most useful business insight. Default metric should be the first numeric column. Default dimension should be the first categorical column.
+=========================================================
+TABLE: data   (total rows: {len(df):,})
 
-    13. RETURN ONLY the raw SQL query. No explanations, no markdown, no code fences. Just the SELECT statement.
-    """
+SCHEMA (every column with type, stats & sample values):
+{schema_str}
+
+TOP VALUE FREQUENCIES PER DIMENSION (use for exact string matching):
+{freq_str}
+=========================================================
+
+{history_str}
+{error_section}
+{few_shot}
+
+=== MASTER RULES — FOLLOW ALL OF THEM WITHOUT EXCEPTION ===
+
+RULE 1 — COLUMN FIDELITY:
+  Use ONLY column names EXACTLY as listed in the schema (they are lowercase with underscores).
+  Never invent, abbreviate, or rename column names in the FROM/WHERE/GROUP BY clauses.
+
+RULE 2 — MANDATORY FROM CLAUSE:
+  Every query MUST have FROM data. This is non-negotiable.
+
+RULE 3 — GROUP BY COMPLETENESS:
+  If SELECT contains ANY aggregate function (SUM, COUNT, AVG, MIN, MAX) alongside a raw column,
+  every raw (non-aggregated) column in SELECT MUST appear in GROUP BY. No exceptions.
+
+RULE 4 — NATURAL LANGUAGE → SQL MAPPING:
+  "total / sum / overall"        → SUM(col)
+  "average / avg / mean / per"   → AVG(col)
+  "how many / count / number of" → COUNT(*) or COUNT(col)
+  "min / minimum / lowest"       → MIN(col)
+  "max / maximum / highest"      → MAX(col)
+  "distinct / unique"            → COUNT(DISTINCT col)
+  "top N"                        → ORDER BY ... DESC LIMIT N
+  "bottom N / worst N"           → ORDER BY ... ASC LIMIT N
+  "by / per / for each / across" → GROUP BY that column
+  "between X and Y"              → WHERE col BETWEEN X AND Y
+  "greater than / above / over"  → WHERE col > value
+  "less than / below / under"    → WHERE col < value
+  "trend / over time / monthly"  → GROUP BY date part, ORDER BY date
+  "compare / vs / versus"        → SELECT both items side-by-side
+  "growth / change"              → use LAG() window function or subquery
+  "percentage / share / ratio"   → use window SUM or subquery division
+  "rank / ranking"               → use RANK() or ROW_NUMBER() window
+
+RULE 5 — STRING MATCHING:
+  Always use ILIKE for text comparisons (case-insensitive).
+  For partial matches use ILIKE '%value%'.
+  Pick the closest matching value from the "TOP VALUE FREQUENCIES" section above.
+
+RULE 6 — DATE HANDLING:
+  Use EXTRACT(YEAR FROM col), EXTRACT(MONTH FROM col), EXTRACT(QUARTER FROM col).
+  For monthly trend: GROUP BY EXTRACT(YEAR FROM date_col), EXTRACT(MONTH FROM date_col).
+  Never cast date columns to strings unless needed for display.
+
+RULE 7 — AGGREGATION OVERRIDE:
+  If user's selected aggregation is NOT 'None (show raw data)', apply that aggregation
+  function to the primary metric column in the SELECT.
+  Current selection: "{agg}"
+
+RULE 8 — ORDERING:
+  Always add ORDER BY unless the question is about a single scalar value.
+  For aggregated results, ORDER BY the aggregate DESC unless question implies ASC (bottom/worst/lowest).
+
+RULE 9 — ALIASES:
+  Every derived column MUST have a meaningful AS alias (e.g., SUM(sales) AS total_sales).
+  No naked expressions without aliases.
+
+RULE 10 — ROW LIMITS:
+  "show all / list" → LIMIT 100
+  "top N / bottom N" → LIMIT N (use exact number from question)
+  Single scalar answers → no LIMIT needed
+
+RULE 11 — MULTI-METRIC QUERIES:
+  If user asks for multiple metrics (e.g., "sales and profit by country"), include ALL in SELECT.
+  All non-aggregate columns must be in GROUP BY.
+
+RULE 12 — WINDOW FUNCTIONS:
+  For YoY growth, running totals, ranks, percentages — use proper window functions.
+  DuckDB supports: SUM() OVER(), LAG() OVER(), RANK() OVER(), ROW_NUMBER() OVER(), etc.
+
+RULE 13 — NULLIF / SAFE DIVISION:
+  Never divide without NULLIF(divisor, 0) to avoid division-by-zero errors.
+
+RULE 14 — DISTINCT COUNT:
+  Always write as COUNT(DISTINCT col), NOT as COUNT(DISTINCT(col)).
+
+RULE 15 — OUTPUT FORMAT:
+  Return ONLY the raw SQL SELECT statement.
+  Absolutely NO explanations, NO markdown fences, NO comments, NO preamble.
+  The response must start with SELECT and nothing else.
+
+=========================================================
+USER QUESTION: "{question}"
+=========================================================
+
+SQL:"""
             return prompt
 
+        def _is_general_question(question):
+            """Detect if a question is a general knowledge / conversational question
+            that does NOT require SQL — so we can answer it like GPT."""
+            q_lower = question.lower().strip()
+            general_triggers = [
+                "what is", "what are", "how does", "how do", "explain", "define",
+                "tell me about", "describe", "who is", "who are", "why is", "why does",
+                "when was", "where is", "give me", "list the", "can you", "could you",
+                "help me understand", "difference between", "compare", "pros and cons",
+                "advantages", "disadvantages", "recommend", "suggest", "best way",
+                "how to", "what does", "meaning of", "hello", "hi", "thanks", "thank you",
+                "good morning", "good evening"
+            ]
+            data_triggers = [
+                "my data", "this data", "the data", "dataset", "table", "column",
+                "chart", "graph", "plot", "show", "display", "filter", "sort",
+                "aggregate", "group", "total", "sum", "count", "average", "trend",
+                "top", "bottom", "best", "worst", "sales", "revenue", "profit"
+            ]
+            # If it explicitly references "my data" / "the data", it is a data question
+            for trigger in data_triggers:
+                if trigger in q_lower:
+                    return False
+            # Check if any actual column name is in the question
+            for col in df.columns:
+                if col.replace("_", " ") in q_lower or col in q_lower:
+                    return False
+            # Check general triggers
+            for trigger in general_triggers:
+                if q_lower.startswith(trigger) or trigger in q_lower:
+                    return True
+            return False
+
+        def _answer_general_question(question):
+            """Use the LLM to answer a general / conversational question like GPT."""
+            prompt = f"""You are a highly intelligent AI assistant similar to ChatGPT. 
+The user is asking a general knowledge or conversational question. 
+Answer it clearly, accurately, and helpfully. 
+Format your response in a clean, readable way. Use bullet points or numbered lists where appropriate.
+Be concise but thorough. Do NOT refuse to answer.
+
+User question: {question}
+
+Answer:"""
+            resp = client.chat.completions.create(
+                model="nvidia/nemotron-3-super-120b-a12b",
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.6,
+                top_p=0.95,
+                max_tokens=1024
+            )
+            return resp.choices[0].message.content.strip()
+
         def smart_query(question, selected_agg):
-            schema_str, data_profile = _build_schema_context()
-        
-            # Generate SQL from LLM
+            schema_str, freq_str, data_profile = _build_schema_context()
+
             def _call_llm_for_sql(prompt_text):
                 res = client.chat.completions.create(
                     model="nvidia/nemotron-3-super-120b-a12b",
                     messages=[{"role": "user", "content": prompt_text}],
-                    temperature=0.0,
+                    temperature=0.0,   # deterministic for SQL
                     top_p=0.95,
                     max_tokens=1024
                 )
                 sql_query = res.choices[0].message.content.strip()
-                # Clean any markdown fences
+                # Strip markdown fences if any
                 sql_query = re.sub(r"^```sql\s*\n?", "", sql_query, flags=re.MULTILINE)
                 sql_query = re.sub(r"^```\s*\n?", "", sql_query, flags=re.MULTILINE)
                 sql_query = re.sub(r"\n?```$", "", sql_query, flags=re.MULTILINE)
                 sql_query = sql_query.strip()
-                # Remove any leading explanation text before SELECT
+                # Remove any text before SELECT
                 select_match = re.search(r'(SELECT\s)', sql_query, re.IGNORECASE)
                 if select_match and select_match.start() > 0:
                     sql_query = sql_query[select_match.start():]
                 return sql_query
-        
-            # Attempt up to 3 times with self-repair
+
             max_attempts = 3
             last_error = None
             last_sql = None
-        
+
             for attempt in range(max_attempts):
                 try:
                     if attempt == 0:
-                        prompt = _build_llm_prompt(question, selected_agg, schema_str)
+                        prompt = _build_llm_prompt(question, selected_agg, schema_str, freq_str)
                     else:
-                        prompt = _build_llm_prompt(question, selected_agg, schema_str, 
-                                                  error_context={"sql": last_sql, "error": str(last_error)})
-                
+                        prompt = _build_llm_prompt(
+                            question, selected_agg, schema_str, freq_str,
+                            error_context={"sql": last_sql, "error": str(last_error)}
+                        )
+
                     sql = _call_llm_for_sql(prompt)
                     last_sql = sql
-                
-                    # Validate basic structure
+
                     if not sql.upper().strip().startswith('SELECT'):
-                        raise Exception(f"Generated output is not a valid SQL SELECT statement: {sql[:100]}")
+                        raise Exception(f"Output is not a valid SQL SELECT: {sql[:120]}")
                     if 'FROM' not in sql.upper():
-                        raise Exception("Generated SQL is missing FROM clause")
-                
+                        raise Exception("Missing FROM clause in generated SQL")
+
                     con = duckdb.connect()
                     try:
                         con.register("data", df)
                         result = con.execute(sql).df()
-                    
-                        # Store successful SQL in chat history
+
+                        # Persist successful query in memory
                         st.session_state.chat_history.append((question, sql))
-                        # Keep history manageable
                         if len(st.session_state.chat_history) > 10:
                             st.session_state.chat_history = st.session_state.chat_history[-10:]
-                    
+
                         return result
                     finally:
                         con.close()
-                    
+
                 except Exception as e:
                     last_error = e
                     last_sql = sql if 'sql' in dir() else "(no SQL generated)"
                     if attempt < max_attempts - 1:
                         continue
-        
-            # All attempts failed — raise the last error with context
-            raise Exception(f"After {max_attempts} attempts, could not generate a working query.\nLast SQL: {last_sql}\nLast Error: {str(last_error)}")
 
+            raise Exception(
+                f"After {max_attempts} attempts, could not generate a working query.\n"
+                f"Last SQL: {last_sql}\nLast Error: {str(last_error)}"
+            )
+
+        def _generate_deep_insight(question, result_df):
+            """Generate a rich, GPT-level business insight from the query result."""
+            money_keywords = ['sales', 'revenue', 'profit', 'margin', 'cost', 'price', 'amount']
+
+            # Build a comprehensive stats summary for the LLM
+            stats_lines = []
+            for col in result_df.columns:
+                if pd.api.types.is_numeric_dtype(result_df[col]):
+                    is_money = any(k in col.lower() for k in money_keywords)
+                    fmt = "${:,.2f}" if is_money else "{:,.0f}"
+                    stats_lines.append(
+                        f"  {col}: total={fmt.format(result_df[col].sum())}  "
+                        f"avg={fmt.format(result_df[col].mean())}  "
+                        f"max={fmt.format(result_df[col].max())}  "
+                        f"min={fmt.format(result_df[col].min())}"
+                    )
+            stats_str = "\n".join(stats_lines) if stats_lines else "  (non-numeric result)"
+
+            result_sample = result_df.head(20).to_string(index=False)
+
+            insight_prompt = f"""You are a world-class Business Intelligence Analyst at a top consulting firm (McKinsey / BCG level).
+You have just queried a dataset and received the following results.
+
+USER QUESTION: "{question}"
+
+QUERY RESULT (up to 20 rows):
+{result_sample}
+
+NUMERIC COLUMN STATISTICS:
+{stats_str}
+
+FULL DATASET CONTEXT:
+- Total rows in dataset: {len(df):,}
+- Primary business metrics: {', '.join(business_metrics[:4])}
+- Key dimensions: {', '.join(dimension_cols[:5])}
+
+YOUR TASK:
+Write a sharp, professional business insight that a CEO or VP would find immediately useful.
+Structure your response as follows:
+
+**Key Finding:** (1 sentence — the single most important thing this data reveals)
+
+**Why It Matters:** (2–3 sentences explaining the business implication)
+
+**Recommended Action:** (1–2 concrete, specific actions the business should take)
+
+**Watch Out For:** (1 potential risk, anomaly, or caveat in this data)
+
+Rules:
+- Be specific — use actual numbers from the result (formatted cleanly).
+- Be decisive — do NOT hedge with "it seems like" or "possibly".
+- Do NOT say "based on the data" or "the analysis shows".
+- Write as if you are presenting in a boardroom.
+- Keep total length to 150–200 words maximum.
+"""
+            resp = client.chat.completions.create(
+                model="nvidia/nemotron-3-super-120b-a12b",
+                messages=[{"role": "user", "content": insight_prompt}],
+                temperature=0.65,
+                top_p=0.95,
+                max_tokens=600
+            )
+            return resp.choices[0].message.content.strip()
+
+        # =====================================================================
+        # ========================= MAIN ASK HANDLER ==========================
+        # =====================================================================
         if ask_pressed and q:
             if not is_powerbi_related(q):
-                st.warning("⚠️ Please ask a question related to data analysis.")
+                # --- General / conversational question handler ---
+                if _is_general_question(q):
+                    with st.spinner("Thinking..."):
+                        gen_answer = _answer_general_question(q)
+                    st.markdown(f"""
+                    <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.3);
+                                border-radius: 12px; padding: 20px; margin-top: 10px;">
+                        <div style="font-size: 0.8rem; color: #6366F1; font-weight: 600; margin-bottom: 8px;">
+                            💬 AI Answer
+                        </div>
+                        <div style="line-height: 1.7; color: #E2E8F0;">{gen_answer.replace(chr(10), '<br>')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Please ask a question related to data analysis.")
             else:
                 try:
                     # Phase 1: Computation + progress bar
                     loading_container = st.empty()
                     pbar = loading_container.progress(5, text="Translating natural language to SQL... 5%")
                 
-                    # Get result (cached inside smart_query)
-                    result = smart_query(q, st.session_state.agg_option)
-                    time.sleep(0.5)
-                    pbar.progress(50, text="Executing query on DuckDB engine... 50%")
-                
-                    # ----- Prepare visualisation (still cached) -----
-                    fig = None
-                    is_metric = False
-                    metric_col_name = None
-                    metric_val = None
+                    # --- Check for general question even if it passed is_powerbi_related ---
+                    if _is_general_question(q):
+                        pbar.progress(50, text="Generating AI answer... 50%")
+                        gen_answer = _answer_general_question(q)
+                        pbar.progress(100, text="Done! 100%")
+                        time.sleep(0.3)
+                        loading_container.empty()
+                        st.markdown(f"""
+                        <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.3);
+                                    border-radius: 12px; padding: 20px; margin-top: 10px;">
+                            <div style="font-size: 0.8rem; color: #6366F1; font-weight: 600; margin-bottom: 8px;">
+                                💬 AI Answer
+                            </div>
+                            <div style="line-height: 1.7; color: #E2E8F0;">{gen_answer.replace(chr(10), '<br>')}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # --- Data query path ---
+                        result = smart_query(q, st.session_state.agg_option)
+                        time.sleep(0.3)
+                        pbar.progress(55, text="Executing on DuckDB engine... 55%")
 
-                    if len(result.columns) >= 2 and len(result) > 1:
-                        pbar.progress(70, text="Rendering smart visualizations... 70%")
-                        col1 = result.columns[0]
-                        col2 = result.columns[1]
-                        num_rows = len(result)
-                        q_lower = q.lower()
-                    
-                        # Detect column types
-                        is_date = False
-                        if pd.api.types.is_datetime64_any_dtype(result[col1]):
-                            is_date = True
-                        elif result[col1].dtype == 'object' or str(result[col1].dtype) == 'string':
-                            val = str(result[col1].iloc[0])
-                            if re.match(r'^\d{4}-\d{2}-\d{2}', val) or re.match(r'^\d{2}/\d{2}/\d{4}', val):
+                        # ----- Prepare visualisation -----
+                        fig = None
+                        is_metric = False
+                        metric_col_name = None
+                        metric_val = None
+
+                        if len(result.columns) >= 2 and len(result) > 1:
+                            pbar.progress(70, text="Rendering smart visualizations... 70%")
+                            col1 = result.columns[0]
+                            col2 = result.columns[1]
+                            num_rows = len(result)
+                            q_lower = q.lower()
+                        
+                            # Detect column types
+                            is_date = False
+                            if pd.api.types.is_datetime64_any_dtype(result[col1]):
                                 is_date = True
-                        is_c1_num = pd.api.types.is_numeric_dtype(result[col1])
-                        is_c2_num = pd.api.types.is_numeric_dtype(result[col2])
-                    
-                        # Check if col1 looks like a time sequence (year, month, quarter)
-                        is_time_like = any(t in col1.lower() for t in ['year', 'month', 'quarter', 'qtr', 'week', 'date', 'day', 'period'])
-                    
-                        # Detect question intent for chart type
-                        wants_trend = any(w in q_lower for w in ['trend', 'over time', 'over the', 'monthly', 'yearly', 'quarterly', 'weekly', 'growth', 'decline', 'change over', 'progression', 'timeline', 'history'])
-                        wants_compare = any(w in q_lower for w in ['compare', 'comparison', 'vs', 'versus', 'difference between', 'against'])
-                        wants_distribution = any(w in q_lower for w in ['distribution', 'spread', 'breakdown', 'share', 'proportion', 'percentage', 'pie', 'composition', 'mix'])
-                        wants_ranking = any(w in q_lower for w in ['top', 'bottom', 'best', 'worst', 'highest', 'lowest', 'rank', 'ranking', 'most', 'least', 'leading', 'lagging'])
-                        wants_correlation = any(w in q_lower for w in ['correlation', 'relationship', 'scatter', 'plotted against', 'vs'])
-                        wants_area = any(w in q_lower for w in ['area', 'cumulative', 'stacked area', 'filled'])
-                        wants_hbar = any(w in q_lower for w in ['horizontal', 'hbar'])
-                        wants_treemap = any(w in q_lower for w in ['treemap', 'tree map', 'hierarchy', 'hierarchical'])
-                        wants_funnel = any(w in q_lower for w in ['funnel', 'pipeline', 'stages', 'conversion'])
-                    
-                        # Has 3+ columns? Could do grouped bar
-                        has_multi_metrics = len(result.columns) >= 3 and sum(pd.api.types.is_numeric_dtype(result[c]) for c in result.columns) >= 2
-                    
-                        try:
-                            # 1. Explicit user intent takes priority
-                            if wants_funnel and not is_c1_num and is_c2_num and num_rows <= 10:
-                                fig = px.funnel(result, x=col2, y=col1,
-                                                title=f"{col2.replace('_', ' ').title()} Funnel by {col1.replace('_', ' ').title()}")
+                            elif result[col1].dtype == 'object' or str(result[col1].dtype) == 'string':
+                                val = str(result[col1].iloc[0])
+                                if re.match(r'^\d{4}-\d{2}-\d{2}', val) or re.match(r'^\d{2}/\d{2}/\d{4}', val):
+                                    is_date = True
+                            is_c1_num = pd.api.types.is_numeric_dtype(result[col1])
+                            is_c2_num = pd.api.types.is_numeric_dtype(result[col2])
                         
-                            elif wants_treemap and not is_c1_num and is_c2_num:
-                                fig = px.treemap(result, path=[col1], values=col2,
-                                                 title=f"{col2.replace('_', ' ').title()} Treemap by {col1.replace('_', ' ').title()}")
+                            # Check if col1 looks like a time sequence (year, month, quarter)
+                            is_time_like = any(t in col1.lower() for t in ['year', 'month', 'quarter', 'qtr', 'week', 'date', 'day', 'period'])
                         
-                            elif wants_area and is_c2_num and (is_date or is_time_like):
-                                temp_res = result.sort_values(by=col1)
-                                fig = px.area(temp_res, x=col1, y=col2,
-                                              title=f"{col2.replace('_', ' ').title()} over {col1.replace('_', ' ').title()}")
+                            # Detect question intent for chart type
+                            wants_trend = any(w in q_lower for w in ['trend', 'over time', 'over the', 'monthly', 'yearly', 'quarterly', 'weekly', 'growth', 'decline', 'change over', 'progression', 'timeline', 'history'])
+                            wants_compare = any(w in q_lower for w in ['compare', 'comparison', 'vs', 'versus', 'difference between', 'against'])
+                            wants_distribution = any(w in q_lower for w in ['distribution', 'spread', 'breakdown', 'share', 'proportion', 'percentage', 'pie', 'composition', 'mix'])
+                            wants_ranking = any(w in q_lower for w in ['top', 'bottom', 'best', 'worst', 'highest', 'lowest', 'rank', 'ranking', 'most', 'least', 'leading', 'lagging'])
+                            wants_correlation = any(w in q_lower for w in ['correlation', 'relationship', 'scatter', 'plotted against', 'vs'])
+                            wants_area = any(w in q_lower for w in ['area', 'cumulative', 'stacked area', 'filled'])
+                            wants_hbar = any(w in q_lower for w in ['horizontal', 'hbar'])
+                            wants_treemap = any(w in q_lower for w in ['treemap', 'tree map', 'hierarchy', 'hierarchical'])
+                            wants_funnel = any(w in q_lower for w in ['funnel', 'pipeline', 'stages', 'conversion'])
                         
-                            elif wants_distribution and not is_c1_num and is_c2_num and num_rows <= 8:
-                                fig = px.pie(result, names=col1, values=col2, hole=0.4,
-                                             title=f"Distribution of {col2.replace('_', ' ').title()}")
-                                fig.update_traces(textposition='inside', textinfo='percent+label')
+                            # Has 3+ columns? Could do grouped bar
+                            has_multi_metrics = len(result.columns) >= 3 and sum(pd.api.types.is_numeric_dtype(result[c]) for c in result.columns) >= 2
                         
-                            elif wants_correlation and is_c1_num and is_c2_num:
-                                fig = px.scatter(result, x=col1, y=col2,
-                                                 title=f"{col2.replace('_', ' ').title()} vs {col1.replace('_', ' ').title()}",
-                                                 trendline="ols")
-                        
-                            elif wants_hbar and not is_c1_num and is_c2_num:
-                                fig = px.bar(result, x=col2, y=col1, orientation='h',
-                                             title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
-                        
-                            # 2. Date / time-series → line chart
-                            elif (is_date or is_time_like) and is_c2_num:
-                                temp_res = result.sort_values(by=col1)
-                                if wants_trend or num_rows > 6:
-                                    fig = px.line(temp_res, x=col1, y=col2, markers=True,
+                            try:
+                                # 1. Explicit user intent takes priority
+                                if wants_funnel and not is_c1_num and is_c2_num and num_rows <= 10:
+                                    fig = px.funnel(result, x=col2, y=col1,
+                                                    title=f"{col2.replace('_', ' ').title()} Funnel by {col1.replace('_', ' ').title()}")
+                            
+                                elif wants_treemap and not is_c1_num and is_c2_num:
+                                    fig = px.treemap(result, path=[col1], values=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} Treemap by {col1.replace('_', ' ').title()}")
+                            
+                                elif wants_area and is_c2_num and (is_date or is_time_like):
+                                    temp_res = result.sort_values(by=col1)
+                                    fig = px.area(temp_res, x=col1, y=col2,
                                                   title=f"{col2.replace('_', ' ').title()} over {col1.replace('_', ' ').title()}")
-                                else:
-                                    fig = px.bar(temp_res, x=col1, y=col2,
-                                                 title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
-                        
-                            # 3. Ranking questions → horizontal bar (looks great for top/bottom)
-                            elif wants_ranking and not is_c1_num and is_c2_num:
-                                sorted_res = result.sort_values(by=col2, ascending=True)
-                                fig = px.bar(sorted_res, x=col2, y=col1, orientation='h',
-                                             title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
-                                fig.update_traces(marker_color='#00e8a2')
-                        
-                            # 4. Comparison with multiple metrics → grouped bar
-                            elif wants_compare and has_multi_metrics:
-                                numeric_cols_in_result = [c for c in result.columns if pd.api.types.is_numeric_dtype(result[c])]
-                                fig = px.bar(result, x=col1, y=numeric_cols_in_result, barmode='group',
-                                             title=f"Comparison by {col1.replace('_', ' ').title()}")
-                        
-                            # 5. Two numeric columns (not time) → scatter
-                            elif is_c1_num and is_c2_num and not is_time_like and 'year' not in col1.lower() and 'month' not in col1.lower():
-                                fig = px.scatter(result, x=col1, y=col2,
-                                                 title=f"{col2.replace('_', ' ').title()} vs {col1.replace('_', ' ').title()}",
-                                                 trendline="ols")
-                        
-                            # 6. Categorical + numeric: smart pick based on row count
-                            elif not is_c1_num and is_c2_num:
-                                if num_rows <= 5 and not wants_ranking:
-                                    # Small categories → donut for variety
+                            
+                                elif wants_distribution and not is_c1_num and is_c2_num and num_rows <= 8:
                                     fig = px.pie(result, names=col1, values=col2, hole=0.4,
-                                                 title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                                 title=f"Distribution of {col2.replace('_', ' ').title()}")
                                     fig.update_traces(textposition='inside', textinfo='percent+label')
-                                elif num_rows <= 12:
-                                    # Medium range → vertical bar
-                                    sorted_res = result.sort_values(by=col2, ascending=False)
-                                    fig = px.bar(sorted_res, x=col1, y=col2,
+                            
+                                elif wants_correlation and is_c1_num and is_c2_num:
+                                    fig = px.scatter(result, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} vs {col1.replace('_', ' ').title()}",
+                                                     trendline="ols")
+                            
+                                elif wants_hbar and not is_c1_num and is_c2_num:
+                                    fig = px.bar(result, x=col2, y=col1, orientation='h',
                                                  title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
-                                else:
-                                    # Many categories → horizontal bar for readability
+                            
+                                # 2. Date / time-series → line chart
+                                elif (is_date or is_time_like) and is_c2_num:
+                                    temp_res = result.sort_values(by=col1)
+                                    if wants_trend or num_rows > 6:
+                                        fig = px.line(temp_res, x=col1, y=col2, markers=True,
+                                                      title=f"{col2.replace('_', ' ').title()} over {col1.replace('_', ' ').title()}")
+                                    else:
+                                        fig = px.bar(temp_res, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            
+                                # 3. Ranking questions → horizontal bar (looks great for top/bottom)
+                                elif wants_ranking and not is_c1_num and is_c2_num:
                                     sorted_res = result.sort_values(by=col2, ascending=True)
                                     fig = px.bar(sorted_res, x=col2, y=col1, orientation='h',
                                                  title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                    fig.update_traces(marker_color='#00e8a2')
+                            
+                                # 4. Comparison with multiple metrics → grouped bar
+                                elif wants_compare and has_multi_metrics:
+                                    numeric_cols_in_result = [c for c in result.columns if pd.api.types.is_numeric_dtype(result[c])]
+                                    fig = px.bar(result, x=col1, y=numeric_cols_in_result, barmode='group',
+                                                 title=f"Comparison by {col1.replace('_', ' ').title()}")
+                            
+                                # 5. Two numeric columns (not time) → scatter
+                                elif is_c1_num and is_c2_num and not is_time_like and 'year' not in col1.lower() and 'month' not in col1.lower():
+                                    fig = px.scatter(result, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} vs {col1.replace('_', ' ').title()}",
+                                                     trendline="ols")
+                            
+                                # 6. Categorical + numeric: smart pick based on row count
+                                elif not is_c1_num and is_c2_num:
+                                    if num_rows <= 5 and not wants_ranking:
+                                        # Small categories → donut for variety
+                                        fig = px.pie(result, names=col1, values=col2, hole=0.4,
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                        fig.update_traces(textposition='inside', textinfo='percent+label')
+                                    elif num_rows <= 12:
+                                        # Medium range → vertical bar
+                                        sorted_res = result.sort_values(by=col2, ascending=False)
+                                        fig = px.bar(sorted_res, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                    else:
+                                        # Many categories → horizontal bar for readability
+                                        sorted_res = result.sort_values(by=col2, ascending=True)
+                                        fig = px.bar(sorted_res, x=col2, y=col1, orientation='h',
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            
+                                # 7. Fallback → bar chart
+                                else:
+                                    fig = px.bar(result, x=col1, y=col2,
+                                                 title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            except Exception:
+                                fig = px.bar(result, x=col1, y=col2)
                         
-                            # 7. Fallback → bar chart
-                            else:
-                                fig = px.bar(result, x=col1, y=col2,
-                                             title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
-                        except Exception:
-                            fig = px.bar(result, x=col1, y=col2)
+                            # Apply premium theme to ALL chart types
+                            if fig:
+                                fig.update_layout(
+                                    plot_bgcolor='#0a0c14',
+                                    paper_bgcolor='#0a0c14',
+                                    font=dict(color='#f0f2f5', family='Inter, sans-serif'),
+                                    title_font=dict(size=16, color='#f0f2f5', family='Outfit, sans-serif'),
+                                    xaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'),
+                                    yaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'),
+                                    margin=dict(l=40, r=40, t=50, b=40),
+                                    hoverlabel=dict(bgcolor='#141620', font_color='#f0f2f5', bordercolor='rgba(0,232,162,0.3)')
+                                )
+                                fig.update_traces(marker_color='#00e8a2', selector=dict(type='bar'))
+                        elif len(result.columns) == 1 and len(result) == 1:
+                            is_metric = True
+                            metric_col_name = result.columns[0]
+                            metric_val = result.iloc[0, 0]
                     
-                        # Apply premium theme to ALL chart types
+                        pbar.progress(85, text="Generating deep business insight... 85%")
+                    
+                        # ----- GPT-level deep insight -----
+                        final_insight = _generate_deep_insight(q, result)
+                    
+                        # Phase 2: Complete
+                        time.sleep(0.3)
+                        pbar.progress(100, text="Finalizing response... 100%")
+                        time.sleep(0.3)
+                        loading_container.empty()
+                    
+                        # ----- Render -----
+                        st.dataframe(result)
+                    
                         if fig:
-                            fig.update_layout(
-                                plot_bgcolor='#0a0c14',
-                                paper_bgcolor='#0a0c14',
-                                font=dict(color='#f0f2f5', family='Inter, sans-serif'),
-                                title_font=dict(size=16, color='#f0f2f5', family='Outfit, sans-serif'),
-                                xaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'),
-                                yaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'),
-                                margin=dict(l=40, r=40, t=50, b=40),
-                                hoverlabel=dict(bgcolor='#141620', font_color='#f0f2f5', bordercolor='rgba(0,232,162,0.3)')
-                            )
-                            fig.update_traces(marker_color='#00e8a2', selector=dict(type='bar'))
-                    elif len(result.columns) == 1 and len(result) == 1:
-                        is_metric = True
-                        metric_col_name = result.columns[0]
-                        metric_val = result.iloc[0, 0]
-                
-                    pbar.progress(85, text="Synthesizing business insights... 85%")
-                
-                    # ----- LLM insight (still needed) -----
-                    result_sample = result.head(20)
-                    prompt = f"""
-                    You are a Business Intelligence expert analyzing data.
-                    User question: {q}
-                    Aggregation selected: {st.session_state.agg_option}
-                    Result data (sample of up to 20 rows):
-                    {result_sample.to_string(index=False)}
-                
-                    Provide ONE short, actionable business insight based on this data. 
-                    Keep it concise and focused on business value. Do not mention "based on the data".
-                    """
-                    insight_resp = client.chat.completions.create(
-                        model="nvidia/nemotron-3-super-120b-a12b",
-                        messages=[{"role": "user", "content": prompt}],
-                        temperature=0.7,
-                        top_p=0.95,
-                        max_tokens=512
-                    )
-                    final_insight = insight_resp.choices[0].message.content
-                
-                    # Phase 2: Complete
-                    time.sleep(0.3)
-                    pbar.progress(100, text="Finalizing response... 100%")
-                    time.sleep(0.3)
-                    loading_container.empty()
-                
-                    # ----- Render -----
-                    st.dataframe(result)
-                
-                    if fig:
-                        st.plotly_chart(fig, use_container_width=True)
-                    elif is_metric:
-                        money_keywords = ['sales', 'revenue', 'price', 'amount', 'profit', 'margin', 'cost', 'sum', 'total']
-                        is_money = any(kw in metric_col_name.lower() for kw in money_keywords)
-                        if is_money and isinstance(metric_val, (int, float)):
-                            st.metric("Result", f"${metric_val:,.2f}")
-                        elif isinstance(metric_val, (int, float)):
-                            st.metric("Result", f"{metric_val:,.2f}")
-                        else:
-                            st.metric("Result", metric_val)
-                
-                    st.success("💡 Insight: " + final_insight)
-                    st.session_state['export_df'] = result
+                            st.plotly_chart(fig, use_container_width=True)
+                        elif is_metric:
+                            money_keywords = ['sales', 'revenue', 'price', 'amount', 'profit', 'margin', 'cost', 'sum', 'total']
+                            is_money = any(kw in metric_col_name.lower() for kw in money_keywords)
+                            if is_money and isinstance(metric_val, (int, float)):
+                                st.metric("Result", f"${metric_val:,.2f}")
+                            elif isinstance(metric_val, (int, float)):
+                                st.metric("Result", f"{metric_val:,.2f}")
+                            else:
+                                st.metric("Result", metric_val)
+                    
+                        # Render the deep insight in a styled card
+                        st.markdown(f"""
+                        <div style="background: rgba(99,102,241,0.07); border: 1px solid rgba(99,102,241,0.25);
+                                    border-radius: 14px; padding: 22px 26px; margin-top: 12px;">
+                            <div style="font-size: 0.78rem; color: #6366F1; font-weight: 700;
+                                        letter-spacing: 0.08em; margin-bottom: 12px;">
+                                💡 AI BUSINESS INSIGHT
+                            </div>
+                            <div style="line-height: 1.75; color: #E2E8F0; font-size: 0.92rem;">
+                                {final_insight.replace(chr(10), '<br>').replace('**', '<b>').replace('**', '</b>')}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        st.session_state['export_df'] = result
             
                 except Exception as e:
                     st.error(f"Sorry, I couldn't process that question. Error details: {str(e)}")
-                    st.info("Try rephrasing your question to be more specific about the columns you want to analyze, or click 'Clear Context' if the AI is confused by a previous question.")
+                    st.info("Try rephrasing your question or click 'Clear Context' if a previous query is confusing the AI.")
 
         # ================= EXPORT PIPELINE =================
         if 'export_df' in st.session_state:

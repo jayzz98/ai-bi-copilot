@@ -326,9 +326,9 @@ h3,
     font-family: 'Outfit', sans-serif !important;
     font-weight: 800 !important;
     letter-spacing: -0.01em;
-    color: #2F1160 !important;
-    /* Deep Midnight Purple */
-    -webkit-text-fill-color: #2F1160 !important;
+    color: #000000 !important;
+    /* Absolute Black */
+    -webkit-text-fill-color: #000000 !important;
 }
 
 h1,
@@ -784,7 +784,7 @@ hr,
     box-shadow: 0 10px 30px rgba(255, 154, 158, 0.1);
 }
 
-/* Fix: Uploaded file name/size text must be white on the dark file card */
+/* Fix: Uploaded file name/size text must be black */
 [data-testid="stUploadedFile"] div,
 [data-testid="stUploadedFile"] span,
 [data-testid="stUploadedFile"] small,
@@ -795,8 +795,8 @@ hr,
 [data-testid="stSidebar"] [data-testid="stFileUploader"] li span,
 [data-testid="stSidebar"] [data-testid="stFileUploader"] li div,
 [data-testid="stSidebar"] [data-testid="stFileUploader"] li small {
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 
 /* ===== EXPANDER ===== */
