@@ -491,7 +491,7 @@ if not _sub_active:
 
 client = OpenAI(
     base_url="https://integrate.api.nvidia.com/v1",
-    api_key=st.secrets.get("NVIDIA_API_KEY", "no_key_found")
+    api_key="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"
 )
 
 # ================= UI: ELYSIUM AI STYLE — PREMIUM EDITION =================
