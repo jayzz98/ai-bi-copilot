@@ -18,7 +18,7 @@ import time
 import streamlit.components.v1 as components
 import base64 # Added for video encoding
 import sqlite3
-import hashlib
+import hashliba
 import socket
 import uuid as _uuid_mod
 from datetime import datetime, timedelta
@@ -295,13 +295,14 @@ if not st.session_state.authenticated:
     with open('style.css', 'r', encoding='utf-8') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-    render_bubble()
     st.markdown("""
-    <div style="text-align: center; padding: 40px 0 20px 0;">
-        <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
-            <span class="pink-ai" style="color: #D53F8C !important;">AI </span><span>BI Copilot</span>
+    <div class="sd-auth-page">
+        <div class="sd-auth-brand-row">
+            <div class="sd-brand-icon">AI</div>
+            <div class="sd-brand-title"><span>AI</span> BI Copilot</div>
         </div>
-        
+        <h1 class="sd-auth-title">Welcome back</h1>
+        <p class="sd-auth-subtitle">Sign in to continue to your workspace</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -309,11 +310,13 @@ if not st.session_state.authenticated:
     with _auth_col2:
         auth_mode = st.radio("", ["Login", "Sign Up"], horizontal=True, label_visibility="collapsed")
 
+        st.markdown('<div class="sd-auth-card">', unsafe_allow_html=True)
         if auth_mode == "Login":
             with st.form("login_form"):
-                login_id = st.text_input("Username or Email", placeholder="e.g. user123 or you@example.com")
+                login_id = st.text_input("Email address", placeholder="you@company.com")
                 login_password = st.text_input("Password", type="password", placeholder="Enter your password")
-                login_btn = st.form_submit_button("Login", type="primary", use_container_width=True)
+                st.checkbox("Remember me", value=True)
+                login_btn = st.form_submit_button("Sign in", type="primary", use_container_width=True)
                 if login_btn:
                     if not login_id or not login_password:
                         st.error("Please fill in all fields.")
@@ -331,7 +334,7 @@ if not st.session_state.authenticated:
                 reg_email = st.text_input("Email", placeholder="you@example.com")
                 reg_password = st.text_input("Password", type="password", placeholder="Min 6 characters")
                 reg_confirm = st.text_input("Confirm Password", type="password", placeholder="Re-enter password")
-                reg_btn = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+                reg_btn = st.form_submit_button("Create one", type="primary", use_container_width=True)
                 if reg_btn:
                     if not reg_username or not reg_email or not reg_password:
                         st.error("Please fill in all fields.")
@@ -349,6 +352,15 @@ if not st.session_state.authenticated:
                             st.rerun()
                         else:
                             st.error(msg)
+        st.markdown("""
+        <div class="sd-auth-divider"><span>or continue with</span></div>
+        <div class="sd-social-grid">
+            <div class="sd-social-btn">Google</div>
+            <div class="sd-social-btn">Microsoft</div>
+        </div>
+        </div>
+        <p class="sd-auth-terms">By signing in, you agree to our Terms of Service and Privacy Policy.</p>
+        """, unsafe_allow_html=True)
 
     st.stop()
 
@@ -365,21 +377,14 @@ if not _sub_active:
     with open('style.css', 'r', encoding='utf-8') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
-    render_bubble()
-    
     _user_email = st.session_state.user_email
     _stripe_email = urllib.parse.quote(_user_email)
 
-    st.markdown(f"""
-    <div style="text-align: center; padding: 20px 0 30px 0;">
-        <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
-            <span class="pink-ai" style="color: #D53F8C !important;">AI </span><span>BI Copilot</span>
-        </div>
-        <div style="margin-top: 10px; padding: 6px 16px; background: rgba(193, 74, 138, 0.1); border-radius: 20px; display: inline-block;">
-            <span style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #D53F8C; font-weight: 600;">
-                \U0001f4cb Subscription Status: INACTIVE
-            </span>
-        </div>
+    st.markdown("""
+    <div class="sd-pricing-header">
+        <div class="sd-pricing-badge">Simple, transparent pricing</div>
+        <h1>Choose the plan that fits your needs</h1>
+        <p>Start with a free trial. Upgrade when you're ready.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -416,43 +421,46 @@ if not _sub_active:
         """, unsafe_allow_html=True)
         st.markdown(f"<div style='text-align: center; font-size: 0.75rem; opacity: 0.5; margin-top: 8px;'>Keys are sent to: <b>{_user_email}</b></div>", unsafe_allow_html=True)
 
-    st.divider()
-
-    # Plan Cards
-    st.markdown('<h3 style="text-align: center; font-family: \'Outfit\', sans-serif; margin-bottom: 25px;">Select Your Plan</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 class="sd-plan-title">Select Your Plan</h3>', unsafe_allow_html=True)
     _p1, _p2, _p3 = st.columns(3)
     
     with _p1:
         st.markdown(f"""
-        <div style="padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; background: rgba(0,0,0,0.2); text-align: center; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="sd-plan-card">
             <div>
-                <div style="font-weight: 700; opacity: 0.7;">Monthly</div>
-                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">$5<span style="font-size: 0.9rem; font-weight: 400;">/mo</span></div>
+                <div class="sd-plan-tier">Tier 1</div>
+                <div class="sd-plan-name">Monthly</div>
+                <div class="sd-plan-price">$5<span>/month</span></div>
+                <div class="sd-plan-caption">Pay monthly, cancel anytime</div>
             </div>
-            <a href="https://buy.stripe.com/test_monthly?prefilled_email={_stripe_email}" target="_blank" style="display: block; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem;">Buy Monthly</a>
+            <a href="https://buy.stripe.com/test_monthly?prefilled_email={_stripe_email}" target="_blank" class="sd-plan-link">Start Free Trial</a>
         </div>
         """, unsafe_allow_html=True)
 
     with _p2:
         st.markdown(f"""
-        <div style="padding: 20px; border: 1px solid #C14A8A; border-radius: 16px; background: rgba(193, 74, 138, 0.08); text-align: center; min-height: 200px; position: relative; display: flex; flex-direction: column; justify-content: space-between;">
-            <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: #C14A8A; color: white; font-size: 0.65rem; padding: 2px 10px; border-radius: 10px; font-weight: bold;">BEST VALUE</div>
+        <div class="sd-plan-card sd-plan-popular">
+            <div class="sd-plan-chip">Most Popular</div>
             <div>
-                <div style="font-weight: 700; color: #fff;">Quarterly</div>
-                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0; color: #C14A8A;">$29<span style="font-size: 0.9rem; font-weight: 400; color: #fff;">/qtr</span></div>
+                <div class="sd-plan-tier">Tier 2</div>
+                <div class="sd-plan-name">Quarterly</div>
+                <div class="sd-plan-price">$29<span>/quarter</span></div>
+                <div class="sd-plan-caption">Billed every 3 months</div>
             </div>
-            <a href="https://buy.stripe.com/test_quarterly?prefilled_email={_stripe_email}" target="_blank" style="display: block; padding: 10px; background: #C14A8A; border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem;">Buy Quarterly</a>
+            <a href="https://buy.stripe.com/test_quarterly?prefilled_email={_stripe_email}" target="_blank" class="sd-plan-link sd-plan-link-primary">Get Quarterly Plan</a>
         </div>
         """, unsafe_allow_html=True)
 
     with _p3:
         st.markdown(f"""
-        <div style="padding: 20px; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; background: rgba(0,0,0,0.2); text-align: center; min-height: 200px; display: flex; flex-direction: column; justify-content: space-between;">
+        <div class="sd-plan-card">
             <div>
-                <div style="font-weight: 700; opacity: 0.7;">Yearly</div>
-                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">$59<span style="font-size: 0.9rem; font-weight: 400;">/yr</span></div>
+                <div class="sd-plan-tier">Tier 3</div>
+                <div class="sd-plan-name">Yearly</div>
+                <div class="sd-plan-price">$59<span>/year</span></div>
+                <div class="sd-plan-caption">Save $18/year vs monthly</div>
             </div>
-            <a href="https://buy.stripe.com/test_yearly?prefilled_email={_stripe_email}" target="_blank" style="display: block; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; text-decoration: none; font-weight: bold; font-size: 0.85rem;">Buy Yearly</a>
+            <a href="https://buy.stripe.com/test_yearly?prefilled_email={_stripe_email}" target="_blank" class="sd-plan-link">Start Yearly Plan</a>
         </div>
         """, unsafe_allow_html=True)
 
@@ -574,18 +582,16 @@ st.markdown("""
     color: #ffffff !important;
     -webkit-text-fill-color: #ffffff !important;
 }
-/* BROWSE BUTTON INSIDE THE BOX */
-[data-testid="stSidebar"] [data-testid="stFileUploader"] button {
-    background-color: #000000 !important;
-    color: #ffffff !important;
-    border: 1px solid #ffffff !important;
+/* BROWSE BUTTON INSIDE THE BOX — black text on white bg */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"],
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"] * {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    border: 1px solid rgba(0,0,0,0.2) !important;
 }
-[data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover,
-[data-testid="stSidebar"] [data-testid="stFileUploader"] button:hover * {
-    background-color: transparent !important;
-    border-color: #ffffff !important;
-    color: #ffffff !important;
-    -webkit-text-fill-color: #ffffff !important;
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"]:hover {
+    background-color: #f0f0f0 !important;
 }
 /* NUCLEAR: Force all uploaded file text and icons to black */
 [data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] div,
@@ -634,28 +640,28 @@ div[data-testid="stVerticalBlock"] {
 """, unsafe_allow_html=True)
 
 
-# Native Flow Flex Header (With MP4 Video)
-st.markdown('''
-<div class="hero-header-section">
-    <div class="main-title">
-        <span class="pink-ai" style="color: #D53F8C !important;">AI </span><span class="title-dark">BI Copilot</span>
+# Dashboard Header
+st.markdown(f"""
+<div class="sd-dashboard-header">
+    <div>
+        <h1>Data Workspace</h1>
+        <p>Analyze and query your data with AI</p>
     </div>
+    <div class="sd-dashboard-user">{st.session_state.user_email}</div>
 </div>
-''', unsafe_allow_html=True)
-
-render_bubble()
+""", unsafe_allow_html=True)
 
 # ================= SIDEBAR: ACCOUNT INFO =================
 _sub_active, _sub_expiry, _is_premium, _trial_used = _check_sub(st.session_state.user_email)
 _status_label = "💎 Premium Subscriber" if _is_premium else "Free User"
 _display_expiry = _sub_expiry.strftime('%b %d, %Y') if _sub_expiry else 'N/A'
 st.sidebar.markdown(f"""
-<div style="padding: 10px 0 14px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
-    <div style="font-size: 0.65rem; opacity: 0.5; color: #000000; font-weight: 800;">{APP_VERSION}</div>
-    <div style="font-size: 0.75rem; opacity: 0.6;">Logged in as</div>
-    <div style="font-weight: 700; font-size: 0.9rem; margin-top: 2px;">{st.session_state.user_email}</div>
-    <div style="font-size: 0.82rem; margin-top: 6px; font-weight: 600; color: {'#C14A8A' if _is_premium else '#ffffff'};">{_status_label}</div>
-    <div style="font-size: 0.72rem; margin-top: 4px; opacity: 0.8;">Subscription until: {_display_expiry}</div>
+<div class="sd-sidebar-account">
+    <div class="sd-sidebar-version">{APP_VERSION}</div>
+    <div class="sd-sidebar-kicker">Logged in as</div>
+    <div class="sd-sidebar-email">{st.session_state.user_email}</div>
+    <div class="sd-sidebar-status">{_status_label}</div>
+    <div class="sd-sidebar-expiry">Subscription until: {_display_expiry}</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -665,7 +671,7 @@ if st.sidebar.button("Logout", use_container_width=True):
     st.rerun()
 
 # ================= SIDEBAR UPLOADER & DB CONNECTION =================
-st.sidebar.header("Data Source")
+st.sidebar.markdown('<div class="sd-side-section-title">Data Source</div>', unsafe_allow_html=True)
 
 if 'data_source_type' not in st.session_state:
     st.session_state.data_source_type = "CSV Upload"
@@ -676,7 +682,8 @@ def set_data_source(src):
             del st.session_state['db_df']
     st.session_state.data_source_type = src
 
-st.sidebar.button("CSV", 
+st.sidebar.markdown('<div class="sd-source-caption">Choose one source</div>', unsafe_allow_html=True)
+st.sidebar.button("CSV Upload", 
                   type="primary" if st.session_state.data_source_type == "CSV Upload" else "secondary",
                   on_click=set_data_source, args=("CSV Upload",),
                   use_container_width=True)
@@ -692,16 +699,22 @@ st.sidebar.button("Power BI",
                   use_container_width=True)
 
 data_source_type = st.session_state.data_source_type
-st.sidebar.caption(f"Currently Active: **{data_source_type}**")
+st.sidebar.markdown(f'<div class="sd-active-source">Active: {data_source_type}</div>', unsafe_allow_html=True)
 
 uploaded_files = None
 db_connection_error = None
 
 if data_source_type == "CSV Upload":
+    st.sidebar.markdown("""
+    <div class="sd-upload-hint">
+        <div class="sd-upload-title">Drop files here</div>
+        <div class="sd-upload-subtitle">Excel, CSV files</div>
+    </div>
+    """, unsafe_allow_html=True)
     uploaded_files = st.sidebar.file_uploader("Upload CSV or Excel files", type=['csv', 'xlsx', 'xls'], accept_multiple_files=True)
 
 elif data_source_type == "Database Connection":
-    st.sidebar.subheader("Database Credentials")
+    st.sidebar.markdown('<div class="sd-side-subtitle">Database Credentials</div>', unsafe_allow_html=True)
     db_type = st.sidebar.selectbox("Database Type", ["SQL Server", "MySQL"])
     db_host = st.sidebar.text_input("Host (e.g., localhost)")
     db_port = st.sidebar.text_input("Port (e.g., 1433 or 3306)")
@@ -758,8 +771,8 @@ elif data_source_type == "Database Connection":
                 st.sidebar.error(f"Error: {db_connection_error}")
 
 elif data_source_type == "Live Power BI":
-    st.sidebar.subheader("Live Power BI Scanner")
-    st.sidebar.caption("Scans your computer for an open Power BI file and connects to its hidden data engine.")
+    st.sidebar.markdown('<div class="sd-side-subtitle">Live Power BI Scanner</div>', unsafe_allow_html=True)
+    st.sidebar.markdown('<div class="sd-active-source">Scans for an open Power BI file and connects to its hidden data engine.</div>', unsafe_allow_html=True)
     
     if st.sidebar.button("🔍 Scan for Open Power BI", use_container_width=True):
         with st.spinner("Scanning local ports for msmdsrv.exe..."):
@@ -999,9 +1012,9 @@ with data_container:
                     kpi_value = f"{df[col].sum():,.0f}"
                 
                 st.markdown(f"""
-                <div style="padding: 8px 0;">
-                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 4px;">Total {display_label}</div>
-                    <div style="font-size: 1.6rem; font-weight: 700; color: #ffffff; word-break: break-all;">{kpi_value}</div>
+                <div class="sd-kpi-card">
+                    <div class="sd-kpi-label">Total {display_label}</div>
+                    <div class="sd-kpi-value">{kpi_value}</div>
                 </div>
                 """, unsafe_allow_html=True)
 
