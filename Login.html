@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | AI BI Copilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0F111C;
+            --accent-pink: #D53F8C;
+            --accent-blue: #6366F1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .font-outfit {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+        }
+
+        .glow-button {
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(213, 63, 140, 0);
+        }
+
+        .glow-button:hover {
+            box-shadow: 0 0 30px rgba(213, 63, 140, 0.3);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            100% {
+                transform: translate(5%, 10%) scale(1.1);
+            }
+        }
+
+        .mesh-blob {
+            position: absolute;
+            filter: blur(80px);
+            border-radius: 50%;
+            animation: float 15s infinite alternate ease-in-out;
+            z-index: 0;
+            opacity: 0.3;
+        }
+
+        .input-focus:focus {
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 0 4px rgba(213, 63, 140, 0.15);
+            outline: none;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-4px);
+            }
+
+            75% {
+                transform: translateX(4px);
+            }
+        }
+
+        .error-shake {
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+    </style>
+    <style>
+        sd-component {
+            display: block;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/petite-vue@0.4.1/dist/petite-vue.iife.js" defer init></script>
+</head>
+
+<body>
+    <div class="min-h-screen bg-[#0F111C] flex flex-col relative">
+        <!-- Background Blobs -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="mesh-blob bg-[#D53F8C] w-[400px] h-[400px] -top-20 -left-20"></div>
+            <div class="mesh-blob bg-[#6366F1] w-[500px] h-[500px] top-1/2 -right-40" style="animation-delay: -5s;">
+            </div>
+            <div class="mesh-blob bg-[#D53F8C] w-[300px] h-[300px] -bottom-20 left-1/2" style="animation-delay: -10s;">
+            </div>
+        </div>
+
+        <!-- Navigation Component -->
+        <!-- component: NavigationBar (7b125985-d2c4-4df1-a9c6-dc6d377bee7d) -->
+        <div
+            v-scope="{ ...{&quot;activeItem&quot;:&quot;login&quot;,&quot;dashboardHref&quot;:&quot;#dashboard&quot;,&quot;sourcesHref&quot;:&quot;#sources&quot;,&quot;insightsHref&quot;:&quot;#insights&quot;,&quot;pricingHref&quot;:&quot;#pricing&quot;,&quot;loginHref&quot;:&quot;#login&quot;,&quot;launchHref&quot;:&quot;#launch&quot;}, $emit() {} }">
+            <nav id="main-nav" class="fixed top-0 w-full z-50 bg-[#0F111C] border-b border-white/5">
+                <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 bg-gradient-to-br from-[#D53F8C] to-[#6366F1] rounded-xl flex items-center justify-center">
+                            <iconify-icon icon="lucide:brain-circuit" class="text-white text-2xl"></iconify-icon>
+                        </div>
+                        <span class="font-outfit text-xl font-bold tracking-tight text-white">AI BI Copilot</span>
+                    </div>
+
+                    <div class="hidden md:flex items-center gap-10 text-sm font-medium text-slate-400">
+                        <a :href="dashboardHref" id="nav-dashboard" class="transition-colors"
+                            :class="{ 'text-white': activeItem === 'dashboard', 'hover:text-white': activeItem !== 'dashboard' }">Dashboard</a>
+                        <a :href="sourcesHref" id="nav-sources" class="transition-colors"
+                            :class="{ 'text-white': activeItem === 'sources', 'hover:text-white': activeItem !== 'sources' }">Data
+                            Sources</a>
+                        <a :href="insightsHref" id="nav-insights" class="transition-colors"
+                            :class="{ 'text-white': activeItem === 'insights', 'hover:text-white': activeItem !== 'insights' }">Insights</a>
+                        <a :href="pricingHref" id="nav-pricing" class="transition-colors"
+                            :class="{ 'text-white': activeItem === 'pricing', 'hover:text-white': activeItem !== 'pricing' }">Pricing</a>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <a :href="loginHref" id="nav-login"
+                            class="text-sm font-medium text-slate-400 hover:text-white transition-colors px-4">Login</a>
+                        <a :href="launchHref" id="nav-launch-btn"
+                            class="bg-white text-[#0F111C] px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-200 transition-colors shadow-lg">Launch
+                            Tool</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        <!-- /component: NavigationBar (7b125985-d2c4-4df1-a9c6-dc6d377bee7d) -->
+
+        <!-- Main Content -->
+        <div class="flex-1 flex items-center justify-center px-6 py-20 relative z-10">
+            <div class="w-full max-w-[480px]">
+                <!-- Header -->
+                <div class="text-center mb-10">
+                    <a href="index.html" class="inline-flex items-center gap-3 mb-6 hover:opacity-90 transition-opacity">
+                        <div
+                            class="w-12 h-12 bg-gradient-to-br from-[#D53F8C] to-[#6366F1] rounded-xl flex items-center justify-center">
+                            <iconify-icon icon="lucide:brain-circuit" class="text-white text-3xl"></iconify-icon>
+                        </div>
+                        <span class="font-outfit text-2xl font-bold tracking-tight text-white">AI BI Copilot</span>
+                    </a>
+                    <h1 class="font-outfit text-4xl font-extrabold text-white mb-3 tracking-tight">Welcome Back</h1>
+                    <p class="text-[#94A3B8] text-sm leading-relaxed max-w-[320px] mx-auto">
+                        Sign in to access your AI-powered business intelligence dashboard
+                    </p>
+                </div>
+
+                <!-- Login Card -->
+                <div class="glass-card rounded-[32px] p-8 md:p-10 shadow-2xl">
+                    <form id="login-form" class="space-y-6">
+                        <!-- Email -->
+                        <div class="space-y-2">
+                            <label for="email"
+                                class="block text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Email
+                                Address</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <iconify-icon icon="lucide:mail" class="text-[#94A3B8] text-lg"></iconify-icon>
+                                </div>
+                                <input type="email" id="email" name="email" placeholder="you@company.com"
+                                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-[#475569] transition-all input-focus">
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center">
+                                <label for="password"
+                                    class="block text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Password</label>
+                                <a href="#reset-password" id="forgot-password-link"
+                                    class="text-xs font-semibold text-[#6366F1] hover:text-[#818CF8] transition-colors">Forgot
+                                    password?</a>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <iconify-icon icon="lucide:lock" class="text-[#94A3B8] text-lg"></iconify-icon>
+                                </div>
+                                <input type="password" id="password" name="password" placeholder="••••••••"
+                                    class="w-full bg-white/5 border border-white/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-[#475569] transition-all input-focus">
+                            </div>
+                        </div>
+
+                        <!-- Remember Me -->
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <div class="relative flex items-center">
+                                <input type="checkbox" class="peer sr-only">
+                                <div
+                                    class="h-5 w-5 bg-white/5 border border-white/10 rounded-md transition-all peer-checked:bg-[#D53F8C] peer-checked:border-[#D53F8C]">
+                                </div>
+                                <iconify-icon icon="lucide:check"
+                                    class="absolute text-white text-sm opacity-0 peer-checked:opacity-100 transition-opacity left-0.5"></iconify-icon>
+                            </div>
+                            <span class="text-sm text-[#94A3B8] group-hover:text-white transition-colors">Remember this
+                                device</span>
+                        </label>
+
+                        <!-- Submit -->
+                        <button type="submit"
+                            id="login-submit-btn"
+                            class="glow-button w-full bg-[#D53F8C] text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-[#E54B9B] transition-all transform active:scale-[0.98]">
+                            Sign In
+                            <iconify-icon icon="lucide:arrow-right" class="text-lg"></iconify-icon>
+                        </button>
+                    </form>
+
+                    <!-- Divider -->
+                    <div class="relative my-8">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-white/5"></div>
+                        </div>
+                        <div class="relative flex justify-center text-xs uppercase">
+                            <span class="bg-[#141620] px-3 text-[#475569] font-bold tracking-widest">Or continue
+                                with</span>
+                        </div>
+                    </div>
+
+                    <!-- Social Buttons -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button id="social-google-btn"
+                            class="flex items-center justify-center gap-2 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white hover:bg-white/10 hover:-translate-y-0.5 transition-all">
+                            <iconify-icon icon="logos:google-icon" class="text-lg"></iconify-icon>
+                            Google
+                        </button>
+                        <button id="social-microsoft-btn"
+                            class="flex items-center justify-center gap-2 py-3 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white hover:bg-white/10 hover:-translate-y-0.5 transition-all">
+                            <iconify-icon icon="logos:microsoft-icon" class="text-lg"></iconify-icon>
+                            Microsoft
+                        </button>
+                    </div>
+
+                    <!-- Sign Up -->
+                    <div class="mt-10 text-center">
+                        <p class="text-sm text-[#94A3B8]">
+                            Don't have an account?
+                            <a href="#"
+                                id="signup-link" class="text-[#D53F8C] font-bold hover:underline ml-1">Sign up for
+                                free</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Component -->
+        <!-- component: Footer (f60d3041-88a8-47f0-9b52-bd3d5e2841f1) -->
+        <div
+            v-scope="{ ...{&quot;twitterHref&quot;:&quot;#&quot;,&quot;linkedinHref&quot;:&quot;#&quot;,&quot;githubHref&quot;:&quot;#&quot;,&quot;dashboardHref&quot;:&quot;#dashboard&quot;,&quot;analyticsHref&quot;:&quot;#&quot;,&quot;connectorsHref&quot;:&quot;#&quot;,&quot;apiHref&quot;:&quot;#&quot;,&quot;aboutHref&quot;:&quot;#&quot;,&quot;privacyHref&quot;:&quot;#&quot;,&quot;termsHref&quot;:&quot;#&quot;,&quot;contactHref&quot;:&quot;#&quot;,&quot;showSystemStatus&quot;:true,&quot;systemStatusText&quot;:&quot;OPERATIONAL&quot;,&quot;buildVersion&quot;:&quot;v1.6.4&quot;}, $emit() {} }">
+            <footer class="border-t border-white/5 pt-20 pb-10 bg-[#0F111C]">
+                <div class="max-w-7xl mx-auto px-6">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                        <div class="col-span-1 md:col-span-1">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div
+                                    class="w-8 h-8 bg-gradient-to-br from-[#D53F8C] to-[#6366F1] rounded-lg flex items-center justify-center">
+                                    <iconify-icon icon="lucide:brain-circuit" class="text-white text-lg"></iconify-icon>
+                                </div><span class="font-outfit text-lg font-bold tracking-tight text-white">AI BI
+                                    Copilot</span>
+                            </div>
+                            <p class="text-sm text-slate-400 mb-6">The ultimate intelligence layer for your business
+                                data. Automate analysis, discover truths, scale growth.</p>
+                            <div class="flex gap-4"><a :href="twitterHref" id="footer-social-x"
+                                    class="text-slate-400 hover:text-white transition-colors"><iconify-icon
+                                        icon="mdi:twitter" class="text-xl"></iconify-icon></a><a :href="linkedinHref"
+                                    id="footer-social-linkedin"
+                                    class="text-slate-400 hover:text-white transition-colors"><iconify-icon
+                                        icon="mdi:linkedin" class="text-xl"></iconify-icon></a><a :href="githubHref"
+                                    id="footer-social-github"
+                                    class="text-slate-400 hover:text-white transition-colors"><iconify-icon
+                                        icon="mdi:github" class="text-xl"></iconify-icon></a></div>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-bold mb-6">Product</h5>
+                            <ul class="space-y-4 text-sm text-slate-400">
+                                <li><a :href="dashboardHref" id="f-link-dashboard"
+                                        class="hover:text-white transition-colors">Dashboard</a></li>
+                                <li><a :href="analyticsHref" id="f-link-analytics"
+                                        class="hover:text-white transition-colors">Insights Engine</a></li>
+                                <li><a :href="connectorsHref" id="f-link-connectors"
+                                        class="hover:text-white transition-colors">Data Sources</a></li>
+                                <li><a :href="apiHref" id="f-link-api" class="hover:text-white transition-colors">API
+                                        Access</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-bold mb-6">Company</h5>
+                            <ul class="space-y-4 text-sm text-slate-400">
+                                <li><a :href="aboutHref" id="f-link-about"
+                                        class="hover:text-white transition-colors">About Us</a></li>
+                                <li><a :href="privacyHref" id="f-link-privacy"
+                                        class="hover:text-white transition-colors">Privacy Policy</a></li>
+                                <li><a :href="termsHref" id="f-link-terms"
+                                        class="hover:text-white transition-colors">Terms of Service</a></li>
+                                <li><a :href="contactHref" id="f-link-contact"
+                                        class="hover:text-white transition-colors">Contact Support</a></li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h5 class="text-white font-bold mb-6">Newsletter</h5>
+                            <p class="text-xs text-slate-500 mb-4">Get weekly AI BI tips and industry news.</p>
+                            <form id="footer-newsletter" class="flex gap-2"
+                                @submit.prevent="$emit('newsletterSubmit', { email: $el.querySelector('input').value })">
+                                <input type="email" placeholder="Email address"
+                                    class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-xs w-full focus:outline-none focus:border-[#D53F8C] transition-colors"><button
+                                    type="submit"
+                                    class="bg-[#D53F8C] px-3 py-2 rounded-lg text-white font-bold text-xs shrink-0">Join</button>
+                            </form>
+                            <div class="mt-8"><span v-if="showSystemStatus"
+                                    class="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-full text-[10px] font-bold border border-emerald-500/20">
+                                    <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>SYSTEM
+                                    STATUS: {{ systemStatusText }}
+                                </span></div>
+                        </div>
+                    </div>
+                    <div
+                        class="border-t border-white/5 pt-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <p class="text-xs text-slate-600">&copy; 2024 AI BI Copilot. All rights reserved.</p>
+                        <div class="flex items-center gap-6"><span
+                                class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Build {{
+                                buildVersion }}</span><img
+                                src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg"
+                                alt="Stripe" class="h-4 opacity-30 grayscale"></div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+        <!-- /component: Footer (f60d3041-88a8-47f0-9b52-bd3d5e2841f1) -->
+    </div>
+<script>
+document.getElementById('login-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    window.location.href = 'workspace.html';
+});
+document.getElementById('social-google-btn')?.addEventListener('click', function() {
+    window.location.href = 'workspace.html';
+});
+document.getElementById('social-microsoft-btn')?.addEventListener('click', function() {
+    window.location.href = 'workspace.html';
+});
+</script>
+</body>
+</html>
