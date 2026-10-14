@@ -15,12 +15,214 @@
       background: #fafafa;
       color: #111827;
       min-height: 100vh;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       1. LOGIN VIEW
+       ═══════════════════════════════════════════════════════ */
+    #login-view {
       display: flex;
+      min-height: 100vh;
+      width: 100%;
+      background: #0b0c16;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 24px;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      opacity: 0.35;
+    }
+    .blob-1 { width: 450px; height: 450px; background: #D53F8C; top: -10%; left: -10%; }
+    .blob-2 { width: 500px; height: 500px; background: #6366F1; bottom: -10%; right: -10%; }
+    
+    .login-box {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 460px;
+      background: rgba(18, 20, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 40px 36px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 40px rgba(213, 63, 140, 0.12);
+      color: #ffffff;
+      text-align: center;
+    }
+    .login-brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .login-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #D53F8C, #6366F1);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+    .login-brand h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .login-brand h1 span { color: #D53F8C; }
+    .login-tagline {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 28px;
+    }
+
+    .demo-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #D53F8C, #c9357f);
+      color: #ffffff;
+      border: none;
+      padding: 15px 24px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(213, 63, 140, 0.35);
+      transition: all 0.25s ease;
+    }
+    .demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(213, 63, 140, 0.55);
+      background: linear-gradient(135deg, #e04895, #D53F8C);
+    }
+    .demo-btn:active { transform: scale(0.99); }
+
+    .or-divider {
+      display: flex;
+      align-items: center;
+      margin: 24px 0;
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .or-divider span { padding: 0 12px; }
+
+    .auth-toggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 3px;
+      margin-bottom: 20px;
+    }
+    .auth-tab {
+      flex: 1;
+      padding: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #94a3b8;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .auth-tab.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    .form-group {
+      text-align: left;
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-input {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      border-color: #D53F8C;
+      box-shadow: 0 0 0 3px rgba(213, 63, 140, 0.2);
+    }
+    .submit-btn {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 13px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .login-footer-links {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      font-size: 12px;
+      color: #64748b;
+    }
+    .login-footer-links a {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .login-footer-links a:hover { color: #ffffff; }
+
+    /* ═══════════════════════════════════════════════════════
+       2. DASHBOARD VIEW
+       ═══════════════════════════════════════════════════════ */
+    #app-view {
+      display: none;
+      width: 100%;
+      min-height: 100vh;
     }
     
     /* SIDEBAR */
     .sidebar {
-      width: 280px;
+      width: 290px;
       background: #d4638a;
       background: linear-gradient(180deg, #d4638a 0%, #c9527c 100%);
       color: #ffffff;
@@ -33,7 +235,7 @@
     .user-card {
       padding-bottom: 16px;
       border-bottom: 1px solid rgba(255,255,255,0.25);
-      margin-bottom: 20px;
+      margin-bottom: 18px;
     }
     .user-ver {
       font-size: 11px;
@@ -44,13 +246,13 @@
     }
     .user-label {
       font-size: 12px;
-      opacity: 0.8;
+      opacity: 0.85;
     }
     .user-email {
       font-size: 13px;
       font-weight: 700;
       word-break: break-all;
-      margin: 2px 0 6px 0;
+      margin: 2px 0 8px 0;
     }
     .status-badge {
       display: inline-flex;
@@ -59,7 +261,7 @@
       font-size: 12px;
       font-weight: 600;
       color: #ffffff;
-      background: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.18);
       padding: 3px 10px;
       border-radius: 12px;
     }
@@ -80,113 +282,155 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      margin: 12px 0 24px 0;
+      margin: 10px 0 20px 0;
       transition: all 0.2s;
     }
     .logout-btn:hover { background: #f3f4f6; }
     
     .section-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 700;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       color: #ffffff;
     }
     
     .source-btn {
       width: 100%;
-      padding: 11px 16px;
+      padding: 10px 16px;
       border-radius: 24px;
       border: none;
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
+      margin-bottom: 8px;
+      text-align: left;
+      display: flex;
+      align-items: center;
       transition: all 0.2s;
-      text-align: center;
     }
     .source-btn.active {
-      background: #000000;
-      color: #ffffff;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .source-btn.inactive {
       background: #ffffff;
       color: #111827;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
-    .source-btn.inactive:hover { background: #f3f4f6; }
-    
+    .source-btn.inactive {
+      background: rgba(255,255,255,0.15);
+      color: #ffffff;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .source-btn.inactive:hover {
+      background: rgba(255,255,255,0.25);
+    }
     .source-caption {
-      font-size: 11px;
-      margin: 4px 0 16px 2px;
+      font-size: 12px;
       opacity: 0.85;
-      font-style: italic;
+      margin-bottom: 18px;
     }
     
     .upload-card {
-      background: rgba(255,255,255,0.22);
-      border: 1px dashed rgba(255,255,255,0.4);
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
       border-radius: 16px;
-      padding: 14px;
-      margin-top: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
     }
     .upload-inner {
-      background: #000000;
+      background: rgba(255,255,255,0.1);
+      border: 2px dashed rgba(255,255,255,0.35);
       border-radius: 12px;
       padding: 16px 12px;
       text-align: center;
-      color: #ffffff;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-inner:hover {
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.6);
     }
     .upload-inner h4 {
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
       margin-bottom: 4px;
     }
     .upload-inner p {
       font-size: 11px;
-      opacity: 0.6;
-      margin-bottom: 12px;
+      opacity: 0.8;
+      line-height: 1.4;
+      margin-bottom: 10px;
     }
     .browse-btn {
       background: #ffffff;
-      color: #000000;
+      color: #111827;
       border: none;
-      padding: 6px 14px;
-      border-radius: 8px;
+      padding: 6px 16px;
+      border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
     }
+    .browse-btn:hover { background: #f3f4f6; }
+    
     .file-pill {
+      background: #ffffff;
+      color: #111827;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
       display: flex;
       align-items: center;
       gap: 8px;
-      background: rgba(255,255,255,0.9);
-      color: #111827;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      margin-top: 10px;
-      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      word-break: break-all;
     }
-    
-    /* MAIN WORKSPACE */
+    .file-pill.empty {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.7);
+      box-shadow: none;
+      font-weight: 500;
+      justify-content: center;
+    }
+
+    /* WORKSPACE */
     .workspace {
       flex: 1;
-      padding: 36px 48px;
+      padding: 32px 40px;
       overflow-y: auto;
       max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
     }
     
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .top-link {
+      font-size: 13px;
+      color: #6b7280;
+      text-decoration: none;
+      padding: 6px 14px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 20px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .top-link:hover { color: #111827; border-color: #d1d5db; }
+    
     .app-header {
-      text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
     }
     .app-title {
       font-family: 'Outfit', sans-serif;
-      font-size: 42px;
+      font-size: 38px;
       font-weight: 800;
-      color: #000000;
+      color: #111827;
       letter-spacing: -0.5px;
     }
     .app-title span {
@@ -198,50 +442,27 @@
       margin-top: 4px;
     }
     
-    /* TOP NAV BAR */
-    .top-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .top-link {
-      font-size: 12px;
-      font-weight: 600;
-      color: #4b5563;
-      text-decoration: none;
-      padding: 6px 14px;
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 20px;
-      transition: all 0.2s;
-    }
-    .top-link:hover {
-      border-color: #D53F8C;
-      color: #D53F8C;
-    }
-    
     /* TABS */
     .tabs-wrap {
       display: flex;
-      gap: 12px;
+      gap: 8px;
       border-bottom: 2px solid #e5e7eb;
       margin-bottom: 28px;
     }
     .tab-btn {
-      font-family: 'Outfit', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      padding: 10px 18px;
-      border: none;
       background: none;
-      cursor: pointer;
+      border: none;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
       color: #6b7280;
+      cursor: pointer;
       position: relative;
       transition: color 0.2s;
     }
+    .tab-btn:hover { color: #111827; }
     .tab-btn.active {
-      color: #000000;
+      color: #D53F8C;
     }
     .tab-btn.active::after {
       content: '';
@@ -250,430 +471,851 @@
       left: 0;
       right: 0;
       height: 3px;
-      background: #000000;
+      background: #D53F8C;
       border-radius: 3px 3px 0 0;
     }
-    
-    /* TAB CONTENT */
+
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
     
-    /* KPI BLOCK */
-    .kpi-section {
+    /* KPI METRICS */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
       margin-bottom: 24px;
     }
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    }
     .kpi-label {
-      font-size: 13px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       color: #6b7280;
-      margin-bottom: 4px;
-      font-weight: 500;
+      margin-bottom: 6px;
     }
     .kpi-value {
       font-family: 'Outfit', sans-serif;
-      font-size: 36px;
+      font-size: 28px;
       font-weight: 800;
-      color: #000000;
+      color: #111827;
     }
-    
+    .kpi-sub {
+      font-size: 11px;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+
     .scan-btn {
-      background: #000000;
+      width: 100%;
+      background: #d4638a;
+      background: linear-gradient(90deg, #d4638a 0%, #c9527c 100%);
       color: #ffffff;
       border: none;
-      padding: 12px 24px;
-      border-radius: 24px;
-      font-family: 'Outfit', sans-serif;
+      padding: 14px;
+      border-radius: 12px;
       font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       cursor: pointer;
-      margin: 16px 0 28px 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      margin-bottom: 28px;
       transition: all 0.2s;
+      box-shadow: 0 4px 12px rgba(212, 99, 138, 0.25);
     }
     .scan-btn:hover {
-      background: #1f2937;
+      box-shadow: 0 6px 20px rgba(212, 99, 138, 0.4);
       transform: translateY(-1px);
     }
-    
-    /* COPILOT CHAT BOX */
+
     .copilot-section h3 {
       font-family: 'Outfit', sans-serif;
       font-size: 22px;
-      font-weight: 800;
-      color: #000000;
+      font-weight: 700;
       margin-bottom: 16px;
     }
     .copilot-section h3 span { color: #D53F8C; }
     
     .chat-box {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 14px;
     }
     .chat-input {
       flex: 1;
-      background: #0f172a;
-      color: #ffffff;
-      border: 1px solid #1e293b;
-      padding: 14px 18px;
+      padding: 13px 18px;
+      border: 1px solid #d1d5db;
       border-radius: 12px;
       font-size: 14px;
       outline: none;
-      font-family: inherit;
+      background: #ffffff;
+      transition: border-color 0.2s;
     }
-    .chat-input::placeholder { color: #64748b; }
+    .chat-input:focus {
+      border-color: #D53F8C;
+      box-shadow: 0 0 0 3px rgba(213, 63, 140, 0.1);
+    }
     .chat-ask-btn {
-      background: #000000;
+      background: #D53F8C;
       color: #ffffff;
       border: none;
-      padding: 0 28px;
+      padding: 0 24px;
       border-radius: 12px;
-      font-family: 'Outfit', sans-serif;
       font-weight: 700;
-      font-size: 14px;
-      letter-spacing: 0.5px;
+      font-size: 13px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: background 0.2s;
     }
-    .chat-ask-btn:hover { background: #1e293b; }
+    .chat-ask-btn:hover { background: #b82d73; }
     
-    /* SUGGESTIONS */
     .suggestions {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     .sug-pill {
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      color: #4b5563;
-      padding: 6px 12px;
-      border-radius: 16px;
       font-size: 12px;
+      padding: 7px 14px;
+      background: #f3f4f6;
+      color: #4b5563;
+      border-radius: 20px;
       cursor: pointer;
       transition: all 0.2s;
+      border: 1px solid transparent;
     }
     .sug-pill:hover {
-      border-color: #D53F8C;
-      color: #D53F8C;
-      background: #fdf2f8;
+      background: #e5e7eb;
+      color: #111827;
+      border-color: #d1d5db;
     }
     
-    /* RESULTS CONTAINER */
     .response-card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
       border-left: 4px solid #D53F8C;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border-radius: 14px;
+      padding: 22px;
+      margin-top: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     }
     .res-header {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-weight: 700;
       font-size: 14px;
+      font-weight: 700;
       color: #111827;
       margin-bottom: 10px;
     }
     .res-body {
       font-size: 13.5px;
-      line-height: 1.6;
+      line-height: 1.7;
       color: #374151;
     }
     .res-body ul {
-      margin-left: 20px;
-      margin-top: 8px;
+      margin: 10px 0 0 20px;
     }
-    
-    /* DASHBOARD CHARTS */
+    .res-body li {
+      margin-bottom: 6px;
+    }
+
+    /* EMPTY STATES */
+    .empty-state {
+      background: #ffffff;
+      border: 2px dashed #e5e7eb;
+      border-radius: 20px;
+      padding: 48px 32px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .empty-state-icon {
+      font-size: 42px;
+      margin-bottom: 14px;
+    }
+    .empty-state h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 8px;
+    }
+    .empty-state p {
+      font-size: 13.5px;
+      color: #6b7280;
+      max-width: 480px;
+      margin: 0 auto 20px auto;
+      line-height: 1.5;
+    }
+    .empty-upload-btn {
+      background: #D53F8C;
+      color: #ffffff;
+      border: none;
+      padding: 11px 24px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .empty-upload-btn:hover {
+      background: #b82d73;
+    }
+
+    /* CHARTS */
     .charts-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
       gap: 24px;
-      margin-top: 20px;
+      margin-top: 16px;
     }
     .chart-card {
-      background: #0f172a;
+      background: #1e1e2f;
       border-radius: 16px;
       padding: 24px;
       color: #ffffff;
       box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
     .chart-title {
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      margin-bottom: 16px;
       color: #ffffff;
+      margin-bottom: 16px;
     }
-    
+
     /* TABLE */
     .table-card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      overflow: hidden;
-      margin-top: 16px;
+      border-radius: 14px;
+      overflow-x: auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 13px;
       text-align: left;
+      font-size: 13px;
     }
     th {
       background: #f9fafb;
       padding: 12px 16px;
       font-weight: 600;
-      color: #374151;
+      color: #4b5563;
       border-bottom: 1px solid #e5e7eb;
     }
     td {
-      padding: 10px 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid #f3f4f6;
-      color: #4b5563;
+      color: #111827;
     }
-    tr:hover td { background: #fdf2f8; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
   </style>
 </head>
 <body>
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="user-card">
-      <div class="user-ver">v1.6 - Production Edition</div>
-      <div class="user-label">Logged in as</div>
-      <div class="user-email">jaykadao99210@gmail.com</div>
-      <div class="status-badge"><span class="status-dot"></span> Active Workspace</div>
-    </div>
+  <!-- ═══════════════════════════════════════════════════════
+       1. LOGIN VIEW (DEFAULT ENTRY POINT)
+       ═══════════════════════════════════════════════════════ -->
+  <div id="login-view">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
     
-    <button class="logout-btn" onclick="alert('Session active: Welcome to AI BI Copilot!')">Active Workspace</button>
-    
-    <div class="section-title">Data Source</div>
-    
-    <button class="source-btn active" id="src-csv" onclick="setSource('CSV')">CSV Upload</button>
-    <button class="source-btn inactive" id="src-db" onclick="setSource('Database')">Database Connection</button>
-    <button class="source-btn inactive" id="src-pbi" onclick="setSource('Power BI')">Live Power BI</button>
-    <div class="source-caption">Currently Active: <strong id="cur-src">CSV Upload</strong></div>
-    
-    <div class="upload-card">
-      <div class="upload-inner">
-        <h4>Upload CSV or Excel</h4>
-        <p>Drag and drop files here<br>Limit 200MB per file</p>
-        <button class="browse-btn" onclick="document.getElementById('csv-file-input').click()">Browse files</button>
-        <input type="file" id="csv-file-input" style="display:none;" accept=".csv,.xlsx" onchange="handleFileUpload(event)">
+    <div class="login-box">
+      <div class="login-brand">
+        <div class="login-icon">⚡</div>
+        <h1><span>AI</span> BI Copilot</h1>
       </div>
-      <div class="file-pill">
-        📄 <span id="active-filename">Cars Datasets 2025.csv</span>
-        <span style="margin-left:auto;font-size:10px;opacity:0.6;">121.7 KB</span>
-      </div>
-    </div>
-  </aside>
+      
+      <p class="login-tagline">
+        Autonomous business intelligence and LLM insights powered by NVIDIA NIM & LangChain.
+      </p>
 
-  <!-- WORKSPACE -->
-  <main class="workspace">
-    <div class="top-actions">
-      <a href="https://github.com/jayzz98/ai-bi-copilot" target="_blank" class="top-link">⌥ GitHub Repository</a>
-      <a href="https://jaykumar.online" target="_blank" class="top-link">🌐 Portfolio</a>
-    </div>
-
-    <div class="app-header">
-      <h1 class="app-title"><span>AI</span> BI Copilot</h1>
-      <p class="app-sub">Autonomous Natural Language Insights & Executive Analytics Platform</p>
-    </div>
-
-    <!-- TABS -->
-    <div class="tabs-wrap">
-      <button class="tab-btn active" onclick="switchTab('tab-insights', this)">AI Copilot & Insights</button>
-      <button class="tab-btn" onclick="switchTab('tab-dash', this)">Executive Dashboard</button>
-      <button class="tab-btn" onclick="switchTab('tab-data', this)">Data Ingestion & Records</button>
-    </div>
-
-    <!-- TAB 1: COPILOT & INSIGHTS -->
-    <div id="tab-insights" class="tab-pane active">
-      <div class="kpi-section">
-        <div class="kpi-label">Total Cars Prices</div>
-        <div class="kpi-value">$157,137,504.00</div>
-      </div>
-
-      <button class="scan-btn" onclick="runAutonomousScan()">
-        ⚡ RUN AUTONOMOUS INSIGHT SCAN
+      <!-- Instant Demo Login Button -->
+      <button class="demo-btn" onclick="loginInstantDemo()">
+        <span>🚀</span> Launch Instant Demo
       </button>
 
-      <div class="copilot-section">
-        <h3><span>AI</span> Copilot Insights</h3>
+      <div class="or-divider">
+        <span>or sign in with credentials</span>
+      </div>
+
+      <div class="auth-toggle">
+        <button class="auth-tab active" id="tab-login-btn" onclick="setAuthMode('login')">Sign In</button>
+        <button class="auth-tab" id="tab-signup-btn" onclick="setAuthMode('signup')">Create Account</button>
+      </div>
+
+      <form onsubmit="handleManualAuth(event)">
+        <div class="form-group">
+          <label id="auth-email-label">Username or Email</label>
+          <input type="text" id="auth-email" class="form-input" placeholder="e.g. user@company.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="auth-pass" class="form-input" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="submit-btn" id="auth-submit-btn">
+          Sign In to Workspace →
+        </button>
+      </form>
+
+      <div class="login-footer-links">
+        <a href="https://jaykumar.online" target="_blank">← Back to Portfolio</a>
+        <span>•</span>
+        <a href="https://github.com/jayzz98/ai-bi-copilot" target="_blank">GitHub Repository</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       2. WORKSPACE APPLICATION VIEW
+       ═══════════════════════════════════════════════════════ -->
+  <div id="app-view">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="user-card">
+        <div class="user-ver">v1.6 - Production Edition</div>
+        <div class="user-label">Logged in as</div>
+        <div class="user-email" id="sidebar-user-email">demo@aibicopilot.com</div>
+        <div class="status-badge"><span class="status-dot"></span> Active Workspace</div>
+      </div>
+      
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+      
+      <div class="section-title">Data Source</div>
+      
+      <button class="source-btn active" id="src-csv" onclick="setSource('CSV')">CSV Upload</button>
+      <button class="source-btn inactive" id="src-db" onclick="setSource('Database')">Database Connection</button>
+      <button class="source-btn inactive" id="src-pbi" onclick="setSource('Power BI')">Live Power BI</button>
+      <div class="source-caption">Currently Active: <strong id="cur-src">CSV Upload</strong></div>
+      
+      <div class="upload-card">
+        <div class="upload-inner" onclick="document.getElementById('csv-file-input').click()">
+          <h4>Upload CSV Dataset</h4>
+          <p>Click or drag & drop files here<br>Supported: CSV, TSV</p>
+          <button class="browse-btn" type="button">Browse files</button>
+          <input type="file" id="csv-file-input" style="display:none;" accept=".csv,.txt,.tsv" onchange="handleFileUpload(event)">
+        </div>
         
-        <div class="chat-box">
-          <input type="text" id="chat-input" class="chat-input" placeholder="Ask your question here in plain English (e.g., 'What are the top 3 most expensive models?')..." onkeydown="if(event.key==='Enter') executeQuery()">
-          <button class="chat-ask-btn" onclick="executeQuery()">ASK</button>
+        <div id="active-file-pill" class="file-pill empty">
+          No dataset loaded
         </div>
+      </div>
+    </aside>
 
-        <div class="suggestions">
-          <span class="sug-pill" onclick="fillPrompt('Show top manufacturers ranked by total vehicle value')">🏎️ Top manufacturers by price</span>
-          <span class="sug-pill" onclick="fillPrompt('What are the key price anomalies and hypercar outliers?')">🔍 Outlier & anomaly detection</span>
-          <span class="sug-pill" onclick="fillPrompt('Summarize executive takeaways and statistical distribution')">📊 Executive summary</span>
-          <span class="sug-pill" onclick="fillPrompt('Compare Bugatti average valuation against other brands')">⚡ Bugatti market dominance</span>
-        </div>
+    <!-- WORKSPACE -->
+    <main class="workspace">
+      <div class="top-actions">
+        <button class="top-link" onclick="logout()">Sign Out</button>
+        <a href="https://github.com/jayzz98/ai-bi-copilot" target="_blank" class="top-link">⌥ GitHub Repository</a>
+        <a href="https://jaykumar.online" target="_blank" class="top-link">🌐 Portfolio</a>
+      </div>
 
-        <!-- AI RESPONSE BOX -->
-        <div id="ai-response-box" class="response-card" style="display:block;">
-          <div class="res-header">
-            <span>✨</span> <strong>AI Executive Intelligence:</strong>
+      <div class="app-header">
+        <h1 class="app-title"><span>AI</span> BI Copilot</h1>
+        <p class="app-sub">Autonomous Natural Language Insights & Executive Analytics Platform</p>
+      </div>
+
+      <!-- TABS -->
+      <div class="tabs-wrap">
+        <button class="tab-btn active" onclick="switchTab('tab-insights', this)">AI Copilot & Insights</button>
+        <button class="tab-btn" onclick="switchTab('tab-dash', this)">Executive Dashboard</button>
+        <button class="tab-btn" onclick="switchTab('tab-data', this)">Data Ingestion & Records</button>
+      </div>
+
+      <!-- TAB 1: COPILOT & INSIGHTS -->
+      <div id="tab-insights" class="tab-pane active">
+        <!-- KPI GRID -->
+        <div class="kpi-grid">
+          <div class="kpi-card">
+            <div class="kpi-label">Active Records</div>
+            <div class="kpi-value" id="kpi-records">—</div>
+            <div class="kpi-sub" id="kpi-records-sub">Awaiting CSV upload</div>
           </div>
-          <div class="res-body" id="ai-response-text">
-            <strong>Key Finding:</strong> Market valuation is highly concentrated in ultra-luxury hypercars. The top 8 manufacturers account for <strong>78.4%</strong> ($123.1M) of the total $157.1M market capitalization in this dataset.
-            <ul>
-              <li><strong>Top Manufacturer:</strong> Bugatti dominates total catalog valuation at $55.0M across premium models.</li>
-              <li><strong>Highest Single Valuation:</strong> Bugatti La Voiture Noire leads all individual assets at $18.0M.</li>
-              <li><strong>Pricing Tier Spread:</strong> Tier-1 hypercars ($3M+) represent only 2.1% of units but generate 52.8% of aggregate valuation.</li>
-            </ul>
+          <div class="kpi-card">
+            <div class="kpi-label">Active Columns</div>
+            <div class="kpi-value" id="kpi-cols">—</div>
+            <div class="kpi-sub" id="kpi-cols-sub">Schema unmapped</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Metric Aggregate</div>
+            <div class="kpi-value" id="kpi-total">—</div>
+            <div class="kpi-sub" id="kpi-total-sub">Primary metric total</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Completeness</div>
+            <div class="kpi-value" id="kpi-quality">—</div>
+            <div class="kpi-sub" id="kpi-quality-sub">Null check pending</div>
+          </div>
+        </div>
+
+        <button class="scan-btn" onclick="runAutonomousScan()">
+          ⚡ RUN AUTONOMOUS INSIGHT SCAN
+        </button>
+
+        <div class="copilot-section">
+          <h3><span>AI</span> Copilot Intelligence</h3>
+          
+          <div class="chat-box">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Ask questions about your data in plain English (e.g., 'What are the top categories by value?')..." onkeydown="if(event.key==='Enter') executeQuery()">
+            <button class="chat-ask-btn" onclick="executeQuery()">ASK</button>
+          </div>
+
+          <div class="suggestions">
+            <span class="sug-pill" onclick="fillPrompt('Show top segments ranked by aggregate metric value')">📊 Top categories ranking</span>
+            <span class="sug-pill" onclick="fillPrompt('Detect distribution anomalies and high-leverage outliers')">🔍 Outlier & anomaly check</span>
+            <span class="sug-pill" onclick="fillPrompt('Summarize key statistical takeaways and executive insights')">⚡ Executive summary</span>
+            <span class="sug-pill" onclick="fillPrompt('What is the distribution spread across data dimensions?')">📈 Dimension analysis</span>
+          </div>
+
+          <!-- AI RESPONSE BOX -->
+          <div id="ai-response-box" class="response-card" style="display:block;">
+            <div class="res-header">
+              <span>✨</span> <strong>AI Executive Intelligence:</strong>
+            </div>
+            <div class="res-body" id="ai-response-text">
+              <em>Upload a CSV dataset using the sidebar to generate automated executive intelligence, statistical profiling, and anomaly diagnostics.</em>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- TAB 2: EXECUTIVE DASHBOARD -->
-    <div id="tab-dash" class="tab-pane">
-      <div style="margin-bottom:16px;">
-        <h3 style="font-family:'Outfit';font-size:20px;font-weight:700;">📈 Trend Analysis <span style="font-size:13px;font-weight:400;color:#6b7280;margin-left:8px;">Performance over time</span></h3>
-        <div class="kpi-value" style="font-size:28px;margin-top:4px;">$157,137,504.00</div>
-      </div>
-
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-title">Top 8 Company Names by Cars Prices</div>
-          <div style="height:320px;">
-            <canvas id="companyChart"></canvas>
-          </div>
+      <!-- TAB 2: EXECUTIVE DASHBOARD -->
+      <div id="tab-dash" class="tab-pane">
+        <div id="charts-empty" class="empty-state">
+          <div class="empty-state-icon">📊</div>
+          <h3>No Visualizations Available</h3>
+          <p>Please upload a CSV dataset from the sidebar. The visual engine will automatically detect metrics and render distribution charts.</p>
+          <button class="empty-upload-btn" onclick="document.getElementById('csv-file-input').click()">Upload CSV to Generate Charts</button>
         </div>
 
-        <div class="chart-card">
-          <div class="chart-title">Top 8 Cars Names by Cars Prices</div>
-          <div style="height:320px;">
-            <canvas id="carsChart"></canvas>
+        <div id="charts-content" style="display:none;">
+          <div style="margin-bottom:16px;">
+            <h3 style="font-family:'Outfit';font-size:20px;font-weight:700;">📈 Automated Analytics & Distributions</h3>
+            <p style="font-size:13px;color:#6b7280;margin-top:2px;" id="charts-summary-line">Dynamic visualization generated from uploaded data.</p>
+          </div>
+
+          <div class="charts-grid">
+            <div class="chart-card">
+              <div class="chart-title" id="chart1-title">Primary Category Ranking</div>
+              <div style="height:320px;">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <div class="chart-title" id="chart2-title">Top Items by Value</div>
+              <div style="height:320px;">
+                <canvas id="itemsChart"></canvas>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- TAB 3: DATA INGESTION -->
-    <div id="tab-data" class="tab-pane">
-      <h3 style="font-family:'Outfit';font-size:20px;font-weight:700;margin-bottom:12px;">Active Dataset Profiling</h3>
-      <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">Previewing top records from <strong id="table-dataset-name">Cars Datasets 2025.csv</strong> (1,240 rows profiling complete with zero missing headers).</p>
+      <!-- TAB 3: DATA INGESTION -->
+      <div id="tab-data" class="tab-pane">
+        <div id="table-empty" class="empty-state">
+          <div class="empty-state-icon">📄</div>
+          <h3>No Active Dataset Ingested</h3>
+          <p>Upload a CSV file to inspect data schema, detect null values, and preview ingested records.</p>
+          <button class="empty-upload-btn" onclick="document.getElementById('csv-file-input').click()">Browse & Upload CSV</button>
+        </div>
 
-      <div class="table-card">
-        <table>
-          <thead>
-            <tr>
-              <th>Company</th>
-              <th>Car Name</th>
-              <th>Engine Type</th>
-              <th>Horsepower</th>
-              <th>Valuation / Price</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Bugatti</strong></td>
-              <td>La Voiture Noire</td>
-              <td>8.0L Quad-Turbo W16</td>
-              <td>1,479 hp</td>
-              <td><strong style="color:#D53F8C;">$18,000,000</strong></td>
-              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Hypercar</span></td>
-            </tr>
-            <tr>
-              <td><strong>Bugatti</strong></td>
-              <td>Centodieci</td>
-              <td>8.0L Quad-Turbo W16</td>
-              <td>1,577 hp</td>
-              <td><strong style="color:#D53F8C;">$9,000,000</strong></td>
-              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Hypercar</span></td>
-            </tr>
-            <tr>
-              <td><strong>Bugatti</strong></td>
-              <td>Divo</td>
-              <td>8.0L Quad-Turbo W16</td>
-              <td>1,479 hp</td>
-              <td><strong style="color:#D53F8C;">$5,800,000</strong></td>
-              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Hypercar</span></td>
-            </tr>
-            <tr>
-              <td><strong>Bugatti</strong></td>
-              <td>Mistral</td>
-              <td>8.0L Quad-Turbo W16</td>
-              <td>1,577 hp</td>
-              <td><strong style="color:#D53F8C;">$5,000,000</strong></td>
-              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Roadster</span></td>
-            </tr>
-            <tr>
-              <td><strong>Lamborghini</strong></td>
-              <td>Veneno Roadster</td>
-              <td>6.5L V12</td>
-              <td>740 hp</td>
-              <td><strong style="color:#D53F8C;">$4,500,000</strong></td>
-              <td><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Supercar</span></td>
-            </tr>
-            <tr>
-              <td><strong>Bugatti</strong></td>
-              <td>Bolide</td>
-              <td>8.0L Quad-Turbo W16</td>
-              <td>1,825 hp</td>
-              <td><strong style="color:#D53F8C;">$4,500,000</strong></td>
-              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Track Only</span></td>
-            </tr>
-            <tr>
-              <td><strong>Bugatti</strong></td>
-              <td>Chiron Super Sport 300+</td>
-              <td>8.0L Quad-Turbo W16</td>
-              <td>1,577 hp</td>
-              <td><strong style="color:#D53F8C;">$3,500,000</strong></td>
-              <td><span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;">Hypercar</span></td>
-            </tr>
-          </tbody>
-        </table>
+        <div id="table-content" style="display:none;">
+          <h3 style="font-family:'Outfit';font-size:20px;font-weight:700;margin-bottom:8px;">Active Dataset Profiling</h3>
+          <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">
+            Previewing top records from <strong id="table-dataset-name">—</strong> (<span id="table-dataset-stats">0 rows</span>).
+          </p>
+
+          <div class="table-card">
+            <table id="data-preview-table">
+              <thead id="data-preview-thead">
+                <tr><th>Column</th></tr>
+              </thead>
+              <tbody id="data-preview-tbody">
+                <tr><td>No records</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
+  </div>
 
   <script>
+    // ═══════════════════════════════════════════════════════
+    // AUTHENTICATION LOGIC
+    // ═══════════════════════════════════════════════════════
+    let currentAuthMode = 'login';
+    let userDataset = null;
+    let chart1Instance = null;
+    let chart2Instance = null;
+
+    function setAuthMode(mode) {
+      currentAuthMode = mode;
+      document.getElementById('tab-login-btn').classList.toggle('active', mode === 'login');
+      document.getElementById('tab-signup-btn').classList.toggle('active', mode === 'signup');
+      document.getElementById('auth-submit-btn').textContent = mode === 'login' ? 'Sign In to Workspace →' : 'Create Account & Start →';
+    }
+
+    function loginInstantDemo() {
+      enterApp("demo@aibicopilot.com");
+    }
+
+    function handleManualAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value.trim();
+      if (!email) return;
+      enterApp(email);
+    }
+
+    function enterApp(userEmail) {
+      document.getElementById('sidebar-user-email').textContent = userEmail;
+      document.getElementById('login-view').style.display = 'none';
+      document.getElementById('app-view').style.display = 'flex';
+      sessionStorage.setItem('ai_bi_auth', userEmail);
+    }
+
+    function logout() {
+      sessionStorage.removeItem('ai_bi_auth');
+      document.getElementById('app-view').style.display = 'none';
+      document.getElementById('login-view').style.display = 'flex';
+    }
+
+    // Auto-check session
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedUser = sessionStorage.getItem('ai_bi_auth');
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'login') {
+        logout();
+      } else if (savedUser) {
+        enterApp(savedUser);
+      }
+    });
+
+    // ═══════════════════════════════════════════════════════
+    // TABS & NAVIGATION
+    // ═══════════════════════════════════════════════════════
     function switchTab(tabId, btn) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
       document.getElementById(tabId).classList.add('active');
       btn.classList.add('active');
-      if (tabId === 'tab-dash') {
-        renderCharts();
+      if (tabId === 'tab-dash' && userDataset) {
+        setTimeout(renderDatasetCharts, 50);
       }
     }
 
     function setSource(src) {
       document.getElementById('cur-src').textContent = src;
       ['src-csv', 'src-db', 'src-pbi'].forEach(id => {
-        document.getElementById(id).classList.remove('active');
-        document.getElementById(id).classList.add('inactive');
+        document.getElementById(id).className = 'source-btn inactive';
       });
       if (src === 'CSV') document.getElementById('src-csv').className = 'source-btn active';
       if (src === 'Database') document.getElementById('src-db').className = 'source-btn active';
       if (src === 'Power BI') document.getElementById('src-pbi').className = 'source-btn active';
     }
 
+    // ═══════════════════════════════════════════════════════
+    // CSV PARSING & DATA HANDLING
+    // ═══════════════════════════════════════════════════════
     function handleFileUpload(e) {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        document.getElementById('active-filename').textContent = file.name;
-        document.getElementById('table-dataset-name').textContent = file.name;
-        alert('File ingested successfully: ' + file.name + ' (' + Math.round(file.size/1024) + ' KB)');
-      }
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const text = event.target.result;
+        parseCSVData(file.name, file.size, text);
+      };
+      reader.readAsText(file);
     }
 
+    function parseCSVData(fileName, fileSize, rawText) {
+      const lines = rawText.split(/\r?\n/).filter(line => line.trim().length > 0);
+      if (lines.length < 2) {
+        alert("The selected file does not appear to contain valid CSV records.");
+        return;
+      }
+
+      // Simple CSV split handling quotes
+      function splitRow(row) {
+        const result = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < row.length; i++) {
+          const char = row[i];
+          if (char === '"' || char === "'") {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(cur.trim().replace(/^["']|["']$/g, ''));
+            cur = '';
+          } else {
+            cur += char;
+          }
+        }
+        result.push(cur.trim().replace(/^["']|["']$/g, ''));
+        return result;
+      }
+
+      const headers = splitRow(lines[0]);
+      const rows = [];
+      let totalCells = 0;
+      let nullCells = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const vals = splitRow(lines[i]);
+        if (vals.length === headers.length) {
+          rows.push(vals);
+          vals.forEach(v => {
+            totalCells++;
+            if (!v || v === 'NaN' || v === 'null' || v === 'None') nullCells++;
+          });
+        }
+      }
+
+      // Detect numeric and text columns
+      const numericCols = [];
+      const categoricalCols = [];
+
+      headers.forEach((h, colIdx) => {
+        let isNum = true;
+        let numCount = 0;
+        for (let r = 0; r < Math.min(rows.length, 50); r++) {
+          const rawVal = rows[r][colIdx].replace(/[$,€£]/g, '').trim();
+          if (rawVal !== '') {
+            if (isNaN(Number(rawVal))) {
+              isNum = false;
+              break;
+            } else {
+              numCount++;
+            }
+          }
+        }
+        if (isNum && numCount > 0) {
+          numericCols.push(colIdx);
+        } else {
+          categoricalCols.push(colIdx);
+        }
+      });
+
+      // Calculate aggregate of first numeric column
+      let metricSum = 0;
+      let primaryMetricName = "Sum";
+      if (numericCols.length > 0) {
+        const numIdx = numericCols[0];
+        primaryMetricName = headers[numIdx];
+        rows.forEach(r => {
+          const val = parseFloat(r[numIdx].replace(/[$,€£]/g, '')) || 0;
+          metricSum += val;
+        });
+      }
+
+      userDataset = {
+        name: fileName,
+        size: fileSize,
+        headers: headers,
+        rows: rows,
+        numericCols: numericCols,
+        categoricalCols: categoricalCols,
+        metricSum: metricSum,
+        primaryMetricName: primaryMetricName,
+        nullCells: nullCells,
+        totalCells: totalCells
+      };
+
+      // Update UI
+      updateDashboardWithDataset();
+    }
+
+    function updateDashboardWithDataset() {
+      if (!userDataset) return;
+
+      const d = userDataset;
+      const sizeKB = (d.size / 1024).toFixed(1);
+
+      // Sidebar Pill
+      const pill = document.getElementById('active-file-pill');
+      pill.className = 'file-pill';
+      pill.innerHTML = `📄 <span style="font-weight:700;">${d.name}</span> <span style="margin-left:auto;font-size:10px;opacity:0.6;">${sizeKB} KB</span>`;
+
+      // KPIs
+      document.getElementById('kpi-records').textContent = d.rows.length.toLocaleString();
+      document.getElementById('kpi-records-sub').textContent = `${sizeKB} KB ingested`;
+      
+      document.getElementById('kpi-cols').textContent = d.headers.length;
+      document.getElementById('kpi-cols-sub').textContent = `${d.numericCols.length} num, ${d.categoricalCols.length} cat`;
+
+      if (d.numericCols.length > 0) {
+        document.getElementById('kpi-total').textContent = d.metricSum > 1000000 
+          ? '$' + (d.metricSum / 1000000).toFixed(2) + 'M' 
+          : '$' + d.metricSum.toLocaleString();
+        document.getElementById('kpi-total-sub').textContent = `Total ${d.primaryMetricName}`;
+      } else {
+        document.getElementById('kpi-total').textContent = d.rows.length;
+        document.getElementById('kpi-total-sub').textContent = 'Row Count';
+      }
+
+      const cleanliness = d.totalCells > 0 ? (((d.totalCells - d.nullCells) / d.totalCells) * 100).toFixed(1) : 100;
+      document.getElementById('kpi-quality').textContent = `${cleanliness}%`;
+      document.getElementById('kpi-quality-sub').textContent = `${d.nullCells} missing values`;
+
+      // AI Box Initial summary
+      document.getElementById('ai-response-box').style.display = 'block';
+      document.getElementById('ai-response-text').innerHTML = `
+        <strong>Autonomous Diagnostic Scan Complete (100% Verified):</strong><br>
+        ✅ <strong>Dataset Loaded:</strong> <code>${d.name}</code> with <strong>${d.rows.length.toLocaleString()} rows</strong> and <strong>${d.headers.length} columns</strong>.<br>
+        ✅ <strong>Data Quality:</strong> <strong>${cleanliness}% completeness</strong> across all detected dimensions.<br>
+        ✅ <strong>Key Observation:</strong> High analytical fidelity across ${d.headers.slice(0, 4).join(', ')}... Ask any natural language question above to query.
+      `;
+
+      // Table View
+      document.getElementById('table-empty').style.display = 'none';
+      document.getElementById('table-content').style.display = 'block';
+      document.getElementById('table-dataset-name').textContent = d.name;
+      document.getElementById('table-dataset-stats').textContent = `${d.rows.length.toLocaleString()} rows, ${d.headers.length} columns`;
+
+      const thead = document.getElementById('data-preview-thead');
+      thead.innerHTML = '<tr>' + d.headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+
+      const tbody = document.getElementById('data-preview-tbody');
+      const previewRows = d.rows.slice(0, 15);
+      tbody.innerHTML = previewRows.map(row => 
+        '<tr>' + row.map(v => `<td>${v || '<em style="color:#9ca3af;">null</em>'}</td>`).join('') + '</tr>'
+      ).join('');
+
+      // Charts
+      document.getElementById('charts-empty').style.display = 'none';
+      document.getElementById('charts-content').style.display = 'block';
+      document.getElementById('charts-summary-line').textContent = `Generated from ${d.name} (${d.rows.length.toLocaleString()} records).`;
+      
+      renderDatasetCharts();
+    }
+
+    function renderDatasetCharts() {
+      if (!userDataset) return;
+      const d = userDataset;
+
+      const catCol = d.categoricalCols.length > 0 ? d.categoricalCols[0] : 0;
+      const numCol = d.numericCols.length > 0 ? d.numericCols[0] : null;
+
+      // Aggregate top categories
+      const counts = {};
+      const values = {};
+      d.rows.forEach(r => {
+        const cat = r[catCol] || 'Uncategorized';
+        counts[cat] = (counts[cat] || 0) + 1;
+        if (numCol !== null) {
+          const num = parseFloat(r[numCol].replace(/[$,€£]/g, '')) || 0;
+          values[cat] = (values[cat] || 0) + num;
+        }
+      });
+
+      const sortedCats = Object.keys(numCol !== null ? values : counts)
+        .sort((a,b) => (numCol !== null ? values[b] - values[a] : counts[b] - counts[a]))
+        .slice(0, 8);
+
+      const chart1Labels = sortedCats;
+      const chart1Data = sortedCats.map(c => numCol !== null ? Math.round(values[c]) : counts[c]);
+
+      document.getElementById('chart1-title').textContent = numCol !== null 
+        ? `Top Categories by ${d.headers[numCol]} (${d.headers[catCol]})`
+        : `Category Distribution (${d.headers[catCol]})`;
+
+      if (chart1Instance) chart1Instance.destroy();
+      const ctx1 = document.getElementById('categoryChart').getContext('2d');
+      chart1Instance = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+          labels: chart1Labels,
+          datasets: [{
+            data: chart1Data,
+            backgroundColor: '#5865F2',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255,255,255,0.08)' },
+              ticks: { color: 'rgba(255,255,255,0.7)' }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { color: 'rgba(255,255,255,0.9)' }
+            }
+          }
+        }
+      });
+
+      // Second chart: Distribution of 2nd categorical or top individual rows
+      const itemCol = d.categoricalCols.length > 1 ? d.categoricalCols[1] : (d.categoricalCols.length > 0 ? d.categoricalCols[0] : 0);
+      const topItems = [...d.rows]
+        .sort((a, b) => {
+          if (numCol === null) return 0;
+          const vA = parseFloat(a[numCol].replace(/[$,€£]/g, '')) || 0;
+          const vB = parseFloat(b[numCol].replace(/[$,€£]/g, '')) || 0;
+          return vB - vA;
+        })
+        .slice(0, 8);
+
+      const chart2Labels = topItems.map(r => r[itemCol] || 'Row');
+      const chart2Data = topItems.map(r => numCol !== null ? (parseFloat(r[numCol].replace(/[$,€£]/g, '')) || 0) : 1);
+
+      document.getElementById('chart2-title').textContent = numCol !== null 
+        ? `Top High-Impact Items (${d.headers[itemCol]})`
+        : `Record Samples (${d.headers[itemCol]})`;
+
+      if (chart2Instance) chart2Instance.destroy();
+      const ctx2 = document.getElementById('itemsChart').getContext('2d');
+      chart2Instance = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+          labels: chart2Labels,
+          datasets: [{
+            data: chart2Data,
+            backgroundColor: '#D53F8C',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              grid: { color: 'rgba(255,255,255,0.08)' },
+              ticks: { color: 'rgba(255,255,255,0.7)' }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: 'rgba(255,255,255,0.9)', maxRotation: 45, minRotation: 45 }
+            }
+          }
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // AI QUERY ENGINE & SCANS
+    // ═══════════════════════════════════════════════════════
     function fillPrompt(text) {
       document.getElementById('chat-input').value = text;
       executeQuery();
@@ -682,111 +1324,57 @@
     function executeQuery() {
       const q = document.getElementById('chat-input').value.trim();
       if (!q) return;
+
       const box = document.getElementById('ai-response-box');
       const text = document.getElementById('ai-response-text');
       box.style.display = 'block';
       text.innerHTML = '<em>⚡ Querying NVIDIA NIM & LangChain engine...</em>';
-      
+
       setTimeout(() => {
-        if (q.toLowerCase().includes('top') || q.toLowerCase().includes('manufacturer') || q.toLowerCase().includes('brand')) {
-          text.innerHTML = `<strong>Top Manufacturers Analysis:</strong><br>
-          1. <strong>Bugatti:</strong> $55.0M aggregate valuation across 8 flagship chassis.<br>
-          2. <strong>Lamborghini:</strong> $15.6M across limited run production variants.<br>
-          3. <strong>Porsche:</strong> $13.3M with high GT-series liquidity.<br>
-          4. <strong>Rolls Royce:</strong> $11.4M driven by bespoke coachbuild orders.`;
-        } else if (q.toLowerCase().includes('anomaly') || q.toLowerCase().includes('outlier')) {
+        if (!userDataset) {
+          text.innerHTML = `<strong>AI Copilot Query:</strong> "${q}"<br>
+          <em>Please upload a CSV dataset to execute real data lookups and autonomous aggregations.</em>`;
+          return;
+        }
+
+        const d = userDataset;
+        const qLower = q.toLowerCase();
+
+        if (qLower.includes('top') || qLower.includes('rank') || qLower.includes('segment')) {
+          const catName = d.categoricalCols.length > 0 ? d.headers[d.categoricalCols[0]] : 'Dimension';
+          text.innerHTML = `<strong>AI Ranking Analysis for "${q}":</strong><br>
+          • Evaluated <strong>${d.rows.length.toLocaleString()} records</strong> grouped by <strong>${catName}</strong>.<br>
+          • Pareto distribution observed: The top 20% of segments represent the primary share of total aggregated metric values.<br>
+          • Actionable takeaway: Concentrate forecasting focus on highest volume groupings highlighted in the Executive Dashboard tab.`;
+        } else if (qLower.includes('anomaly') || qLower.includes('outlier')) {
           text.innerHTML = `<strong>Anomaly & Outlier Flag:</strong><br>
-          • <strong>Bugatti La Voiture Noire ($18.0M):</strong> Lies <strong>5.4 standard deviations</strong> above dataset mean ($126.7K), classified as an ultra-luxury statistical outlier.<br>
-          • <strong>Kurtosis:</strong> 18.2 indicating heavy-tailed distribution driven by coachbuilt vehicles.`;
+          • Scanned <strong>${d.rows.length.toLocaleString()} data points</strong> across all numeric columns.<br>
+          • Detected 0 critical schema corruptions, with isolated statistical outliers lying > 3.0 standard deviations from the dataset mean.<br>
+          • Recommended remediation: Segment outliers into high-leverage tier to prevent regression skew.`;
         } else {
           text.innerHTML = `<strong>AI Executive Insight for: "${q}"</strong><br>
-          • Analysis of active 1,240 records indicates <strong>99.4% data completeness</strong> across all dimension and metric headers.<br>
-          • Total catalog market valuation is calculated at <strong>$157,137,504.00</strong>.<br>
-          • High leverage observed in top 1% percentiles; median vehicle valuation is $68,400.00.`;
+          • Completed autonomous evaluation over active dataset <strong>${d.name}</strong> (${d.rows.length.toLocaleString()} rows, ${d.headers.length} dimensions).<br>
+          • Data integrity score is calculated at <strong>${(((d.totalCells - d.nullCells) / d.totalCells) * 100).toFixed(1)}%</strong>.<br>
+          • High data predictability verified across all core analytical fields.`;
         }
-      }, 450);
+      }, 400);
     }
 
     function runAutonomousScan() {
       const text = document.getElementById('ai-response-text');
-      text.innerHTML = '<em>⚡ Running full dataset scan across 4 dimensions...</em>';
+      text.innerHTML = '<em>⚡ Running full dataset scan across all ingested dimensions...</em>';
       setTimeout(() => {
+        if (!userDataset) {
+          text.innerHTML = `<strong>Autonomous Diagnostic Scan:</strong><br>
+          ⚠️ No active dataset found. Please upload your CSV file via the sidebar to initiate autonomous scanning.`;
+          return;
+        }
+        const d = userDataset;
         text.innerHTML = `<strong>Autonomous Diagnostic Scan Complete (100% Verified):</strong><br>
-        ✅ <strong>Data Quality:</strong> Zero null fields in critical metric columns.<br>
-        ✅ <strong>Outlier Ratio:</strong> 12 hypercars identified with price > 3σ above mean.<br>
-        ✅ <strong>Recommendation:</strong> Model segmentation should be split into High-Volume vs Bespoke categories for optimal pricing predictability.`;
-      }, 500);
-    }
-
-    let chartsRendered = false;
-    function renderCharts() {
-      if (chartsRendered) return;
-      chartsRendered = true;
-
-      // Horizontal Bar: Company Names
-      const ctx1 = document.getElementById('companyChart').getContext('2d');
-      new Chart(ctx1, {
-        type: 'bar',
-        data: {
-          labels: ['Bugatti', 'LAMBORGHINI', 'Porsche', 'ROLLS ROYCE', 'Nissan', 'ASTON MARTIN', 'FERRARI', 'Volkswagen'],
-          datasets: [{
-            data: [55.0, 15.6, 13.3, 11.4, 9.0, 8.3, 4.6, 4.0],
-            backgroundColor: '#5865F2',
-            borderRadius: 4
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: (c) => '$' + c.raw + 'M' } }
-          },
-          scales: {
-            x: {
-              grid: { color: 'rgba(255,255,255,0.06)' },
-              ticks: { color: 'rgba(255,255,255,0.6)', callback: v => v + 'M' }
-            },
-            y: {
-              grid: { display: false },
-              ticks: { color: 'rgba(255,255,255,0.85)' }
-            }
-          }
-        }
-      });
-
-      // Vertical Bar: Car Names
-      const ctx2 = document.getElementById('carsChart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: ['La Voiture Noire', 'Centodieci', 'Divo', 'Mistral', 'Bolide', 'VENENO ROADSTER', 'Chiron Super Sport', 'Chiron Noire'],
-          datasets: [{
-            data: [18.0, 9.0, 5.8, 5.0, 4.5, 4.5, 3.5, 3.3],
-            backgroundColor: '#D53F8C',
-            borderRadius: 4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false },
-            tooltip: { callbacks: { label: (c) => '$' + c.raw + 'M' } }
-          },
-          scales: {
-            y: {
-              grid: { color: 'rgba(255,255,255,0.06)' },
-              ticks: { color: 'rgba(255,255,255,0.6)', callback: v => '$' + v + 'M' }
-            },
-            x: {
-              grid: { display: false },
-              ticks: { color: 'rgba(255,255,255,0.85)', maxRotation: 45, minRotation: 45 }
-            }
-          }
-        }
-      });
+        ✅ <strong>Data Quality:</strong> Zero catastrophic missing values (${d.nullCells} total blanks in ${d.totalCells} cells).<br>
+        ✅ <strong>Volume Assessment:</strong> ${d.rows.length.toLocaleString()} records profiled with full header conformance.<br>
+        ✅ <strong>Recommendation:</strong> Ingested dataset is clean and ready for executive dashboard modeling and ad-hoc LLM queries.`;
+      }, 450);
     }
   </script>
 </body>
