@@ -1875,6 +1875,21 @@ Diagnosis checklist — fix ALL that apply:
             few_shot = """
 === FEW-SHOT EXAMPLES (study these before writing your query) ===
 
+Q: "total sales"
+SQL: SELECT SUM(sales) AS total_sales FROM data
+
+Q: "what is the total sales"
+SQL: SELECT SUM(sales) AS total_sales FROM data
+
+Q: "what is our total revenue"
+SQL: SELECT SUM(revenue) AS total_revenue FROM data
+
+Q: "average sales"
+SQL: SELECT AVG(sales) AS avg_sales FROM data
+
+Q: "how many total orders"
+SQL: SELECT COUNT(*) AS total_orders FROM data
+
 Q: "total sales by country"
 SQL: SELECT country, SUM(sales) AS total_sales FROM data GROUP BY country ORDER BY total_sales DESC
 
@@ -1949,6 +1964,13 @@ RULE 2 — MANDATORY FROM CLAUSE:
 RULE 3 — GROUP BY COMPLETENESS:
   If SELECT contains ANY aggregate function (SUM, COUNT, AVG, MIN, MAX) alongside a raw column,
   every raw (non-aggregated) column in SELECT MUST appear in GROUP BY. No exceptions.
+
+RULE 3b — OVERALL / SCALAR TOTALS (NEVER GROUP BY UNLESS EXPLICITLY ASKED):
+  If the question asks for an overall total, sum, revenue, count, or average without explicitly specifying a dimension
+  (e.g., "total sales", "what is total sales", "overall revenue", "average price", "how many orders", "total units sold"),
+  do NOT include ANY dimension column in SELECT and do NOT add any GROUP BY clause.
+  Return a SINGLE scalar aggregate row: SELECT SUM(metric) AS total_metric FROM data.
+  Only use GROUP BY when the user explicitly asks for grouping or ranking (e.g. "by", "per", "for each", "across", "top N", "bottom N").
 
 RULE 4 — NATURAL LANGUAGE → SQL MAPPING:
   "total / sum / overall"        → SUM(col)
@@ -2145,18 +2167,30 @@ Answer:"""
                         continue
 
             def _generate_heuristic_sql(q_text, agg_sel):
-                ql = q_text.lower()
+                ql = q_text.lower().strip()
+
+                # Detect if question explicitly asks for grouping or ranking
+                has_grouping_keyword = bool(re.search(r'\b(by|per|for each|each|across|breakdown|split by|categorized by|grouped by)\b', ql))
+
                 n_m = re.search(r'\b(top|first|highest|leading|most)\s+(\d+)\b', ql)
                 N = int(n_m.group(2)) if n_m else None
                 b_m = re.search(r'\b(bottom|lowest|least|last)\s+(\d+)\b', ql)
                 is_bot = bool(b_m) or any(w in ql for w in ['bottom', 'worst', 'lowest', 'least'])
                 if b_m:
                     N = int(b_m.group(2))
-                elif is_bot and not N:
+                elif is_bot and not N and (has_grouping_keyword or any(c.lower() in ql for c in dimension_cols)):
                     N = 5
-                elif any(w in ql for w in ['top', 'best', 'highest', 'most']) and not N:
+                elif any(w in ql for w in ['top', 'best', 'highest', 'most']) and not N and (has_grouping_keyword or any(c.lower() in ql for c in dimension_cols)):
                     N = 5
 
+                is_ranking = (N is not None)
+
+                # Check if user explicitly asked for overall scalar total
+                is_overall_scalar = bool(re.search(r'^\s*(total|overall|grand total|net|average|avg|sum|count|min|max|mean)\s+[a-z0-9_ ]+$', ql)) or (
+                    any(w in ql for w in ['overall', 'grand total', 'all-time', 'all time', 'in total', 'altogether', 'entire'])
+                ) or ql in ['total sales', 'total revenue', 'average sales', 'total quantity', 'total profit', 'count of orders', 'how many orders', 'total orders']
+
+                # Target metric resolution
                 target_m = None
                 for col in numeric_cols:
                     if col.lower() in ql or col.lower().replace('_', ' ') in ql:
@@ -2174,15 +2208,19 @@ Answer:"""
                 if not target_m:
                     target_m = main_metric if main_metric else (business_metrics[0] if business_metrics else (numeric_cols[0] if numeric_cols else None))
 
+                # Target dimension resolution ONLY if explicitly mentioned
                 target_d = None
                 for col in dimension_cols:
-                    if col.lower() in ql or col.lower().replace('_', ' ') in ql:
+                    col_clean = col.lower().replace('_', ' ')
+                    if col.lower() in ql or col_clean in ql:
                         target_d = col
                         break
-                if not target_d:
+                if not target_d and not is_overall_scalar and (has_grouping_keyword or is_ranking):
                     synonyms = [
                         ('car', ['model', 'productline', 'manufacturer', 'vehicle', 'car']),
                         ('product', ['productline', 'product', 'item', 'category']),
+                        ('rep', ['sales_rep', 'rep', 'employee', 'agent', 'person']),
+                        ('salesperson', ['sales_rep', 'rep']),
                         ('customer', ['customername', 'customer', 'client']),
                         ('country', ['country', 'region', 'territory']),
                         ('city', ['city', 'state']),
@@ -2199,17 +2237,29 @@ Answer:"""
                                     break
                         if target_d:
                             break
-                if not target_d and dimension_cols:
-                    target_d = dimension_cols[0]
 
-                agg_fn = agg_sel if agg_sel in ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX'] else ('AVG' if any(w in ql for w in ['average', 'avg', 'mean']) else 'SUM')
+                agg_fn = agg_sel if agg_sel in ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX'] else ('AVG' if any(w in ql for w in ['average', 'avg', 'mean']) else ('COUNT' if any(w in ql for w in ['count', 'number of', 'how many']) else 'SUM'))
+
+                # CRITICAL: If no dimension was mentioned and no grouping/ranking was requested,
+                # NEVER force a dimension. Return a single scalar aggregate row!
+                if not target_d and not has_grouping_keyword and not is_ranking:
+                    if target_m:
+                        alias = f"total_{target_m}" if agg_fn == "SUM" else f"{agg_fn.lower()}_{target_m}"
+                        return f'SELECT {agg_fn}("{target_m}") AS "{alias}" FROM data'
+                    return 'SELECT COUNT(*) AS total_count FROM data'
+
+                # If ranking or grouping keyword was present but no dimension matched, use first dimension
+                if (is_ranking or has_grouping_keyword) and not target_d and dimension_cols:
+                    target_d = dimension_cols[0]
 
                 if target_d and target_m:
                     ord_dir = "ASC" if is_bot else "DESC"
                     lim_clause = f" LIMIT {N}" if N else " LIMIT 10"
-                    return f'SELECT "{target_d}", {agg_fn}("{target_m}") AS "total_{target_m}" FROM data GROUP BY "{target_d}" ORDER BY "total_{target_m}" {ord_dir}{lim_clause}'
+                    alias = f"total_{target_m}" if agg_fn == "SUM" else f"{agg_fn.lower()}_{target_m}"
+                    return f'SELECT "{target_d}", {agg_fn}("{target_m}") AS "{alias}" FROM data GROUP BY "{target_d}" ORDER BY "{alias}" {ord_dir}{lim_clause}'
                 elif target_m:
-                    return f'SELECT {agg_fn}("{target_m}") AS "{agg_fn.lower()}_{target_m}" FROM data'
+                    alias = f"total_{target_m}" if agg_fn == "SUM" else f"{agg_fn.lower()}_{target_m}"
+                    return f'SELECT {agg_fn}("{target_m}") AS "{alias}" FROM data'
                 else:
                     return 'SELECT * FROM data LIMIT 10'
 
