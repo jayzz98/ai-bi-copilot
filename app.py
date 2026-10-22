@@ -4,174 +4,44 @@ import numpy as np
 import re
 import plotly.express as px
 from openai import OpenAI
+from PIL import Image
 import os
 import duckdb
 from sqlalchemy import create_engine
 import urllib.parse
 import psutil
+import pyodbc
+import requests
+from streamlit_lottie import st_lottie
 import time
+# import clr  # Lazy-loaded in Power BI section to avoid startup crash
 import streamlit.components.v1 as components
-import base64
+import base64 # Added for video encoding
 import sqlite3
 import hashlib
 import socket
 import uuid as _uuid_mod
 from datetime import datetime, timedelta
-import json
 
-APP_VERSION = "v3.0 – Cosmic Evolution"
+# Build Version
+APP_VERSION = "v1.6 - Nuclear Fix"
 
-st.set_page_config(
-    page_title="AI BI Copilot | Cosmic",
-    layout="wide",
-    page_icon="🤖",
-    initial_sidebar_state="expanded",
-)
+st.set_page_config(page_title="AI BI Copilot", layout="wide")
 
+# Cloud detection (True if running on Streamlit Community Cloud)
 IS_CLOUD = "STREAMLIT_SERVER_PORT" in os.environ
 
-# ─────────────────────────────────────────────────────────────
-#  GLOBAL CSS  — Design System
-# ─────────────────────────────────────────────────────────────
-st.markdown('<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
-_css_content = r"""
-:root{--pink:#D53F8C;--pink-dark:#B83280;--bg:#0B0E14;--sidebar:#0E1117;--card:rgba(255,255,255,0.025);--border:rgba(255,255,255,0.07);}
-html,body,.stApp{background:#0B0E14!important;color:#E2E8F0!important;}
-*{font-family:'Inter',sans-serif!important;box-sizing:border-box;}
-h1,h2,h3,h4,.outfit{font-family:'Outfit',sans-serif!important;}
-
-/* ===== HIDE STREAMLIT CHROME ===== */
-#MainMenu,footer,header,[data-testid="stToolbar"]{visibility:hidden!important;height:0!important;display:none!important;}
-.stDeployButton{display:none!important;}
-[data-testid="stHeader"]{background:transparent!important;}
-
-/* Bridge hiding - improved to avoid display:none issues with events */
-div[data-testid="stTextInput"]:has(input[aria-label="__bridge__"]) {
-    position: fixed !important;
-    top: -1000px !important;
-    left: -1000px !important;
-    opacity: 0 !important;
-    height: 0 !important;
-    width: 0 !important;
-    overflow: hidden !important;
-    pointer-events: none !important;
-}
-
-iframe[title="streamlit.components.v1.html"] { display: block !important; margin: 0 auto !important; border: none !important; }
-.stMarkdown { display: block !important; }
-[data-testid="stAppViewContainer"] { background: #0B0E14 !important; }
-
-/* ===== SIDEBAR ===== */
-[data-testid="stSidebar"]{background:#0E1117!important;border-right:1px solid rgba(255,255,255,0.05)!important;}
-[data-testid="stSidebar"] *{color:#CBD5E1!important;}
-[data-testid="stSidebar"] h1,[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3{color:#E2E8F0!important;}
-[data-testid="stSidebar"] .stButton>button{background:rgba(255,255,255,0.04)!important;color:#CBD5E1!important;border:1px solid rgba(255,255,255,0.1)!important;border-radius:12px!important;font-weight:600!important;font-size:0.82rem!important;padding:8px 14px!important;transition:all .2s!important;}
-[data-testid="stSidebar"] .stButton>button:hover{background:rgba(213,63,140,0.12)!important;color:#D53F8C!important;border-color:rgba(213,63,140,0.35)!important;}
-[data-testid="stSidebar"] .stButton>button[kind="primary"]{background:rgba(213,63,140,0.15)!important;color:#D53F8C!important;border:1px solid rgba(213,63,140,0.4)!important;}
-[data-testid="stSidebar"] [data-testid="stFileUploader"]>section{background:rgba(255,255,255,0.02)!important;border:1px dashed rgba(255,255,255,0.12)!important;border-radius:12px!important;}
-[data-testid="stSidebar"] [data-testid="stFileUploader"] section *{color:#CBD5E1!important;}
-[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"]{background:#fff!important;color:#000!important;border:none!important;}
-
-/* ===== KPI CARDS ===== */
-.kpi-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:20px;padding:24px;text-align:center;transition:all .3s cubic-bezier(0.4,0,0.2,1);cursor:default;}
-.kpi-card:hover{background:rgba(213,63,140,0.05);border-color:rgba(213,63,140,0.3);transform:translateY(-4px);box-shadow:0 12px 40px -10px rgba(213,63,140,0.15);}
-.kpi-label{font-family:'Outfit',sans-serif;font-size:0.75rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px;}
-.kpi-value{font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:800;color:#E2E8F0;}
-
-/* ===== INPUTS ===== */
-.stTextInput>div>div>input,.stTextArea>div>div>textarea{background:rgba(255,255,255,0.04)!important;border:1px solid rgba(255,255,255,0.1)!important;border-radius:14px!important;color:#E2E8F0!important;padding:12px 16px!important;font-size:0.88rem!important;}
-.stTextInput>div>div>input:focus,.stTextArea>div>div>textarea:focus{border-color:#D53F8C!important;box-shadow:0 0 0 3px rgba(213,63,140,0.12)!important;outline:none!important;}
-.stTextInput label,.stTextArea label,.stSelectbox label,.stNumberInput label{color:#64748B!important;font-size:0.7rem!important;font-weight:700!important;text-transform:uppercase!important;letter-spacing:.1em!important;}
-.stSelectbox>div>div>div{background:rgba(255,255,255,0.04)!important;border:1px solid rgba(255,255,255,0.1)!important;border-radius:12px!important;color:#E2E8F0!important;}
-
-/* ===== BUTTONS ===== */
-.stButton>button[kind="primary"]{background:#D53F8C!important;color:#fff!important;border:none!important;border-radius:14px!important;font-weight:700!important;font-size:0.88rem!important;padding:11px 22px!important;transition:all .2s!important;box-shadow:0 4px 20px -6px rgba(213,63,140,0.5)!important;}
-.stButton>button[kind="primary"]:hover{background:#B83280!important;transform:translateY(-1px)!important;box-shadow:0 8px 25px -6px rgba(213,63,140,0.5)!important;}
-.stButton>button[kind="secondary"]{background:rgba(255,255,255,0.04)!important;color:#CBD5E1!important;border:1px solid rgba(255,255,255,0.1)!important;border-radius:14px!important;font-weight:600!important;transition:all .2s!important;}
-.stButton>button[kind="secondary"]:hover{background:rgba(255,255,255,0.08)!important;border-color:rgba(255,255,255,0.18)!important;}
-
-/* ===== TABS ===== */
-.stTabs [data-baseweb="tab-list"]{background:rgba(255,255,255,0.02)!important;border:1px solid rgba(255,255,255,0.07)!important;border-radius:14px!important;padding:4px!important;gap:4px!important;}
-.stTabs [data-baseweb="tab"]{border-radius:10px!important;color:#64748B!important;font-weight:600!important;font-size:0.85rem!important;padding:8px 18px!important;}
-.stTabs [aria-selected="true"]{background:#D53F8C!important;color:#fff!important;}
-.stTabs [data-baseweb="tab"] *{color:inherit!important;}
-[data-testid="stTabContent"]{padding-top:16px!important;}
-
-/* ===== METRIC ===== */
-[data-testid="stMetric"]{background:rgba(255,255,255,0.03)!important;border:1px solid rgba(255,255,255,0.07)!important;border-radius:18px!important;padding:18px!important;}
-[data-testid="stMetricValue"]{color:#F1F5F9!important;font-family:'Outfit',sans-serif!important;}
-[data-testid="stMetricLabel"]{color:#64748B!important;font-size:.72rem!important;}
-
-/* ===== DATAFRAME ===== */
-[data-testid="stDataFrame"]{border-radius:16px!important;overflow:hidden!important;border:1px solid rgba(255,255,255,0.07)!important;}
-
-/* ===== ALERTS ===== */
-.stAlert{border-radius:12px!important;}
-div[data-testid="stInfoBox"]{background:rgba(99,102,241,0.08)!important;border-color:rgba(99,102,241,0.25)!important;}
-div[data-testid="stWarningBox"]{background:rgba(234,179,8,0.08)!important;border-color:rgba(234,179,8,0.25)!important;}
-div[data-testid="stErrorBox"]{background:rgba(239,68,68,0.08)!important;border-color:rgba(239,68,68,0.25)!important;}
-div[data-testid="stSuccessBox"]{background:rgba(34,197,94,0.08)!important;border-color:rgba(34,197,94,0.25)!important;}
-
-/* ===== PROGRESS ===== */
-.stProgress>div>div{background:rgba(255,255,255,0.05)!important;border-radius:999px!important;}
-.stProgress>div>div>div{background:linear-gradient(90deg,#D53F8C,#9F7AEA)!important;border-radius:999px!important;}
-
-/* ===== RADIO ===== */
-.stRadio>div{gap:8px!important;}
-.stRadio label{background:rgba(255,255,255,0.03)!important;border:1px solid rgba(255,255,255,0.08)!important;border-radius:10px!important;padding:8px 16px!important;color:#94A3B8!important;font-weight:600!important;cursor:pointer!important;transition:all .2s!important;}
-.stRadio [data-checked="true"] label,.stRadio input:checked+div{background:rgba(213,63,140,0.15)!important;border-color:rgba(213,63,140,0.4)!important;color:#D53F8C!important;}
-
-/* ===== FORMS ===== */
-[data-testid="stForm"]{background:transparent!important;border:none!important;padding:0!important;}
-
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar{width:4px;height:4px;}
-::-webkit-scrollbar-track{background:transparent;}
-::-webkit-scrollbar-thumb{background:rgba(213,63,140,0.3);border-radius:10px;}
-
-/* ===== CUSTOM COMPONENTS ===== */
-.insight-card{background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 20px;margin:8px 0;font-size:.86rem;line-height:1.7;color:#CBD5E1;}
-.insight-title{color:#E2E8F0!important;font-family:'Outfit',sans-serif!important;font-weight:700!important;font-size:.92rem!important;display:block!important;margin-bottom:6px!important;}
-.kpi-ghost-bar{height:10px;border-radius:6px;background:rgba(255,255,255,0.04);}
-/* ===== DASHBOARD SHELL ===== */
-.cosmic-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 0 20px; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 24px;
-}
-.cosmic-tabs {
-    display: flex; gap: 8px; background: rgba(255,255,255,0.03); padding: 5px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.06);
-}
-.cosmic-tab {
-    padding: 8px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 700; color: #64748B; cursor: pointer; transition: all 0.2s;
-}
-.cosmic-tab:hover { color: #E2E8F0; background: rgba(255,255,255,0.05); }
-.cosmic-tab.active-tab { background: #D53F8C !important; color: #fff !important; box-shadow: 0 4px 15px -4px rgba(213,63,140,0.4); }
-
-/* Hide the native nav radio - but keep it functional */
-div[data-testid="stSidebar"] div[data-testid="stRadio"] {
-    position: fixed !important;
-    left: -1000px !important;
-    opacity: 0 !important;
-}
-
-hr,[data-testid="stMarkdownDivider"]{border-color:rgba(255,255,255,0.07)!important;}
-"""
-st.markdown('<style>' + _css_content + '</style>', unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────────────────────
-#  AUTH BACKEND  (unchanged logic)
-# ─────────────────────────────────────────────────────────────
-AUTH_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "auth_v2.db")
-
+# ================= AUTH & SUBSCRIPTION SYSTEM =================
+AUTH_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'auth_v2.db')
 
 def _auth_conn():
-    return sqlite3.connect(AUTH_DB_PATH)
-
+    conn = sqlite3.connect(AUTH_DB_PATH)
+    # conn.execute("PRAGMA journal_mode=DELETE")
+    return conn
 
 def _init_auth_db():
     conn = _auth_conn()
-    conn.executescript(
-        """
+    conn.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
@@ -191,56 +61,50 @@ def _init_auth_db():
             used_at TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
-    """
-    )
-    for col in [
-        "ALTER TABLE users ADD COLUMN is_premium INTEGER DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN trial_used INTEGER DEFAULT 0",
-        "ALTER TABLE users ADD COLUMN username TEXT UNIQUE",
-    ]:
-        try:
-            conn.execute(col)
-        except Exception:
-            pass
+    ''')
+    # Column migration
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN is_premium INTEGER DEFAULT 0")
+    except: pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN trial_used INTEGER DEFAULT 0")
+    except: pass
+    try:
+        conn.execute("ALTER TABLE users ADD COLUMN username TEXT UNIQUE")
+    except: pass
     conn.commit()
     conn.close()
-
 
 def _get_device_id():
     mac = _uuid_mod.getnode()
     hostname = socket.gethostname()
     return hashlib.sha256(f"{mac}-{hostname}-AIBICOPILOT".encode()).hexdigest()[:32]
 
-
 def _hash_pw(pw):
     return hashlib.sha256(f"{pw}__AIBICOPILOT_SALT__".encode()).hexdigest()
-
 
 def _register(username, email, password):
     conn = _auth_conn()
     try:
-        conn.execute(
-            "INSERT INTO users (username, email, password_hash, device_id) VALUES (?,?,?,?)",
-            (username.strip(), email.lower().strip(), _hash_pw(password), _get_device_id()),
-        )
+        conn.execute("INSERT INTO users (username, email, password_hash, device_id) VALUES (?, ?, ?, ?)",
+                     (username.strip(), email.lower().strip(), _hash_pw(password), _get_device_id()))
         conn.commit()
-        return True, "Account created successfully!"
+        return True, "Account created successfully! Please login."
     except sqlite3.IntegrityError:
         return False, "An account with this email already exists."
     finally:
         conn.close()
 
-
 def _login(identifier, password):
+    # Owner login bypass (allows login even if no account exists in DB)
     ident_lower = identifier.lower().strip()
     if ident_lower in ["jaykadao99210@gmail.com", "jaykadao99210@gmail", "jaykadao99210@gmai.com"]:
         if password in ["Jayz9850@", "jayz-owner-2024"]:
             return True, "jaykadao99210@gmail.com"
+            
     conn = _auth_conn()
-    row = conn.execute(
-        "SELECT password_hash, device_id, email FROM users WHERE (email=? OR username=?)",
-        (identifier.lower().strip(), identifier.strip()),
-    ).fetchone()
+    row = conn.execute("SELECT password_hash, device_id, email FROM users WHERE (email = ? OR username = ?)",
+                       (identifier.lower().strip(), identifier.strip())).fetchone()
     if not row:
         conn.close()
         return False, "No account found with this email or username."
@@ -251,49 +115,41 @@ def _login(identifier, password):
     this_device = _get_device_id()
     if stored_device and stored_device != this_device:
         conn.close()
-        return False, "⛔ Account locked to another device. Single-device license only."
+        return False, "⛔ This account is locked to another device. Single-device license only — sharing is not allowed."
     if not stored_device:
-        conn.execute("UPDATE users SET device_id=? WHERE email=?", (this_device, actual_email))
+        conn.execute("UPDATE users SET device_id = ? WHERE email = ?", (this_device, actual_email))
         conn.commit()
     conn.close()
     return True, actual_email
 
-
 def _check_sub(email):
     conn = _auth_conn()
-    row = conn.execute(
-        "SELECT subscription_expiry, is_premium, trial_used FROM users WHERE email=?",
-        (email.lower().strip(),),
-    ).fetchone()
+    row = conn.execute("SELECT subscription_expiry, is_premium, trial_used FROM users WHERE email = ?", (email.lower().strip(),)).fetchone()
     conn.close()
     if not row or not row[0]:
         return False, None, 0, (row[2] if row else 0)
     try:
         expiry = datetime.strptime(row[0], "%Y-%m-%d")
-    except Exception:
+    except:
         return False, None, 0, (row[2] if row else 0)
+    is_premium = row[1]
+    trial_used = row[2]
     if datetime.now() > expiry:
-        return False, expiry, row[1], row[2]
-    return True, expiry, row[1], row[2]
-
+        return False, expiry, is_premium, trial_used
+    return True, expiry, is_premium, trial_used
 
 def _activate_trial(email):
     conn = _auth_conn()
-    expiry = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
-    conn.execute(
-        "UPDATE users SET subscription_expiry=?, trial_used=1, is_premium=0 WHERE email=?",
-        (expiry, email.lower().strip()),
-    )
+    expiry_date = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    conn.execute("UPDATE users SET subscription_expiry = ?, trial_used = 1, is_premium = 0 WHERE email = ?", 
+                 (expiry_date, email.lower().strip()))
     conn.commit()
     conn.close()
     return True, "1-Day Free Trial activated!"
 
-
 def _activate_key(email, key):
     conn = _auth_conn()
-    key_row = conn.execute(
-        "SELECT days, used_by FROM subscription_keys WHERE key=?", (key.strip(),)
-    ).fetchone()
+    key_row = conn.execute("SELECT days, used_by FROM subscription_keys WHERE key = ?", (key.strip(),)).fetchone()
     if not key_row:
         conn.close()
         return False, "Invalid subscription key."
@@ -301,1642 +157,2421 @@ def _activate_key(email, key):
         conn.close()
         return False, "This key has already been used."
     days = key_row[0]
-    user_row = conn.execute(
-        "SELECT subscription_expiry FROM users WHERE email=?", (email.lower().strip(),)
-    ).fetchone()
+    user_row = conn.execute("SELECT subscription_expiry FROM users WHERE email = ?", (email.lower().strip(),)).fetchone()
     base_date = datetime.now()
     if user_row and user_row[0]:
         try:
             existing = datetime.strptime(user_row[0], "%Y-%m-%d")
             if existing > base_date:
                 base_date = existing
-        except Exception:
+        except:
             pass
     new_expiry = base_date + timedelta(days=days)
     expiry_str = new_expiry.strftime("%Y-%m-%d")
-    conn.execute(
-        "UPDATE users SET subscription_expiry=?, is_premium=1 WHERE email=?",
-        (expiry_str, email.lower().strip()),
-    )
-    conn.execute(
-        "UPDATE subscription_keys SET used_by=?, used_at=? WHERE key=?",
-        (email.lower().strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), key.strip()),
-    )
+    conn.execute("UPDATE users SET subscription_expiry = ?, is_premium = 1 WHERE email = ?", (expiry_str, email.lower().strip()))
+    conn.execute("UPDATE subscription_keys SET used_by = ?, used_at = ? WHERE key = ?",
+                 (email.lower().strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S"), key.strip()))
     conn.commit()
     conn.close()
     return True, f"✅ Subscription activated until {new_expiry.strftime('%B %d, %Y')}!"
 
-
+# Initialize auth database
 _init_auth_db()
 
+# ================= OWNER BYPASS =================
 OWNER_EMAILS = ["jaykadao99210@gmail.com", "jaykadao99210@gmail"]
 OWNER_SECRET_KEY = "jayz-owner-2024"
 
-# ─────────────────────────────────────────────────────────────
-#  SESSION DEFAULTS
-# ─────────────────────────────────────────────────────────────
-for _k, _v in [("authenticated", False), ("user_email", None), ("sub_expiry", None)]:
-    if _k not in st.session_state:
-        st.session_state[_k] = _v
+# Session defaults for auth
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+if 'user_email' not in st.session_state:
+    st.session_state.user_email = None
+if 'sub_expiry' not in st.session_state:
+    st.session_state.sub_expiry = None
 
-# Owner auto-login via query param
+# Auto-login for owner via query param (e.g. ?key=jayz-owner-2024)
 try:
-    if st.query_params.get("key") == OWNER_SECRET_KEY and not st.session_state.authenticated:
+    _qp = st.query_params
+    if _qp.get("key") == OWNER_SECRET_KEY and not st.session_state.authenticated:
         st.session_state.authenticated = True
         st.session_state.user_email = OWNER_EMAILS[0]
-except Exception:
+except:
     pass
 
-# ─────────────────────────────────────────────────────────────
-#  HTML BRIDGE PROCESSOR
-# ─────────────────────────────────────────────────────────────
-bridge_val = st.text_input("__bridge__", key="__bridge__", label_visibility="collapsed")
-if bridge_val and bridge_val != st.session_state.get("last_bridge_val"):
-    st.session_state["last_bridge_val"] = bridge_val
-    try:
-        data = json.loads(bridge_val)
-        action = data.get("action")
-        if action == "login":
-            ok, res = _login(data.get("email", ""), data.get("password", ""))
-            if ok:
-                st.session_state.authenticated = True
-                st.session_state.user_email = res
-                st.rerun()
-            else:
-                st.error(res)
-        elif action == "register":
-            ok, msg = _register(data.get("username", ""), data.get("email", ""), data.get("password", ""))
-            if ok:
-                st.session_state.authenticated = True
-                st.session_state.user_email = data.get("email", "").lower().strip()
-                st.rerun()
-            else:
-                st.error(msg)
-        elif action == "nav":
-            st.session_state["current_page"] = data.get("page")
-            st.rerun()
-        elif action == "trial":
-            ok, msg = _activate_trial(data.get("email", ""))
-            if ok:
-                st.success(msg)
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.error(msg)
-        elif action == "logout":
-            st.session_state.authenticated = False
-            st.session_state.user_email = None
-            st.session_state["current_page"] = "signin"
-            st.rerun()
-        elif action == "nav_tab":
-            st.session_state.active_tab = data.get("tab", "Copilot")
-            st.rerun()
-    except Exception as e:
-        pass
 
-# ─────────────────────────────────────────────────────────────
-#  RESILIENT BRIDGE SCRIPT (Global Injection)
-# ─────────────────────────────────────────────────────────────
-st.markdown("""
+# ================= VIDEO EMBED FUNCTION =================
+@st.cache_data(show_spinner=False)
+def get_base64_video(file_path):
+    try:
+        with open(file_path, "rb") as video_file:
+            return base64.b64encode(video_file.read()).decode('utf-8')
+    except Exception as e:
+        return ""
+
+# Read your specific video file (Ensure this is in the same folder as app.py)
+video_base64 = get_base64_video("jayz.mp4")
+
+
+def render_bubble():
+    components.html(f"""
+<style>
+@keyframes bubbleRotate {{
+    from {{ transform: rotate(0deg); }}
+    to {{ transform: rotate(360deg); }}
+}}
+#bc {{
+    animation: bubbleRotate 8s linear infinite;
+    will-change: transform;
+}}
+</style>
+<div style="display:flex; justify-content:center; margin-top:-20px; margin-bottom:10px; pointer-events:none;">
+    <video id="bv1" muted playsinline style="display:none;"
+           src="data:video/mp4;base64,{video_base64}"></video>
+    <video id="bv2" muted playsinline style="display:none;"
+           src="data:video/mp4;base64,{video_base64}"></video>
+    <canvas id="bc" style="width:160px; height:auto;"></canvas>
+</div>
 <script>
-if (!window.sendBridge) {
-    window.sendBridge = function(payload) {
-        const input = document.querySelector('input[aria-label="__bridge__"]');
-        if (!input) {
-            console.error("Bridge input not found");
-            return;
-        }
-        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-        setter.call(input, JSON.stringify(payload));
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-        input.focus();
-        const enterEv = new KeyboardEvent('keydown', {
-            key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true
+const v1 = document.getElementById('bv1');
+const v2 = document.getElementById('bv2');
+const canvas = document.getElementById('bc');
+const ctx = canvas.getContext('2d', {{ willReadFrequently: true }});
+let ready = false;
+let active = v1;
+let frameCount = 0;
+let cachedFrame = null;
+
+function draw() {{
+    requestAnimationFrame(draw);
+    if (active.readyState < 2) return;
+    if (!ready && active.videoWidth > 0) {{
+        // 4K quality: use 4x multiplier for ultra-sharp rendering
+        const scale = 4;
+        canvas.width = 160 * scale;
+        canvas.height = 160 * (active.videoHeight / active.videoWidth) * scale;
+        ready = true;
+    }}
+
+    const other = (active === v1) ? v2 : v1;
+    if (active.duration && active.currentTime >= active.duration - 0.25) {{
+        other.currentTime = 0;
+        other.play();
+        active = other;
+    }}
+
+    frameCount++;
+    // Only do expensive pixel manipulation every 3rd frame; reuse cached result otherwise
+    if (frameCount % 3 === 0 || !cachedFrame) {{
+        ctx.drawImage(active, 0, 0, canvas.width, canvas.height);
+        const f = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const d = f.data;
+        const len = d.length;
+        for (let i = 0; i < len; i += 4) {{
+            const r = d[i], g = d[i+1], b = d[i+2];
+            const mx = r > g ? (r > b ? r : b) : (g > b ? g : b);
+            if (mx < 75) {{ 
+                d[i+3] = 0; 
+            }} else if (mx < 115) {{
+                d[i+3] = (mx - 75) * 6.375;
+            }}
+        }}
+        ctx.putImageData(f, 0, 0);
+        cachedFrame = f;
+    }} else {{
+        ctx.putImageData(cachedFrame, 0, 0);
+    }}
+}}
+
+v1.play().then(() => {{ requestAnimationFrame(draw); }}).catch(() => {{
+    v1.addEventListener('canplay', () => {{ v1.play(); requestAnimationFrame(draw); }});
+}});
+</script>
+""", height=200)
+
+# ================= LOGIN / SIGNUP GATE =================
+if not st.session_state.authenticated:
+    st.markdown('<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
+    with open('style.css', 'r', encoding='utf-8') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+    render_bubble()
+    st.markdown("""
+    <div style="text-align: center; padding: 40px 0 20px 0;">
+        <div style="font-family: 'Outfit', sans-serif; font-size: 2.8rem; font-weight: 800;">
+            <span class="pink-ai" style="color: #D53F8C !important;">AI </span><span>BI Copilot</span>
+        </div>
+        
+    </div>
+    """, unsafe_allow_html=True)
+
+    _auth_col1, _auth_col2, _auth_col3 = st.columns([1, 2, 1])
+    with _auth_col2:
+        if st.button("🚀 Launch Instant Demo", use_container_width=True, type="primary"):
+            st.session_state.authenticated = True
+            st.session_state.user_email = "demo@aibicopilot.com"
+            st.rerun()
+
+        st.markdown("<div style='text-align:center;margin:10px 0;opacity:0.6;font-size:0.85rem;'>— or sign in with your account —</div>", unsafe_allow_html=True)
+
+        auth_mode = st.radio("", ["Login", "Sign Up"], horizontal=True, label_visibility="collapsed")
+
+        if auth_mode == "Login":
+            with st.form("login_form"):
+                login_id = st.text_input("Username or Email", placeholder="e.g. user123 or you@example.com")
+                login_password = st.text_input("Password", type="password", placeholder="Enter your password")
+                login_btn = st.form_submit_button("Login", type="primary", use_container_width=True)
+                if login_btn:
+                    if not login_id or not login_password:
+                        st.error("Please fill in all fields.")
+                    else:
+                        ok, res = _login(login_id, login_password)
+                        if ok:
+                            st.session_state.authenticated = True
+                            st.session_state.user_email = res
+                            st.rerun()
+                        else:
+                            st.error(res)
+        else:
+            with st.form("signup_form"):
+                reg_username = st.text_input("Username", placeholder="e.g. user123")
+                reg_email = st.text_input("Email", placeholder="you@example.com")
+                reg_password = st.text_input("Password", type="password", placeholder="Min 6 characters")
+                reg_confirm = st.text_input("Confirm Password", type="password", placeholder="Re-enter password")
+                reg_btn = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+                if reg_btn:
+                    if not reg_username or not reg_email or not reg_password:
+                        st.error("Please fill in all fields.")
+                    elif len(reg_password) < 6:
+                        st.error("Password must be at least 6 characters.")
+                    elif reg_password != reg_confirm:
+                        st.error("Passwords do not match.")
+                    else:
+                        ok, msg = _register(reg_username, reg_email, reg_password)
+                        if ok:
+                            st.session_state.authenticated = True
+                            st.session_state.user_email = reg_email.lower().strip()
+                            st.success("Account created successfully! Welcome to your trial session.")
+                            time.sleep(1.5)
+                            st.rerun()
+                        else:
+                            st.error(msg)
+
+    st.stop()
+
+# ================= SUBSCRIPTION & PRICING CHECK: REMOVED =================
+# Direct access to all analytics features without pricing or subscription barriers
+_sub_active = True
+_is_premium = 1
+st.session_state.sub_expiry = None
+
+NVIDIA_API_KEY = os.environ.get("NVIDIA_API_KEY")
+if not NVIDIA_API_KEY:
+    try:
+        NVIDIA_API_KEY = st.secrets.get("NVIDIA_API_KEY")
+    except Exception:
+        pass
+if not NVIDIA_API_KEY:
+    NVIDIA_API_KEY = "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"
+
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=NVIDIA_API_KEY
+)
+
+# ================= UI: ELYSIUM AI STYLE — PREMIUM EDITION =================
+st.markdown('<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">', unsafe_allow_html=True)
+
+# Mouse Follower Script
+components.html("""
+<script>
+const doc = window.parent.document;
+if (!doc.getElementById('ag-cursor-sprinkles')) {
+    const container = doc.createElement('div');
+    container.id = 'ag-cursor-sprinkles';
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100vw';
+    container.style.height = '100vh';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '9999';
+    doc.body.appendChild(container);
+    
+    // Antigravity style colors (blues, pinks, purples)
+    const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4'];
+    
+    doc.addEventListener('mousemove', (e) => {
+        if (Math.random() > 0.85) return; // spawn most of the time for dense real-time feel
+        
+        const sprinkle = doc.createElement('div');
+        sprinkle.style.position = 'absolute';
+        sprinkle.style.left = e.clientX + 'px';
+        sprinkle.style.top = e.clientY + 'px';
+        
+        // Random sprinkle shape (dashes)
+        sprinkle.style.width = (Math.random() * 3 + 2) + 'px'; 
+        sprinkle.style.height = (Math.random() * 8 + 4) + 'px'; 
+        sprinkle.style.background = colors[Math.floor(Math.random() * colors.length)];
+        sprinkle.style.borderRadius = '5px';
+        
+        const initAngle = Math.random() * 360;
+        sprinkle.style.transform = `translate(-50%, -50%) rotate(${initAngle}deg)`;
+        sprinkle.style.transition = 'all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        sprinkle.style.opacity = '1';
+        
+        container.appendChild(sprinkle);
+        
+        // Execute the visual scatter burst
+        requestAnimationFrame(() => {
+            const flyX = e.clientX + (Math.random() - 0.5) * 100;
+            const flyY = e.clientY + (Math.random() - 0.5) * 100;
+            const finalAngle = initAngle + (Math.random() > 0.5 ? 90 : -90);
+            
+            sprinkle.style.left = flyX + 'px';
+            sprinkle.style.top = flyY + 'px';
+            sprinkle.style.opacity = '0';
+            sprinkle.style.transform = `translate(-50%, -50%) rotate(${finalAngle}deg) scale(0)`;
         });
-        input.dispatchEvent(enterEv);
-        setTimeout(() => { input.blur(); }, 20);
-    };
+        
+        setTimeout(() => { sprinkle.remove(); }, 750);
+    });
+}
+</script>
+""", height=0, width=0)
+
+# Load external CSS
+with open('style.css', 'r', encoding='utf-8') as f:
+    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+
+# Critical inline overrides (guaranteed to load, no caching issues)
+st.markdown("""
+<style>
+/* FORCE: File Uploader = BLACK Background Inside */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] > section {
+    background-color: #000000 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 8px !important;
+}
+/* TEXT INSIDE THE BOX = WHITE */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] section *,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] section div div {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
+/* BROWSE BUTTON INSIDE THE BOX — black text on white bg */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"],
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"] * {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+    border: 1px solid rgba(0,0,0,0.2) !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stBaseButton-secondary"]:hover {
+    background-color: #f0f0f0 !important;
+}
+/* NUCLEAR: Force all uploaded file text and icons to black */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] div,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] span,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] p,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] small,
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] * {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
 }
 
-// Helper to click the native Streamlit radio buttons (hidden in sidebar)
-window.clickNativeTab = function(index) {
-    const radioDiv = window.parent.document.querySelector('div[data-testid="stRadio"]');
-    if (!radioDiv) return;
-    const labels = radioDiv.querySelectorAll('label');
-    if (labels[index]) {
-        labels[index].click();
-    }
-};
-</script>
+/* NUCLEAR: Force the remove button to be invisible background */
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] button {
+    background-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] button svg {
+    fill: #000000 !important;
+    color: #000000 !important;
+}
+[data-testid="stSidebar"] [data-testid="stFileUploader"] [data-testid="stUploadedFile"] button:hover svg {
+    fill: #ff0000 !important;
+}
+/* FORCE: Tab text = BLACK */
+.stTabs [data-baseweb="tab"] *,
+.stTabs [data-baseweb="tab"] p,
+.stTabs [data-baseweb="tab"] span,
+.stTabs [data-baseweb="tab"],
+.stTabs [aria-selected="true"],
+.stTabs [aria-selected="true"] p,
+.stTabs [aria-selected="true"] span {
+    color: #000000 !important;
+    -webkit-text-fill-color: #000000 !important;
+}
+/* FORCE: Hide all dividers and horizontal lines */
+hr, [data-testid="stMarkdownDivider"] {
+    display: none !important;
+}
+/* FORCE: Reset spacing to natural flow */
+div[data-testid="stVerticalBlock"] {
+    gap: 1rem !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────────────────────────────────────────
-#  VIDEO BUBBLE
-# ─────────────────────────────────────────────────────────────
-@st.cache_data(show_spinner=False)
-def get_base64_video(path):
-    try:
-        with open(path, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    except Exception:
-        return ""
-
-
-_vid64 = get_base64_video("jayz.mp4")
-
-
-def render_bubble(size=130):
-    if not _vid64:
-        st.markdown(
-            f"""<div style="display:flex;justify-content:center;margin:12px 0 4px;">
-            <div style="width:{size}px;height:{size}px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#D53F8C,#702459);
-            display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;
-            font-size:1.6rem;font-weight:800;color:#fff;box-shadow:0 0 40px rgba(213,63,140,0.3);">AI</div></div>""",
-            unsafe_allow_html=True,
-        )
-        return
-    components.html(
-        f"""
-<style>@keyframes bspin{{from{{transform:rotate(0deg)}}to{{transform:rotate(360deg)}}}}</style>
-<div style="display:flex;justify-content:center;margin:4px 0;">
-  <video id="bv" muted playsinline style="display:none" src="data:video/mp4;base64,{_vid64}"></video>
-  <canvas id="bc" style="width:{size}px;height:{size}px;border-radius:50%;animation:bspin 10s linear infinite;"></canvas>
-</div>
-<script>
-const v=document.getElementById('bv');const c=document.getElementById('bc');
-const ctx=c.getContext('2d',{{willReadFrequently:true}});let ready=false;
-function draw(){{requestAnimationFrame(draw);if(v.readyState<2)return;
-if(!ready&&v.videoWidth>0){{c.width=200;c.height=200;ready=true;}}
-ctx.drawImage(v,0,0,c.width,c.height);
-const f=ctx.getImageData(0,0,c.width,c.height);const d=f.data;
-for(let i=0;i<d.length;i+=4){{const m=Math.max(d[i],d[i+1],d[i+2]);
-d[i+3]=m<75?0:m<115?(m-75)*6.375:255;}}ctx.putImageData(f,0,0);}}
-v.play().then(()=>requestAnimationFrame(draw)).catch(()=>{{v.addEventListener('canplay',()=>{{v.play();requestAnimationFrame(draw);}});}});
-</script>""",
-        height=size + 16,
-    )
-
-
-# Mouse sprinkle effect
-components.html(
-    """
-<script>
-const doc=window.parent.document;
-if(!doc.getElementById('ag-sprinkles')){
-  const c=doc.createElement('div');c.id='ag-sprinkles';
-  Object.assign(c.style,{position:'fixed',top:'0',left:'0',width:'100vw',height:'100vh',pointerEvents:'none',zIndex:'9999'});
-  doc.body.appendChild(c);
-  const cols=['#D53F8C','#9F7AEA','#60A5FA','#EC4899'];
-  doc.addEventListener('mousemove',e=>{
-    if(Math.random()>0.8)return;
-    const s=doc.createElement('div');
-    Object.assign(s.style,{position:'absolute',left:e.clientX+'px',top:e.clientY+'px',
-      width:(Math.random()*3+2)+'px',height:(Math.random()*8+4)+'px',
-      background:cols[Math.floor(Math.random()*cols.length)],borderRadius:'5px',
-      transform:`translate(-50%,-50%) rotate(${Math.random()*360}deg)`,
-      transition:'all .7s cubic-bezier(.25,.46,.45,.94)',opacity:'1'});
-    c.appendChild(s);
-    requestAnimationFrame(()=>{
-      s.style.left=(e.clientX+(Math.random()-.5)*100)+'px';
-      s.style.top=(e.clientY+(Math.random()-.5)*100)+'px';
-      s.style.opacity='0';s.style.transform=`translate(-50%,-50%) rotate(${Math.random()*360}deg) scale(0)`;
-    });
-    setTimeout(()=>s.remove(),750);
-  });
-}
-</script>""",
-    height=0,
-    width=0,
-)
-
-# ─────────────────────────────────────────────────────────────
-#  LOGIN / SIGNUP PAGE
-# ─────────────────────────────────────────────────────────────
-if not st.session_state.authenticated:
-    page = st.session_state.get("current_page", "signin")
-    file_to_load = "components/login_page.html"
-    
-    if page == "home" or page == "get_started":
-        file_to_load = "components/landing_page.html"
-    elif page == "pricing":
-        file_to_load = "components/pricing_page.html"
-    elif page == "signup":
-        file_to_load = "components/login_page.html" # Assuming signup is toggled in JS or same page
-        
-    try:
-        with open(file_to_load, "r", encoding="utf-8") as f:
-            html = f.read()
-    except:
-        html = f"<h1>Error: {file_to_load} not found.</h1>"
-
-    bridge_js = """
-    <script>
-    function sendBridge(payload) {
-        var input = window.parent.document.querySelector('input[aria-label="__bridge__"]');
-        if (!input) return;
-        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-        setter.call(input, JSON.stringify(payload));
-        input.dispatchEvent(new Event('input', {bubbles: true}));
-        input.dispatchEvent(new Event('change', {bubbles: true}));
-        input.focus();
-        input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true}));
-        setTimeout(()=>input.blur(), 50);
-    }
-    
-    document.addEventListener("DOMContentLoaded", function() {
-        document.querySelectorAll("form").forEach(f => {
-            f.addEventListener("submit", function(e) {
-                e.preventDefault();
-                let fd = new FormData(f);
-                let actionAttr = f.getAttribute("action") || "";
-                let payload = { action: actionAttr.includes("signup") ? "register" : "login" };
-                fd.forEach((value, key) => payload[key] = value);
-                sendBridge(payload);
-            });
-        });
-        
-        document.querySelectorAll("a").forEach(a => {
-            a.addEventListener("click", function(e) {
-                let href = a.getAttribute("href");
-                if (href && href.startsWith("?action=")) {
-                    e.preventDefault();
-                    sendBridge({ action: "nav", page: href.replace("?action=", "") });
-                } else if (href && href.startsWith("?auth_action=")) {
-                    e.preventDefault();
-                    let page = href.replace("?auth_action=", "");
-                    if(page === "signup" || page === "signin") {
-                        sendBridge({ action: "nav", page: page });
-                    }
-                }
-            });
-        });
-    });
-    </script>
-    """
-    
-    if "</body>" in html:
-        html = html.replace("</body>", bridge_js + "</body>")
-    else:
-        html += bridge_js
-        
-    components.html(html, height=800, scrolling=True)
-    st.stop()
-
-# ─────────────────────────────────────────────────────────────
-#  SUBSCRIPTION GATE
-# ─────────────────────────────────────────────────────────────
-_sub_active, _sub_expiry, _is_premium, _trial_used = _check_sub(st.session_state.user_email)
-st.session_state.sub_expiry = _sub_expiry
-
-if st.session_state.user_email and st.session_state.user_email.lower().strip() in OWNER_EMAILS:
-    _sub_active = True
-
-if not _sub_active:
-    _ue = st.session_state.user_email
-    _se = urllib.parse.quote(_ue)
-    
-    # Load Pricing HTML template
-    try:
-        with open("components/pricing_page.html", "r", encoding="utf-8") as f:
-            html = f.read()
-    except:
-        html = "<h1>Pricing Template Not Found</h1>"
-
-    # Inject bridge JS for pricing actions
-    bridge_js = """
-    <script>
-    function sendBridge(payload) {
-        var input = window.parent.document.querySelector('input[aria-label="__bridge__"]');
-        if (!input) return;
-        var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-        setter.call(input, JSON.stringify(payload));
-        input.dispatchEvent(new Event('input', {bubbles: true}));
-        input.dispatchEvent(new Event('change', {bubbles: true}));
-        input.focus();
-        input.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true}));
-        setTimeout(()=>input.blur(), 50);
-    }
-    
-    document.addEventListener("DOMContentLoaded", function() {
-        // Intercept trial and signin links
-        document.querySelectorAll("a").forEach(a => {
-            a.addEventListener("click", function(e) {
-                let href = a.getAttribute("href");
-                if (href && href.startsWith("?sub_action=trial")) {
-                    e.preventDefault();
-                    sendBridge({ action: "trial", email: "%s" });
-                } else if (href && href.startsWith("?action=signin")) {
-                    e.preventDefault();
-                    sendBridge({ action: "logout" });
-                }
-            });
-        });
-        
-        // Intercept stripe checkout buttons (simulated)
-        document.querySelectorAll('a[href*="stripe.com"]').forEach(a => {
-            a.addEventListener("click", function(e) {
-                // Let the link open in new tab as intended, but we could track it
-            });
-        });
-    });
-    </script>
-    """ % _ue
-    
-    if "</body>" in html:
-        html = html.replace("</body>", bridge_js + "</body>")
-    else:
-        html += bridge_js
-
-    components.html(html, height=1000, scrolling=True)
-    st.stop()
-
-# ─────────────────────────────────────────────────────────────
-#  MAIN APP — OpenAI client
-# ─────────────────────────────────────────────────────────────
-client = OpenAI(
-    base_url="https://integrate.api.nvidia.com/v1",
-    api_key="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",
-)
-
-# ─────────────────────────────────────────────────────────────
-#  COSMIC DASHBOARD SHELL (Stabilized)
-# ─────────────────────────────────────────────────────────────
-if "active_tab" not in st.session_state:
-    st.session_state.active_tab = "Copilot"
-
-_sub_active2, _sub_expiry2, _is_premium2, _ = _check_sub(st.session_state.user_email)
-if st.session_state.user_email and st.session_state.user_email.lower().strip() in OWNER_EMAILS:
-    _sub_active2 = True
-
-_status_color = "#D53F8C" if _is_premium2 else "#64748B"
-_status_label = "💎 Premium" if _is_premium2 else "Free User"
-_expiry_str = _sub_expiry2.strftime("%b %d, %Y") if _sub_expiry2 else "N/A"
-
-# ── Top Navigation Row ──────────────────────────────────────
-_hcol1, _hcol2, _hcol3 = st.columns([3, 5, 3])
-
-with _hcol1:
-    st.markdown(f"""
-    <div style="display:flex;align-items:center;gap:14px;padding-top:10px;">
-        <div style="width:36px;height:36px;border-radius:10px;background:#D53F8C;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 15px rgba(213,63,140,0.3);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        </div>
-        <div>
-            <div style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;line-height:1;color:#E2E8F0;">
-                <span style="color:#D53F8C;">AI</span> BI Copilot
-            </div>
-            <div style="font-size:.62rem;color:#334155;font-weight:700;text-transform:uppercase;letter-spacing:.12em;">{APP_VERSION}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Synchronize with a native (hidden) radio for stability
-_tab_options = ["🤖 AI Copilot", "📊 Dashboard"]
-_active_idx = 1 if st.session_state.active_tab == "Dashboard" else 0
-selected_tab_label = st.sidebar.radio("Navigation", _tab_options, index=_active_idx, label_visibility="collapsed", key="native_nav_radio")
-
-# Update active_tab based on radio
-if selected_tab_label == "📊 Dashboard" and st.session_state.active_tab != "Dashboard":
-    st.session_state.active_tab = "Dashboard"
-    st.rerun()
-elif selected_tab_label == "🤖 AI Copilot" and st.session_state.active_tab != "Copilot":
-    st.session_state.active_tab = "Copilot"
-    st.rerun()
-
-with _hcol2:
-    st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
-    _tabs_html = ""
-    for i, (t_lbl, t_id) in enumerate([("🤖 AI Copilot", "Copilot"), ("📊 Dashboard", "Dashboard")]):
-        _active_class = "active-tab" if st.session_state.active_tab == t_id else ""
-        _tabs_html += f'<div class="cosmic-tab {_active_class}" onclick="clickNativeTab({i})">{t_lbl}</div>'
-    
-    st.markdown(f"""
-    <div class="cosmic-tabs" style="justify-content:center;">
-        {_tabs_html}
-    </div>
-    """, unsafe_allow_html=True)
-
-with _hcol3:
-    st.markdown(f"""
-    <div style="display:flex;align-items:center;justify-content:flex-end;gap:16px;padding-top:10px;">
-        <div style="text-align:right;">
-            <div style="font-size:.75rem;font-weight:700;color:{_status_color};">{_status_label}</div>
-            <div style="font-size:.62rem;color:#334155;">Until {_expiry_str}</div>
-        </div>
-        <div style="width:38px;height:38px;border-radius:50%;background:rgba(213,63,140,0.2); border:1px solid rgba(213,63,140,0.3);
-            display:flex;align-items:center;justify-content:center;font-family:'Outfit',sans-serif;font-weight:800;color:#D53F8C;font-size:.85rem;cursor:default;">
-            {st.session_state.user_email[:2].upper() if st.session_state.user_email else 'U'}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown('<div style="border-bottom:1px solid rgba(255,255,255,0.06);margin:16px 0 24px;"></div>', unsafe_allow_html=True)
-
-# ─────────────────────────────────────────────────────────────
-#  SIDEBAR
-# ─────────────────────────────────────────────────────────────
-# Sidebar logo + account
-st.sidebar.markdown(
-    f"""
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid rgba(255,255,255,0.06);">
-    <div style="width:32px;height:32px;border-radius:8px;background:#D53F8C;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-    </div>
-    <div>
-        <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;color:#E2E8F0;line-height:1.1;">
-            <span style="color:#D53F8C;">AI</span> BI Copilot
-        </div>
-        <div style="font-size:.65rem;color:#334155;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">Data Workspace</div>
+# Native Flow Flex Header (With MP4 Video)
+st.markdown('''
+<div class="hero-header-section">
+    <div class="main-title">
+        <span class="pink-ai" style="color: #D53F8C !important;">AI </span><span class="title-dark">BI Copilot</span>
     </div>
 </div>
-<div style="margin-bottom:16px;">
-    <div style="font-size:.62rem;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.12em;margin-bottom:8px;">Account</div>
-    <div style="font-size:.8rem;color:#94A3B8;line-height:1.5;">
-        <span style="display:block;color:#E2E8F0;font-weight:600;font-size:.85rem;">{st.session_state.user_email}</span>
-        <span style="color:{_status_color};font-weight:700;">{_status_label}</span> · <span style="color:#475569;">Until {_expiry_str}</span>
-    </div>
+''', unsafe_allow_html=True)
+
+render_bubble()
+
+# ================= SIDEBAR: ACCOUNT INFO =================
+st.sidebar.markdown(f"""
+<div style="padding: 10px 0 14px 0; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 12px;">
+    <div style="font-size: 0.65rem; opacity: 0.5; color: #000000; font-weight: 800;">{APP_VERSION}</div>
+    <div style="font-size: 0.75rem; opacity: 0.6;">Logged in as</div>
+    <div style="font-weight: 700; font-size: 0.9rem; margin-top: 2px;">{st.session_state.user_email or 'Active User'}</div>
+    <div style="font-size: 0.82rem; margin-top: 6px; font-weight: 600; color: #27c93f;">● Active Workspace</div>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 if st.sidebar.button("Logout", use_container_width=True):
     st.session_state.authenticated = False
     st.session_state.user_email = None
     st.rerun()
 
-st.sidebar.markdown(
-    '<div style="margin:20px 0 10px;font-size:.62rem;font-weight:700;color:#334155;text-transform:uppercase;letter-spacing:.12em;">Data Source</div>',
-    unsafe_allow_html=True,
-)
+# ================= SIDEBAR UPLOADER & DB CONNECTION =================
+st.sidebar.header("Data Source")
 
-if "data_source_type" not in st.session_state:
+if 'data_source_type' not in st.session_state:
     st.session_state.data_source_type = "CSV Upload"
 
-
-def _set_src(src):
-    if st.session_state.get("data_source_type") != src and "db_df" in st.session_state:
-        del st.session_state["db_df"]
+def set_data_source(src):
+    if st.session_state.get('data_source_type') != src:
+        if 'db_df' in st.session_state:
+            del st.session_state['db_df']
     st.session_state.data_source_type = src
 
+st.sidebar.button("CSV", 
+                  type="primary" if st.session_state.data_source_type == "CSV Upload" else "secondary",
+                  on_click=set_data_source, args=("CSV Upload",),
+                  use_container_width=True)
 
-# Source buttons — styled to look like sidebar nav items
-for _label_btn, _src_val, _icon_svg in [
-    ("CSV / Excel", "CSV Upload", "📄"),
-    ("Database", "Database Connection", "🗄️"),
-    ("Power BI", "Live Power BI", "📊"),
-]:
-    _is_active = st.session_state.data_source_type == _src_val
-    _btn_type = "primary" if _is_active else "secondary"
-    st.sidebar.button(
-        f"{_icon_svg} {_label_btn}",
-        type=_btn_type,
-        on_click=_set_src,
-        args=(_src_val,),
-        use_container_width=True,
-        key=f"src_btn_{_src_val}",
-    )
+st.sidebar.button("Database", 
+                  type="primary" if st.session_state.data_source_type == "Database Connection" else "secondary",
+                  on_click=set_data_source, args=("Database Connection",),
+                  use_container_width=True)
+
+st.sidebar.button("Power BI", 
+                  type="primary" if st.session_state.data_source_type == "Live Power BI" else "secondary",
+                  on_click=set_data_source, args=("Live Power BI",),
+                  use_container_width=True)
 
 data_source_type = st.session_state.data_source_type
+st.sidebar.caption(f"Currently Active: **{data_source_type}**")
+
 uploaded_files = None
 db_connection_error = None
 
-# ── CSV upload ────────────────────────────────────────────────
 if data_source_type == "CSV Upload":
-    st.sidebar.markdown('<div style="height:10px;"></div>', unsafe_allow_html=True)
-    uploaded_files = st.sidebar.file_uploader(
-        "Upload CSV or Excel", type=["csv", "xlsx", "xls"], accept_multiple_files=True
-    )
+    uploaded_files = st.sidebar.file_uploader("Upload CSV or Excel files", type=['csv', 'xlsx', 'xls'], accept_multiple_files=True)
 
-# ── Database connection ───────────────────────────────────────
 elif data_source_type == "Database Connection":
-    st.sidebar.markdown('<div style="margin:12px 0 6px;font-size:.72rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.1em;">Credentials</div>', unsafe_allow_html=True)
+    st.sidebar.subheader("Database Credentials")
     db_type = st.sidebar.selectbox("Database Type", ["SQL Server", "MySQL"])
-    db_host = st.sidebar.text_input("Host", placeholder="localhost")
-    db_port = st.sidebar.text_input("Port", placeholder="1433 / 3306")
+    db_host = st.sidebar.text_input("Host (e.g., localhost)")
+    db_port = st.sidebar.text_input("Port (e.g., 1433 or 3306)")
     db_user = st.sidebar.text_input("Username")
     db_pass = st.sidebar.text_input("Password", type="password")
     db_name = st.sidebar.text_input("Database Name")
     db_table = st.sidebar.text_input("Table Name")
-    if st.sidebar.button("Connect & Load Data", type="primary", use_container_width=True):
+    
+    if st.sidebar.button("Connect & Load Data", type="primary"):
         if not all([db_host, db_user, db_name, db_table]):
             st.sidebar.error("Please fill in all required fields.")
         else:
             try:
                 safe_pass = urllib.parse.quote_plus(db_pass) if db_pass else ""
-                credentials = f"{db_user}:{safe_pass}" if safe_pass else db_user
+                credentials = f"{db_user}:{safe_pass}" if safe_pass else f"{db_user}"
+                
                 if db_type == "MySQL":
-                    port = db_port or "3306"
+                    port = db_port if db_port else "3306"
                     engine = create_engine(f"mysql+pymysql://{credentials}@{db_host}:{port}/{db_name}")
                 else:
-                    port = db_port or "1433"
+                    port = db_port if db_port else "1433"
+                    # In cloud use FreeTDS (from packages.txt), locally use the official MS driver
                     driver_name = "FreeTDS" if IS_CLOUD else "ODBC+Driver+17+for+SQL+Server"
                     engine = create_engine(f"mssql+pyodbc://{credentials}@{db_host}:{port}/{db_name}?driver={driver_name}")
-                total_rows = pd.read_sql(f"SELECT COUNT(*) FROM {db_table}", engine).iloc[0, 0]
-                lc = st.sidebar.empty()
-                pb = lc.progress(0, text="Connecting... 0%")
-                chunks, rows_fetched = [], 0
+                
+                count_query = f"SELECT COUNT(*) FROM {db_table}"
+                total_rows = pd.read_sql(count_query, engine).iloc[0, 0]
+                
+                loading_container = st.sidebar.empty()
+                progress_bar = loading_container.progress(0, text="Connecting to Database... 0%")
+                
+                query = f"SELECT * FROM {db_table}"
                 chunk_size = max(1000, total_rows // 100) if total_rows > 0 else 1000
-                for chunk in pd.read_sql(f"SELECT * FROM {db_table}", engine, chunksize=chunk_size):
+                chunks = []
+                rows_fetched = 0
+                
+                for chunk in pd.read_sql(query, engine, chunksize=chunk_size):
                     chunks.append(chunk)
                     rows_fetched += len(chunk)
-                    pct = min(int(rows_fetched / total_rows * 100), 99) if total_rows > 0 else 50
-                    pb.progress(pct, text=f"Fetching... {pct}%")
+                    pct = min(int((rows_fetched / total_rows) * 100), 100) if total_rows > 0 else 100
+                    progress_bar.progress(pct, text=f"Fetching data... {pct}% ({rows_fetched:,}/{total_rows:,} rows)")
+                
                 db_df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
-                pb.progress(100, text="Done!")
-                time.sleep(0.4)
-                lc.empty()
-                st.session_state["db_df"] = db_df
-                st.session_state["db_engine"] = engine
-                st.sidebar.success(f"Loaded {len(db_df):,} rows from {db_table}!")
+                
+                progress_bar.progress(100, text="Database loaded successfully! 100%")
+                time.sleep(0.5)
+                loading_container.empty()
+                
+                st.session_state['db_df'] = db_df
+                st.session_state['db_engine'] = engine
+                st.sidebar.success(f"Successfully loaded {len(db_df):,} rows from {db_table}!")
             except Exception as e:
                 db_connection_error = str(e)
                 st.sidebar.error(f"Error: {db_connection_error}")
 
-# ── Power BI ─────────────────────────────────────────────────
 elif data_source_type == "Live Power BI":
-    st.sidebar.markdown('<div style="margin:12px 0 4px;"></div>', unsafe_allow_html=True)
-    st.sidebar.caption("Scans your computer for an open Power BI file.")
+    st.sidebar.subheader("Live Power BI Scanner")
+    st.sidebar.caption("Scans your computer for an open Power BI file and connects to its hidden data engine.")
+    
     if st.sidebar.button("🔍 Scan for Open Power BI", use_container_width=True):
-        found_port = None
-        try:
-            for proc in psutil.process_iter(["name", "pid"]):
-                if proc.info["name"] and "msmdsrv.exe" in proc.info["name"].lower():
-                    for conn in proc.connections(kind="tcp"):
-                        if conn.status == "LISTEN":
-                            found_port = conn.laddr.port
-                            st.session_state["pbi_port"] = found_port
-                            break
-        except Exception as e:
-            st.sidebar.error(f"Scanner error: {e}")
-        if found_port:
-            st.sidebar.success(f"✅ Found Power BI on port {found_port}")
-        else:
-            st.sidebar.warning("⚠️ No active Power BI Desktop found.")
-    if st.session_state.get("pbi_port"):
-        pbi_table = st.sidebar.text_input("Table Name inside Power BI:")
+        with st.spinner("Scanning local ports for msmdsrv.exe..."):
+            found_port = None
+            try:
+                for proc in psutil.process_iter(['name', 'pid']):
+                    if proc.info['name'] and 'msmdsrv.exe' in proc.info['name'].lower():
+                        for conn in proc.connections(kind='tcp'):
+                            if conn.status == 'LISTEN':
+                                found_port = conn.laddr.port
+                                st.session_state['pbi_port'] = found_port
+                                break
+            except Exception as e:
+                st.sidebar.error(f"Scanner error: {e}")
+            
+            if found_port:
+                st.sidebar.markdown(f'<div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 18px; color: #155724; font-family: Inter, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 1rem;">✅ Found Power BI running on Port: {found_port}</div>', unsafe_allow_html=True)
+            else:
+                st.sidebar.markdown('<div style="background-color: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 18px; color: #856404; font-family: Inter, sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 1rem;">⚠️ No active Power BI Desktop file found. Please make sure Power BI Desktop is open on this computer.</div>', unsafe_allow_html=True)
+
+    if 'pbi_port' in st.session_state and st.session_state['pbi_port']:
+        pbi_table = st.sidebar.text_input("Exact Table Name inside Power BI:")
+        
         if st.sidebar.button("Extract Data", type="primary", use_container_width=True):
             if not pbi_table:
-                st.sidebar.warning("Please enter the table name.")
+                st.sidebar.warning("Please enter the name of the table you want to extract.")
             else:
                 try:
-                    port = st.session_state["pbi_port"]
-                    dll_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Microsoft.AnalysisServices.AdomdClient.dll")
+                    port = st.session_state['pbi_port']
+                    current_dir = os.path.dirname(os.path.abspath(__file__))
+                    dll_path = os.path.join(current_dir, "Microsoft.AnalysisServices.AdomdClient.dll")
+                    
                     if not os.path.exists(dll_path):
-                        raise Exception("AdomdClient.dll not found next to app.py.")
-                    import clr
+                        raise Exception("Could not find 'Microsoft.AnalysisServices.AdomdClient.dll' in your app's folder. Please paste it directly next to your app.py file.")
+                        
+                    import clr  # Lazy import to avoid startup crash
                     clr.AddReference(dll_path)
                     import Microsoft.AnalysisServices.AdomdClient as adomd
+                    
                     conn_str = f"Data Source=localhost:{port}"
-                    pbi_conn = adomd.AdomdConnection(conn_str)
-                    pbi_conn.Open()
-                    lc = st.sidebar.empty()
-                    pb = lc.progress(0, text="Extracting... 0%")
-                    cmd = pbi_conn.CreateCommand()
+                    conn = adomd.AdomdConnection(conn_str)
+                    conn.Open()
+                    
+                    loading_container = st.sidebar.empty()
+                    progress_bar = loading_container.progress(0, text="Initializing Power BI Connection... 0%")
+                    
+                    try:
+                        count_cmd = conn.CreateCommand()
+                        count_cmd.CommandText = f"EVALUATE ROW(\"Count\", COUNTROWS('{pbi_table}'))"
+                        count_reader = count_cmd.ExecuteReader()
+                        total_rows = 1000
+                        if count_reader.Read():
+                            total_rows = int(count_reader.GetValue(0))
+                        count_reader.Close()
+                    except:
+                        total_rows = 50000 
+                    
+                    cmd = conn.CreateCommand()
                     cmd.CommandText = f"EVALUATE '{pbi_table}'"
                     reader = cmd.ExecuteReader()
+                    
                     cols = [reader.GetName(i) for i in range(reader.FieldCount)]
-                    data, rc = [], 0
+                    data = []
+                    row_count = 0
+                    
                     while reader.Read():
                         data.append([reader.GetValue(i) for i in range(reader.FieldCount)])
-                        rc += 1
-                        if rc % 500 == 0:
-                            pb.progress(min(rc // 1000, 99), text=f"Extracting {rc:,} rows...")
+                        row_count += 1
+                        if row_count % max(100, total_rows // 100) == 0:
+                            pct = min(int((row_count / total_rows) * 100), 100) if total_rows > 0 else 50
+                            progress_bar.progress(pct, text=f"Extracting data... {pct}% ({row_count:,} rows)")
+                            
+                    progress_bar.progress(100, text="Extraction complete! Finalizing data format... 100%")
+                    time.sleep(0.5)
+                    
                     reader.Close()
-                    pbi_conn.Close()
+                    conn.Close()
+                    
                     db_df = pd.DataFrame(data, columns=cols)
-                    db_df.columns = [c.split("[")[-1].replace("]", "") if "[" in c else c for c in db_df.columns]
-                    pb.progress(100, text="Done!")
-                    time.sleep(0.3)
-                    lc.empty()
-                    st.session_state["db_df"] = db_df
-                    st.sidebar.success(f"Pulled {len(db_df):,} rows from Power BI!")
+                    db_df.columns = [col.split('[')[-1].replace(']', '') if '[' in col else col for col in db_df.columns]
+                    
+                    loading_container.empty()
+                    st.session_state['db_df'] = db_df
+                    st.sidebar.success(f"Successfully pulled {len(db_df):,} rows from Power BI!")
                 except Exception as e:
-                    st.sidebar.error(f"Error: {e}")
+                    db_connection_error = str(e)
+                    st.sidebar.error("Connection failed.")
+                    st.sidebar.error(f"Error Details: {db_connection_error}")
 
-# ─────────────────────────────────────────────────────────────
-#  DATA LOADING
-# ─────────────────────────────────────────────────────────────
-df = None
+# ================= MULTI-TAB ARCHITECTURE =================
+data_container = st.container()
 
-if data_source_type in ["Database Connection", "Live Power BI"] and "db_df" in st.session_state:
-    df = st.session_state["db_df"].copy()
-
-elif data_source_type == "CSV Upload" and uploaded_files:
+with data_container:
+    # ================= LOAD DATA WITH GUARANTEED PROGRESS BAR =================
     try:
-        lc = st.empty()
-        pb = lc.progress(0, text="Reading files... 0%")
-        all_dfs, total_files = [], len(uploaded_files)
-        for idx, uf in enumerate(uploaded_files):
-            ext = os.path.splitext(uf.name)[1].lower()
-            base_pct = int(idx / total_files * 100)
-            pb.progress(min(base_pct, 99), text=f"Reading {uf.name}... {base_pct}%")
-            if ext in [".xlsx", ".xls"]:
-                uf.seek(0)
-                all_dfs.append(pd.read_excel(uf, engine="openpyxl" if ext == ".xlsx" else "xlrd"))
+        if data_source_type in ["Database Connection", "Live Power BI"] and 'db_df' in st.session_state:
+            df = st.session_state['db_df'].copy()
+            
+        elif data_source_type == "CSV Upload" and uploaded_files is not None and len(uploaded_files) > 0:
+            
+            loading_container = st.empty()
+            progress_bar = loading_container.progress(0, text="Initializing File Reader... 0%")
+            
+            all_dfs = []
+            total_files = len(uploaded_files)
+            
+            for file_idx, uploaded_file in enumerate(uploaded_files):
+                file_name = uploaded_file.name
+                file_ext = os.path.splitext(file_name)[1].lower()
+                base_pct = int((file_idx / total_files) * 100)
+                file_pct_range = int(100 / total_files)
+                
+                progress_bar.progress(min(base_pct, 99), text=f"Reading file {file_idx + 1}/{total_files}: {file_name}... {base_pct}%")
+                
+                if file_ext in ['.xlsx', '.xls']:
+                    uploaded_file.seek(0)
+                    file_df = pd.read_excel(uploaded_file, engine='openpyxl' if file_ext == '.xlsx' else 'xlrd')
+                    all_dfs.append(file_df)
+                    done_pct = min(base_pct + file_pct_range, 100)
+                    progress_bar.progress(min(done_pct, 99), text=f"Loaded Excel: {file_name} ({len(file_df):,} rows)... {done_pct}%")
+                else:
+                    uploaded_file.seek(0)
+                    total_lines = sum(1 for _ in uploaded_file) - 1
+                    uploaded_file.seek(0)
+                    
+                    if total_lines > 0:
+                        chunk_size = max(100, total_lines // 20)
+                        chunks = []
+                        rows_read = 0
+                        
+                        for chunk in pd.read_csv(uploaded_file, encoding="latin1", chunksize=chunk_size):
+                            chunks.append(chunk)
+                            rows_read += len(chunk)
+                            inner_pct = min(int((rows_read / total_lines) * file_pct_range), file_pct_range)
+                            progress_bar.progress(min(base_pct + inner_pct, 99), text=f"Reading CSV {file_idx + 1}/{total_files}: {file_name}... {base_pct + inner_pct}% ({rows_read:,}/{total_lines:,} rows)")
+                        
+                        file_df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame()
+                    else:
+                        file_df = pd.read_csv(uploaded_file, encoding="latin1")
+                    all_dfs.append(file_df)
+            
+            df = pd.concat(all_dfs, ignore_index=True) if all_dfs else pd.DataFrame()
+            
+            progress_bar.progress(100, text=f"All {total_files} file(s) loaded successfully! ({len(df):,} total rows) 100%")
+            time.sleep(0.5) 
+            loading_container.empty() 
+            
+        else:
+            if db_connection_error:
+                st.error(f"Connection failed: {db_connection_error}")
             else:
-                uf.seek(0)
-                total_lines = sum(1 for _ in uf) - 1
-                uf.seek(0)
-                chunks, rows_read = [], 0
-                chunk_size = max(100, total_lines // 20) if total_lines > 0 else 500
-                for chunk in pd.read_csv(uf, encoding="latin1", chunksize=chunk_size):
-                    chunks.append(chunk)
-                    rows_read += len(chunk)
-                    inner = min(int(rows_read / max(total_lines, 1) * (100 // total_files)), 100 // total_files)
-                    pb.progress(min(base_pct + inner, 99), text=f"Reading {uf.name}... {base_pct + inner}%")
-                all_dfs.append(pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame())
-        df = pd.concat(all_dfs, ignore_index=True) if all_dfs else pd.DataFrame()
-        pb.progress(100, text=f"Loaded {len(df):,} rows!")
-        time.sleep(0.4)
-        lc.empty()
+                st.warning("⚠️ No data found. Please upload CSV or Excel files, connect to a database, or connect to Live Power BI in the sidebar to get started.")
+            st.stop()
     except Exception as e:
-        st.error(f"Error loading files: {e}")
+        st.error(f"Error loading data: {e}")
+        st.stop()
 
-# ─────────────────────────────────────────────────────────────
-#  EMPTY STATE  (no data connected)
-# ─────────────────────────────────────────────────────────────
-# ─────────────────────────────────────────────────────────────
-#  DATA PREPARATION
-# ─────────────────────────────────────────────────────────────
-if df is not None and not df.empty:
-    _prep_c = st.empty()
-    _prep_bar = _prep_c.progress(5, text="Processing data: Cleaning columns... 5%")
+    # --- TRUE-SYNC DATA PREPARATION BAR ---
+    data_prep_container = st.empty()
     
-    # Clean column names for DuckDB
-    df.columns = df.columns.str.lower().str.replace(r"[^a-z0-9_]", "_", regex=True).str.strip("_")
+    # Determine the label based on the source
+    source_label = "CSV" if data_source_type == "CSV Upload" else "Database" if data_source_type == "Database Connection" else "Power BI"
     
-    # Numeric detection
-    _prep_bar.progress(25, text="Processing data: Detecting numeric columns... 25%")
-    numeric_cols = []
+    data_prep_bar = data_prep_container.progress(5, text=f"Processing {source_label} Data: Cleaning column names... 5%")
+
+    # BULLETPROOF COLUMN CLEANING FOR DUCKDB
+    df.columns = df.columns.str.lower().str.replace(r'[^a-z0-9_]', '_', regex=True).str.strip('_')
+
+    # ================= NUMERIC DETECTION =================
+    data_prep_bar.progress(25, text=f"Processing {source_label} Data: Detecting numeric formats... 25%")
+    numeric_cols=[]
     for col in df.columns:
-        cleaned = df[col].astype(str).str.replace(r"[₹$,]", "", regex=True)
-        converted = pd.to_numeric(cleaned, errors="coerce")
-        if converted.notna().sum() > 0.4 * len(df):
-            df[col] = converted
+        cleaned=df[col].astype(str).str.replace(r"[₹$,]","",regex=True)
+        converted=pd.to_numeric(cleaned,errors="coerce")
+        if converted.notna().sum()>0.4*len(df):
+            df[col]=converted
             numeric_cols.append(col)
-    
-    # Date detection
-    _prep_bar.progress(60, text="Processing data: Parsing dates... 60%")
-    date_cols = []
+
+    # ================= DATE DETECTION =================
+    data_prep_bar.progress(60, text=f"Processing {source_label} Data: Parsing dates and times (this may take a moment)... 60%")
+    date_cols=[]
     for col in df.columns:
-        if col in numeric_cols:
-            continue
+        if col in numeric_cols: continue
         try:
-            converted = pd.to_datetime(df[col].astype(str), errors="coerce", utc=True)
+            converted = pd.to_datetime(df[col].astype(str), errors='coerce', utc=True)
             if converted.notna().sum() > 0.4 * len(df[col].dropna()) and len(df[col].dropna()) > 0:
                 date_cols.append(col)
                 df[col] = converted
-        except Exception:
+        except: 
             pass
-    
-    _prep_bar.progress(85, text="Processing data: Categorizing metrics... 85%")
-    dimension_cols = [c for c in df.columns if c not in numeric_cols and c not in date_cols]
-    
-    business_keywords = ["sales", "revenue", "profit", "margin", "amount", "income", "quantity", "cost", "price", "delay", "duration", "charging", "kw"]
-    business_metrics = [c for c in numeric_cols if any(k in c for k in business_keywords)]
+
+    data_prep_bar.progress(85, text=f"Processing {source_label} Data: Categorizing metrics... 85%")
+    dimension_cols=[c for c in df.columns if c not in numeric_cols and c not in date_cols]
+
+    business_keywords=["sales","revenue","profit","margin","amount","income","quantity","cost","price", "delay", "duration", "charging", "kw"]
+    business_metrics=[c for c in numeric_cols if any(k in c for k in business_keywords)]
     if not business_metrics and numeric_cols:
-        business_metrics = numeric_cols
-    
-    # Sort business metrics by priority
-    _priority_kw = ["sales", "revenue", "profit", "margin", "amount", "quantity", "price", "income", "cost"]
-    business_metrics.sort(key=lambda c: next((i for i, k in enumerate(_priority_kw) if k in c), 999))
-    main_metric = business_metrics[0] if business_metrics else (numeric_cols[0] if numeric_cols else None)
-    
-    _prep_bar.progress(100, text="Processing data: Complete! 100%")
-    time.sleep(0.25)
-    _prep_c.empty()
-else:
-    numeric_cols = []
-    date_cols = []
-    dimension_cols = []
-    business_metrics = []
-    main_metric = None
+        business_metrics=numeric_cols
 
-def render_empty_state():
-    if db_connection_error:
-        st.error(f"Connection failed: {db_connection_error}")
-
-    # Ghost KPIs
-    st.markdown(
-        """
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:8px;">
-        <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.03);margin-bottom:14px;display:flex;align-items:center;justify-content:center;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><rect x="2" y="3" width="6" height="18" rx="1"/><rect x="10" y="8" width="6" height="13" rx="1"/><rect x="18" y="13" width="6" height="8" rx="1"/></svg>
-            </div>
-            <div class="kpi-ghost-bar" style="width:60px;margin-bottom:8px;"></div>
-            <div class="kpi-ghost-bar" style="width:90px;"></div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.03);margin-bottom:14px;display:flex;align-items:center;justify-content:center;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-            </div>
-            <div class="kpi-ghost-bar" style="width:75px;margin-bottom:8px;"></div>
-            <div class="kpi-ghost-bar" style="width:100px;"></div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.03);margin-bottom:14px;display:flex;align-items:center;justify-content:center;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            </div>
-            <div class="kpi-ghost-bar" style="width:50px;margin-bottom:8px;"></div>
-            <div class="kpi-ghost-bar" style="width:80px;"></div>
-        </div>
-        <div style="background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.07);border-radius:18px;padding:20px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.03);margin-bottom:14px;display:flex;align-items:center;justify-content:center;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div class="kpi-ghost-bar" style="width:45px;margin-bottom:8px;"></div>
-            <div class="kpi-ghost-bar" style="width:70px;"></div>
-        </div>
-    </div>
-    <p style="text-align:center;font-size:.62rem;color:#334155;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:28px;">KPI metrics will populate when data is loaded</p>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # Hero empty state
-    st.markdown(
-        """
-    <div style="text-align:center;padding:20px 0 32px;">
-        <div style="position:relative;display:inline-block;margin-bottom:20px;">
-            <div style="position:absolute;inset:-24px;border-radius:50%;background:rgba(213,63,140,0.05);animation:none;"></div>
-            <div style="width:100px;height:100px;border-radius:24px;background:linear-gradient(135deg,rgba(213,63,140,0.15),rgba(159,122,234,0.1));
-                border:1px solid rgba(213,63,140,0.2);display:flex;align-items:center;justify-content:center;margin:0 auto;position:relative;">
-                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D53F8C" stroke-width="1.5">
-                    <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
-                </svg>
-            </div>
-        </div>
-        <h2 style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;color:#E2E8F0;margin:0 0 10px;">No Data Connected Yet</h2>
-        <p style="color:#475569;font-size:.92rem;max-width:500px;margin:0 auto;">Upload a CSV file, connect to a SQL database, or scan your Power BI file in the sidebar to unlock AI insights.</p>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # Connection cards
-    _cc1, _cc2, _cc3 = st.columns(3)
-    _card_style = lambda border_color, icon_bg: f"""background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);
-        border-radius:20px;padding:22px;transition:all .3s;cursor:pointer;
-        display:flex;flex-direction:column;gap:10px;"""
-
-    with _cc1:
-        st.markdown(
-            f"""<div style="{_card_style('#D53F8C','rgba(213,63,140,0.1)')}">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
-                <div style="width:40px;height:40px;border-radius:12px;background:rgba(213,63,140,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D53F8C" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                </div>
-                <div><div style="font-weight:700;color:#E2E8F0;font-size:.9rem;">CSV / Excel</div><div style="font-size:.65rem;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.1em;">Upload</div></div>
-            </div>
-            <p style="color:#64748B;font-size:.8rem;line-height:1.6;margin:0;">Drag & drop any .csv or .xlsx file. AI auto-detects columns, metrics, and data types instantly.</p>
-        </div>""",
-            unsafe_allow_html=True,
-        )
-    with _cc2:
-        st.markdown(
-            f"""<div style="{_card_style('#60A5FA','rgba(59,130,246,0.1)')}">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
-                <div style="width:40px;height:40px;border-radius:12px;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60A5FA" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-                </div>
-                <div><div style="font-weight:700;color:#E2E8F0;font-size:.9rem;">SQL Database</div><div style="font-size:.65rem;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.1em;">Connect</div></div>
-            </div>
-            <p style="color:#64748B;font-size:.8rem;line-height:1.6;margin:0;">Connect to SQL Server or MySQL. Enter credentials in the sidebar to load tables directly.</p>
-        </div>""",
-            unsafe_allow_html=True,
-        )
-    with _cc3:
-        st.markdown(
-            f"""<div style="{_card_style('#EAB308','rgba(234,179,8,0.1)')}">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
-                <div style="width:40px;height:40px;border-radius:12px;background:rgba(234,179,8,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EAB308" stroke-width="2"><rect x="2" y="3" width="6" height="18" rx="1"/><rect x="10" y="8" width="6" height="13" rx="1"/><rect x="18" y="13" width="6" height="8" rx="1"/></svg>
-                </div>
-                <div><div style="font-weight:700;color:#E2E8F0;font-size:.9rem;">Power BI</div><div style="font-size:.65rem;color:#64748B;font-weight:700;text-transform:uppercase;letter-spacing:.1em;">Scan</div></div>
-            </div>
-            <p style="color:#64748B;font-size:.8rem;line-height:1.6;margin:0;">Auto-detect running Power BI Desktop and extract live data from active tables locally.</p>
-        </div>""",
-            unsafe_allow_html=True,
-        )
-
-# ─────────────────────────────────────────────────────────────
-#  HELPER FUNCTIONS
-# ─────────────────────────────────────────────────────────────
-CHART_COLORS = ["#6366F1", "#8B5CF6", "#EC4899", "#F43F5E", "#F97316", "#EAB308", "#22C55E", "#06B6D4", "#3B82F6", "#A855F7"]
-ACCENT = "#6366F1"
-ACCENT2 = "#EC4899"
-POS_COLOR = "#22C55E"
-NEG_COLOR = "#F43F5E"
-
-
-def _label(col):
-    return col.replace("_", " ").strip().title()
-
-
-def _fmt(val, col=""):
-    money_kw = ["sales", "price", "revenue", "amount", "profit", "margin", "cost", "income"]
-    is_m = any(k in col.lower() for k in money_kw)
-    if pd.isna(val):
-        return "N/A"
-    v = float(val)
-    pfx = "$" if is_m else ""
-    if abs(v) >= 1e9:
-        return f"{pfx}{v/1e9:,.1f}B"
-    elif abs(v) >= 1e6:
-        return f"{pfx}{v/1e6:,.1f}M"
-    elif abs(v) >= 1e3:
-        return f"{pfx}{v/1e3:,.1f}K"
-    return f"{pfx}{v:,.2f}" if is_m else f"{v:,.0f}"
-
-
-def _theme(fig, title="", legend=True, height=400):
-    fig.update_layout(
-        title=dict(text=title, font=dict(size=14, color="#E2E8F0", family="Outfit,sans-serif"), x=0.02, y=0.96),
-        plot_bgcolor="rgba(15,17,28,0.95)",
-        paper_bgcolor="rgba(15,17,28,0.95)",
-        font=dict(color="#CBD5E1", family="Inter,sans-serif", size=11),
-        xaxis=dict(gridcolor="rgba(255,255,255,0.04)", zerolinecolor="rgba(255,255,255,0.05)", tickfont=dict(size=10, color="#64748B"), title_font=dict(size=11, color="#64748B"), showline=False),
-        yaxis=dict(gridcolor="rgba(255,255,255,0.04)", zerolinecolor="rgba(255,255,255,0.05)", tickfont=dict(size=10, color="#64748B"), title_font=dict(size=11, color="#64748B"), showline=False),
-        margin=dict(l=50, r=30, t=60, b=50),
-        height=height,
-        showlegend=legend,
-        legend=dict(font=dict(size=10, color="#94A3B8"), bgcolor="rgba(0,0,0,0)"),
-        hoverlabel=dict(bgcolor="#1E293B", font_color="#F1F5F9", bordercolor="rgba(99,102,241,0.3)", font_size=12),
-    )
-    return fig
-
-
-# ─────────────────────────────────────────────────────────────
-#  KPI ROW
-# ─────────────────────────────────────────────────────────────
-def render_kpis():
-    money_kw = ["sales", "price", "revenue", "amount", "profit", "margin", "cost"]
-    _kpi_cols = st.columns(min(4, max(1, len(business_metrics))))
-    for i, col in enumerate(business_metrics[:4]):
-        with _kpi_cols[i]:
-            is_m = any(k in col.lower() for k in money_kw)
-            val = df[col].sum()
-            disp = f"${val:,.2f}" if is_m else f"{val:,.0f}"
-            lbl = _label(col) if len(col) > 4 else col.upper()
-            st.markdown(
-                f"""<div class="kpi-card">
-                <div class="kpi-label">Total {lbl}</div>
-                <div class="kpi-value">{disp}</div>
-            </div>""",
-                unsafe_allow_html=True,
-            )
-
-
-# ─────────────────────────────────────────────────────────────
-#  MAIN RENDERER (Cosmic Tab Management)
-# ─────────────────────────────────────────────────────────────
-if st.session_state.active_tab == "Dashboard":
-    if df is None or df.empty:
-        render_empty_state()
-        st.stop()
-    
-    render_kpis()
-    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-
-    d1 = dimension_cols[0] if dimension_cols else None
-    d2 = dimension_cols[1] if len(dimension_cols) > 1 else d1
-    d3 = dimension_cols[2] if len(dimension_cols) > 2 else d2
-    m1 = numeric_cols[0] if numeric_cols else main_metric
-    m2 = numeric_cols[1] if len(numeric_cols) > 1 else m1
-    m3 = numeric_cols[2] if len(numeric_cols) > 2 else m1
-    dt = date_cols[0] if date_cols else None
-
-    # ── Trend Analysis ─────────────────────────────────────────
-    st.markdown(
-        '<div style="margin:24px 0 12px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">📈 Trend Analysis</span><span style="font-size:.75rem;color:#334155;margin-left:10px;">Performance over time</span></div>',
-        unsafe_allow_html=True,
-    )
-    _t1, _t2 = st.columns(2)
-    with _t1:
-        try:
-            if dt:
-                tmp = df.copy()
-                tmp["_month"] = tmp[dt].dt.to_period("M").astype(str)
-                agg = tmp.groupby("_month")[m1].sum().reset_index().sort_values("_month").tail(24)
-                fig = px.line(agg, x="_month", y=m1, markers=True)
-                fig.update_traces(line=dict(color=ACCENT, width=2.5), marker=dict(size=6, color=ACCENT, line=dict(width=1, color="#fff")), fill="tozeroy", fillcolor="rgba(99,102,241,0.07)")
-                fig = _theme(fig, f"Monthly {_label(m1)} Trend", legend=False)
-                fig.update_layout(xaxis=dict(tickangle=-45))
-                st.plotly_chart(fig, use_container_width=True)
-            elif d1:
-                tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(8, m1).sort_values(m1, ascending=True)
-                fig = px.bar(tmp, x=m1, y=d1, orientation="h")
-                fig.update_traces(marker_color=ACCENT, marker_line_width=0, text=[_fmt(v, m1) for v in tmp[m1]], textposition="outside", textfont=dict(size=10, color="#64748B"))
-                fig = _theme(fig, f"Top 8 {_label(d1)} by {_label(m1)}", legend=False)
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-    with _t2:
-        try:
-            if dt and m2 != m1:
-                tmp = df.copy()
-                tmp["_month"] = tmp[dt].dt.to_period("M").astype(str)
-                agg = tmp.groupby("_month")[m2].sum().reset_index().sort_values("_month").tail(24)
-                fig = px.area(agg, x="_month", y=m2)
-                fig.update_traces(line=dict(color=ACCENT2, width=2), fillcolor="rgba(236,72,153,0.07)")
-                fig = _theme(fig, f"Monthly {_label(m2)} Trend", legend=False)
-                fig.update_layout(xaxis=dict(tickangle=-45))
-                st.plotly_chart(fig, use_container_width=True)
-            elif dt:
-                tmp = df.copy()
-                tmp["_year"] = tmp[dt].dt.year
-                agg = tmp.groupby("_year")[m1].sum().reset_index().sort_values("_year")
-                fig = px.bar(agg, x="_year", y=m1)
-                fig.update_traces(marker_color=ACCENT2, marker_line_width=0, text=[_fmt(v, m1) for v in agg[m1]], textposition="outside", textfont=dict(size=10, color="#64748B"))
-                fig = _theme(fig, f"Yearly {_label(m1)} Summary", legend=False)
-                st.plotly_chart(fig, use_container_width=True)
-            elif d2 and d2 != d1:
-                tmp = df.groupby(d2)[m1].sum().reset_index().nlargest(8, m1).sort_values(m1, ascending=False)
-                fig = px.bar(tmp, x=d2, y=m1)
-                fig.update_traces(marker_color=ACCENT2, marker_line_width=0, text=[_fmt(v, m1) for v in tmp[m1]], textposition="outside", textfont=dict(size=10, color="#64748B"))
-                fig = _theme(fig, f"Top 8 {_label(d2)} by {_label(m1)}", legend=False)
-                fig.update_layout(xaxis=dict(tickangle=-30))
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-
-    # ── Composition ────────────────────────────────────────────
-    st.markdown('<div style="margin:24px 0 12px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">🍩 Composition & Breakdown</span><span style="font-size:.75rem;color:#334155;margin-left:10px;">How values are distributed</span></div>', unsafe_allow_html=True)
-    _c1, _c2 = st.columns(2)
-    with _c1:
-        try:
-            if d1:
-                tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(6, m1)
-                tot = df[m1].sum()
-                shown = tmp[m1].sum()
-                if tot > 0 and (tot - shown) / tot > 0.01:
-                    tmp = pd.concat([tmp, pd.DataFrame({d1: ["Others"], m1: [tot - shown]})], ignore_index=True)
-                fig = px.pie(tmp, names=d1, values=m1, hole=0.55, color_discrete_sequence=CHART_COLORS)
-                fig.update_traces(textposition="outside", textinfo="label+percent", textfont=dict(size=10, color="#CBD5E1"), pull=[0.03] * len(tmp), marker=dict(line=dict(color="#0F111C", width=2)))
-                fig = _theme(fig, f"{_label(m1)} by {_label(d1)}", legend=False)
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-    with _c2:
-        try:
-            td = d2 if d2 and d2 != d1 else (d3 if d3 and d3 != d1 else d1)
-            tm = m2 if m2 != m1 else m1
-            if td:
-                tmp = df.groupby(td)[tm].sum().reset_index().nlargest(6, tm)
-                tot = df[tm].sum()
-                shown = tmp[tm].sum()
-                if tot > 0 and (tot - shown) / tot > 0.01:
-                    tmp = pd.concat([tmp, pd.DataFrame({td: ["Others"], tm: [tot - shown]})], ignore_index=True)
-                fig = px.pie(tmp, names=td, values=tm, color_discrete_sequence=CHART_COLORS[3:])
-                fig.update_traces(textposition="outside", textinfo="label+percent", textfont=dict(size=10, color="#CBD5E1"), marker=dict(line=dict(color="#0F111C", width=2)))
-                fig = _theme(fig, f"{_label(tm)} Share by {_label(td)}", legend=False)
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-
-    # ── Top & Bottom ────────────────────────────────────────────
-    st.markdown('<div style="margin:24px 0 12px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">🏆 Top & Bottom Performers</span><span style="font-size:.75rem;color:#334155;margin-left:10px;">Best and worst categories</span></div>', unsafe_allow_html=True)
-    _r1, _r2 = st.columns(2)
-    with _r1:
-        try:
-            if d1:
-                tmp = df.groupby(d1)[main_metric].sum().reset_index().nlargest(8, main_metric).sort_values(main_metric, ascending=True)
-                fig = px.bar(tmp, x=main_metric, y=d1, orientation="h", color_discrete_sequence=[POS_COLOR])
-                fig.update_traces(marker_line_width=0, text=[_fmt(v, main_metric) for v in tmp[main_metric]], textposition="outside", textfont=dict(size=10, color="#64748B"))
-                fig = _theme(fig, f"🟢 Top 8 {_label(d1)} by {_label(main_metric)}", legend=False, height=380)
-                fig.update_layout(yaxis_title="")
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-    with _r2:
-        try:
-            if d1:
-                tmp = df.groupby(d1)[main_metric].sum().reset_index()
-                tmp = tmp[tmp[main_metric] > 0].nsmallest(8, main_metric).sort_values(main_metric, ascending=False)
-                fig = px.bar(tmp, x=main_metric, y=d1, orientation="h", color_discrete_sequence=[NEG_COLOR])
-                fig.update_traces(marker_line_width=0, text=[_fmt(v, main_metric) for v in tmp[main_metric]], textposition="outside", textfont=dict(size=10, color="#64748B"))
-                fig = _theme(fig, f"🔴 Bottom 8 {_label(d1)} by {_label(main_metric)}", legend=False, height=380)
-                fig.update_layout(yaxis_title="")
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-
-    # ── Distribution ────────────────────────────────────────────
-    st.markdown('<div style="margin:24px 0 12px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">📊 Distribution & Volume</span><span style="font-size:.75rem;color:#334155;margin-left:10px;">Data spread and frequency</span></div>', unsafe_allow_html=True)
-    _d1, _d2 = st.columns(2)
-    with _d1:
-        try:
-            cd = d2 if d2 and d2 != d1 else d1
-            cm = m2 if m2 != m1 else m1
-            if cd:
-                tmp = df.groupby(cd)[cm].sum().reset_index().nlargest(10, cm).sort_values(cm, ascending=False)
-                fig = px.bar(tmp, x=cd, y=cm, color_discrete_sequence=[ACCENT])
-                fig.update_traces(marker_line_width=0, text=[_fmt(v, cm) for v in tmp[cm]], textposition="outside", textfont=dict(size=9, color="#64748B"))
-                fig = _theme(fig, f"{_label(cm)} by {_label(cd)} (Top 10)", legend=False)
-                fig.update_layout(xaxis=dict(tickangle=-30))
-                st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-    with _d2:
-        try:
-            sample = df[m1].dropna()
-            if len(sample) > 5000:
-                sample = sample.sample(5000)
-            fig = px.histogram(sample, x=m1, nbins=25, color_discrete_sequence=["#8B5CF6"])
-            fig.update_traces(marker_line_width=0.5, marker_line_color="#0F111C", opacity=0.85)
-            fig = _theme(fig, f"Distribution of {_label(m1)}", legend=False)
-            fig.update_layout(xaxis_title=_label(m1), yaxis_title="Frequency", bargap=0.03)
-            st.plotly_chart(fig, use_container_width=True)
-        except Exception:
-            pass
-
-    # ── Multi-Metric ────────────────────────────────────────────
-    if len(numeric_cols) >= 2:
-        st.markdown('<div style="margin:24px 0 12px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">⚖️ Multi-Metric Comparison</span><span style="font-size:.75rem;color:#334155;margin-left:10px;">Side-by-side metric analysis</span></div>', unsafe_allow_html=True)
-        _m1, _m2 = st.columns(2)
-        with _m1:
-            try:
-                if d1 and m1 != m2:
-                    tmp = df.groupby(d1).agg({m1: "sum", m2: "sum"}).reset_index().nlargest(8, m1)
-                    fig = px.bar(tmp, x=d1, y=[m1, m2], barmode="group", color_discrete_sequence=[ACCENT, ACCENT2], labels={m1: _label(m1), m2: _label(m2)})
-                    fig.update_traces(marker_line_width=0)
-                    fig = _theme(fig, f"{_label(m1)} vs {_label(m2)} by {_label(d1)}", legend=True)
-                    fig.update_layout(xaxis=dict(tickangle=-30), legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1))
-                    st.plotly_chart(fig, use_container_width=True)
-            except Exception:
-                pass
-        with _m2:
-            try:
-                sm1, sm2 = m1, m3 if m3 != m1 else m2
-                if sm1 != sm2:
-                    sample = df[[sm1, sm2]].dropna()
-                    if len(sample) > 1500:
-                        sample = sample.sample(1500)
-                    fig = px.scatter(sample, x=sm1, y=sm2, color_discrete_sequence=[ACCENT], opacity=0.5)
-                    fig.update_traces(marker=dict(size=5, line=dict(width=0)))
-                    fig = _theme(fig, f"Correlation: {_label(sm1)} vs {_label(sm2)}", legend=False)
-                    st.plotly_chart(fig, use_container_width=True)
-            except Exception:
-                pass
-
-    # ── Summary Table ────────────────────────────────────────────
-    st.markdown('<div style="margin:24px 0 12px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">📋 Data Summary Table</span><span style="font-size:.75rem;color:#334155;margin-left:10px;">Key aggregated metrics at a glance</span></div>', unsafe_allow_html=True)
-    try:
-        if d1:
-            metrics_to_show = [m for m in business_metrics[:4] if m in df.columns] or numeric_cols[:4]
-            agg_dict = {m: ["sum", "mean"] for m in metrics_to_show[:2]}
-            for m in metrics_to_show[2:]:
-                agg_dict[m] = ["sum"]
-            summary = df.groupby(d1).agg(agg_dict).reset_index()
-            summary.columns = [
-                f"{c[0]}_{c[1]}" if c[1] else c[0] for c in summary.columns
-            ]
-            summary.columns = [
-                c.replace("_sum", " (Total)").replace("_mean", " (Avg)").replace("_", " ").strip().title()
-                for c in summary.columns
-            ]
-            scol = [c for c in summary.columns if "(Total)" in c]
-            if scol:
-                summary = summary.sort_values(scol[0], ascending=False)
-            st.dataframe(summary.head(15), use_container_width=True, hide_index=True)
-    except Exception:
-        pass
-
-elif st.session_state.active_tab == "Copilot":
-    if df is None or df.empty:
-        render_empty_state()
+    if not numeric_cols:
+        st.error("⚠️ No numeric columns detected in this dataset. I need at least one metric to aggregate.")
         st.stop()
 
-    render_kpis()
-    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+    # --- SORT BUSINESS METRICS BY PRIORITY ---
+    priority_keywords = ["sales", "revenue", "profit", "margin", "amount", "quantity", "price", "income", "cost"]
+    
+    def get_priority(col_name):
+        lower_col = col_name.lower()
+        for i, pk in enumerate(priority_keywords):
+            if pk in lower_col:
+                return i
+        return 999
 
-    # ── Autonomous Scan ────────────────────────────────────────
-    if st.button("⚡ Run Autonomous Insight Scan", type="primary"):
-        _lc = st.empty()
-        _pb = _lc.progress(0, text="AI Analysis in progress...")
-        num_metrics = df[numeric_cols].agg(["count", "nunique", "max", "min", "sum"])
-        time.sleep(0.4)
-        _pb.progress(25, text="Generated numerical summaries.")
-        dim_insights = {}
-        for dim in dimension_cols:
-            grp = df.groupby(dim)[main_metric].sum()
-            if len(grp) > 1:
-                dim_insights[dim] = grp
-        time.sleep(0.4)
-        _pb.progress(60, text="Analyzed categoricals.")
-        date_insights = {}
-        if date_cols:
-            grp = df.groupby(df[date_cols[0]].dt.year)[main_metric].sum()
-            if len(grp) > 1:
-                date_insights[date_cols[0]] = grp
-        time.sleep(0.3)
-        _pb.progress(100, text="Scan complete!")
-        time.sleep(0.3)
-        _lc.empty()
+    business_metrics.sort(key=get_priority)
+    main_metric = business_metrics[0] if business_metrics else numeric_cols[0]
+    
+    data_prep_bar.progress(100, text=f"Processing {source_label} Data: Complete! 100%")
+    time.sleep(0.3)
+    data_prep_container.empty()
 
-        money_kw = ["sales", "price", "revenue", "amount", "profit", "margin", "cost"]
-        no_sum_cols = ["ordernumber", "orderid", "year", "month", "day", "qtr", "id", "code", "number", "zip", "pin", "phone", "lat", "lon", "index"]
-        sum_allow_kw = ["sales", "revenue", "profit", "margin", "amount", "income", "quantity", "cost", "price", "delay", "duration", "charging", "kw", "unit", "sold", "total"]
+    # ================= TABS =================
+    tab_copilot, tab_dashboard = st.tabs([" AI Copilot & Insights", " Executive Dashboard"])
 
-        def _skip_sum(col):
-            return any(t in col.lower() for t in no_sum_cols) or not any(t in col.lower() for t in sum_allow_kw)
-
-        st.markdown('<div style="margin:16px 0 10px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">🔢 Numerical Insights</span></div>', unsafe_allow_html=True)
-        for i in range(0, len(numeric_cols), 4):
-            _cols = st.columns(4)
-            for j in range(4):
-                if i + j < len(numeric_cols):
-                    col = numeric_cols[i + j]
-                    is_m = any(k in col.lower() for k in money_kw)
-                    mx = num_metrics.loc["max", col]
-                    mn = num_metrics.loc["min", col]
-                    sm = num_metrics.loc["sum", col]
-                    ct = num_metrics.loc["count", col]
-                    uq = num_metrics.loc["nunique", col]
-                    fmt = lambda v: f"${v:,.2f}" if is_m else f"{v:,.0f}"
-                    with _cols[j]:
-                        if _skip_sum(col):
-                            st.markdown(f'<div class="insight-card"><b class="insight-title">{col}</b>Count: {ct:,.0f}<br>Unique: {uq:,}<br>Max: {fmt(mx)}<br>Min: {fmt(mn)}</div>', unsafe_allow_html=True)
-                        else:
-                            st.markdown(f'<div class="insight-card"><b class="insight-title">{col}</b>Total: {fmt(sm)}<br>Unique: {uq:,}<br>Max: {fmt(mx)}<br>Min: {fmt(mn)}</div>', unsafe_allow_html=True)
-
-        if dim_insights:
-            st.markdown('<div style="margin:16px 0 10px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">🗂️ Descriptive Insights</span></div>', unsafe_allow_html=True)
-            for dim, grp in dim_insights.items():
-                is_m = any(k in main_metric.lower() for k in money_kw)
-                bv = grp.max()
-                wv = grp.min()
-                bd = f"${bv:,.2f}" if is_m else f"{bv:,.0f}"
-                wd = f"${wv:,.2f}" if is_m else f"{wv:,.0f}"
-                st.markdown(f'<div class="insight-card"><b class="insight-title">{dim}</b>Best: {grp.idxmax()} ({bd})<br>Worst: {grp.idxmin()} ({wd})</div>', unsafe_allow_html=True)
-
-        if date_insights:
-            st.markdown('<div style="margin:16px 0 10px;"><span style="font-family:\'Outfit\',sans-serif;font-size:1.05rem;font-weight:700;color:#E2E8F0;">📅 Date Insights</span></div>', unsafe_allow_html=True)
-            for d, grp in date_insights.items():
-                is_m = any(k in main_metric.lower() for k in money_kw)
-                bv = grp.max()
-                wv = grp.min()
-                bd = f"${bv:,.2f}" if is_m else f"{bv:,.0f}"
-                wd = f"${wv:,.2f}" if is_m else f"{wv:,.0f}"
-                st.markdown(f'<div class="insight-card"><b class="insight-title">{d}</b>Best Year: {int(grp.idxmax())} ({bd})<br>Worst Year: {int(grp.idxmin())} ({wd})</div>', unsafe_allow_html=True)
-
-    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-
-    # ── AI Copilot Section Header ──────────────────────────────
-    st.markdown(
-        """<div style="background:rgba(213,63,140,0.04);border:1px solid rgba(213,63,140,0.18);border-radius:20px;padding:20px 24px;margin-bottom:16px;">
-        <h3 style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;margin:0 0 4px;">
-            <span style="color:#D53F8C;">AI</span> <span style="color:#E2E8F0;">Copilot</span> <span style="color:#E2E8F0;">Insights</span>
-        </h3>
-        <p style="color:#475569;font-size:.82rem;margin:0;">Ask any business question in plain English — get SQL results, charts & AI analysis instantly.</p></div>""",
-        unsafe_allow_html=True,
-    )
-
-    # ── NLQ Form ───────────────────────────────────────────────
-    if "agg_option" not in st.session_state:
-        st.session_state.agg_option = "None (show raw data)"
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-
-    with st.form("ask_form", border=False):
-        _qcol, _bcol = st.columns([5, 1])
-        with _qcol:
-            q = st.text_input("Question", placeholder='e.g. "Top 5 countries by total sales"', label_visibility="collapsed")
-        with _bcol:
-            ask_pressed = st.form_submit_button("ASK →", type="primary", use_container_width=True)
-
-    agg_option = st.selectbox(
-        "Aggregation override (optional):",
-        ["None (show raw data)", "COUNT", "DISTINCT COUNT", "SUM", "AVG", "MIN", "MAX"],
-        key="agg_option",
-    )
-
-    # Memory status
-    _mc1, _mc2 = st.columns([4, 1])
-    with _mc1:
-        if st.session_state.chat_history:
-            st.markdown(f'<div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.2);border-radius:10px;padding:8px 14px;font-size:.78rem;color:#A5B4FC;">🧠 Memory active — remembering context from last {len(st.session_state.chat_history)} quer{"y" if len(st.session_state.chat_history)==1 else "ies"}.</div>', unsafe_allow_html=True)
-        else:
-            st.markdown('<div style="font-size:.75rem;color:#334155;">🧠 Memory empty — ask a question to start building context.</div>', unsafe_allow_html=True)
-    with _mc2:
-        if st.button("🗑️ Clear", use_container_width=True):
-            st.session_state.chat_history = []
-            st.rerun()
-
-    # ── Intelligence Engine ────────────────────────────────────
-    SYNONYMS = {"product":"productline","products":"productline","item":"productline","category":"productline","order":"ordernumber","orders":"ordernumber","date":"orderdate","country":"country","region":"country","status":"status","city":"city","customer":"customername","territory":"territory","month":"month_id","year":"year_id","performing":"sales","performance":"sales"}
-    MONTH_MAP = {"january":1,"jan":1,"february":2,"feb":2,"march":3,"mar":3,"april":4,"apr":4,"may":5,"june":6,"jun":6,"july":7,"jul":7,"august":8,"aug":8,"september":9,"sep":9,"october":10,"oct":10,"november":11,"nov":11,"december":12,"dec":12}
-    AGG_KEYWORDS = {"total":"SUM","sum":"SUM","average":"AVG","avg":"AVG","mean":"AVG","count":"COUNT","number of":"COUNT","how many":"COUNT","minimum":"MIN","min":"MIN","maximum":"MAX","max":"MAX","distinct":"DISTINCT COUNT","unique":"DISTINCT COUNT"}
-
-    def understand_data_structure():
-        profile = {"table_name":"data","columns":list(df.columns),"dimensions":dimension_cols,"metrics":numeric_cols,"date_fields":date_cols,"sample_values":{},"column_domains":{},"row_count":len(df)}
-        for col in df.columns:
-            if col in dimension_cols:
-                uv = df[col].dropna().unique()
-                profile["sample_values"][col] = {"unique_count":int(len(uv)),"examples":[str(v) for v in uv[:10]]}
-            elif col in numeric_cols:
-                profile["column_domains"][col] = {"min":float(df[col].min()) if not pd.isna(df[col].min()) else 0,"max":float(df[col].max()) if not pd.isna(df[col].max()) else 0,"avg":float(df[col].mean()) if not pd.isna(df[col].mean()) else 0,"sum":float(df[col].sum()) if not pd.isna(df[col].sum()) else 0,"nulls":int(df[col].isna().sum())}
-            elif col in date_cols:
-                nn = df[col].dropna()
-                if len(nn):
-                    profile["column_domains"][col] = {"min_date":str(nn.min()),"max_date":str(nn.max())}
-        return profile
-
-    def _build_schema_ctx():
-        dp = understand_data_structure()
-        lines = []
-        for col in df.columns:
-            ct = "NUMERIC" if col in numeric_cols else ("DATE/TIMESTAMP" if col in date_cols else "TEXT/CATEGORICAL")
-            line = f"  • {col}  [{ct}]"
-            if col in dp["sample_values"]:
-                info = dp["sample_values"][col]
-                line += f"\n      unique_count={info['unique_count']}  sample=[{' | '.join(info['examples'][:12])}]"
-            if col in dp["column_domains"]:
-                dom = dp["column_domains"][col]
-                if "min_date" in dom:
-                    line += f"\n      date_range=[{dom['min_date']} → {dom['max_date']}]"
+    def render_kpis():
+        # ================= KPI =================
+        kpi_cols=st.columns(min(4,max(1, len(business_metrics))))
+        for i,col in enumerate(business_metrics[:4]):
+            with kpi_cols[i]:
+                money_keywords = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost']
+                is_money = any(keyword in col.lower() for keyword in money_keywords)
+                
+                display_label = col.replace('_', ' ').strip().title() if len(col) > 4 else col.upper()
+                
+                if is_money:
+                    kpi_value = f"${df[col].sum():,.2f}"
                 else:
-                    line += f"\n      min={dom['min']:,.2f}  max={dom['max']:,.2f}  avg={dom['avg']:,.2f}  sum={dom['sum']:,.2f}  nulls={dom['nulls']}"
-            lines.append(line)
-        schema_str = "\n".join(lines)
-        freq_lines = []
-        for col in dimension_cols[:8]:
-            try:
-                top = df[col].value_counts().head(5)
-                formatted_items = [f"{v!r} ({c:,})" for v, c in top.items()]
-                freq_lines.append(f"  • {col}: {'  |  '.join(formatted_items)}")
-            except Exception:
-                pass
-        return schema_str, "\n".join(freq_lines) if freq_lines else "(none)", dp
+                    kpi_value = f"{df[col].sum():,.0f}"
+                
+                st.markdown(f"""
+                <div style="padding: 8px 0;">
+                    <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 4px;">Total {display_label}</div>
+                    <div style="font-size: 1.6rem; font-weight: 700; color: #ffffff; word-break: break-all;">{kpi_value}</div>
+                </div>
+                """, unsafe_allow_html=True)
 
-    def _build_prompt(question, agg, schema_str, freq_str="", error_ctx=None):
-        hist = ""
-        if st.session_state.chat_history:
-            hist = "\n=== CONVERSATION HISTORY ===\n"
-            for qp, sp in st.session_state.chat_history[-6:]:
-                hist += f'Q: "{qp}"\nSQL: {sp}\n---\n'
-            hist += "RULE: For follow-ups (it/that/those/same), modify the most recent SQL.\n"
-        err = ""
-        if error_ctx:
-            err = f"\n=== SELF-REPAIR MODE ===\nFailed SQL:\n{error_ctx['sql']}\nError:\n{error_ctx['error']}\nFix ALL issues: typos, missing FROM, GROUP BY, ILIKE for strings, NULLIF for division.\n=========================\n"
-        few_shot = """
-=== FEW-SHOT EXAMPLES ===
+        # Divider removed for tighter UI
+        # st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid rgba(255,154,158,0.2);'>", unsafe_allow_html=True)
+
+    with tab_dashboard:
+        render_kpis()
+
+        # ================= PREMIUM EXECUTIVE DASHBOARD =================
+        # Clean color palette for charts
+        CHART_COLORS = ['#6366F1', '#8B5CF6', '#EC4899', '#F43F5E', '#F97316', '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#A855F7']
+        GRADIENT_COLORS = ['#6366F1', '#818CF8', '#A78BFA', '#C4B5FD']
+        POSITIVE_COLOR = '#22C55E'
+        NEGATIVE_COLOR = '#F43F5E'
+        ACCENT_COLOR = '#6366F1'
+        ACCENT_SECONDARY = '#EC4899'
+
+        def _label(col_name):
+            """Format column names into clean readable labels."""
+            return col_name.replace('_', ' ').strip().title()
+
+        def _fmt_value(val, col_name=''):
+            """Format numeric values with appropriate prefix/suffix."""
+            money_kw = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost', 'income']
+            is_money = any(k in col_name.lower() for k in money_kw)
+            if pd.isna(val):
+                return "N/A"
+            if abs(val) >= 1_000_000_000:
+                return f"${val/1_000_000_000:,.1f}B" if is_money else f"{val/1_000_000_000:,.1f}B"
+            elif abs(val) >= 1_000_000:
+                return f"${val/1_000_000:,.1f}M" if is_money else f"{val/1_000_000:,.1f}M"
+            elif abs(val) >= 1_000:
+                return f"${val/1_000:,.1f}K" if is_money else f"{val/1_000:,.1f}K"
+            else:
+                return f"${val:,.2f}" if is_money else f"{val:,.0f}"
+
+        def _apply_premium_theme(fig, title="", show_legend=True, height=400):
+            """Apply a clean, professional dark theme to any plotly figure."""
+            if not fig:
+                return fig
+            fig.update_layout(
+                title=dict(
+                    text=title,
+                    font=dict(size=15, color='#E2E8F0', family='Outfit, sans-serif'),
+                    x=0.02, y=0.96
+                ),
+                plot_bgcolor='rgba(15, 17, 28, 0.95)',
+                paper_bgcolor='rgba(15, 17, 28, 0.95)',
+                font=dict(color='#CBD5E1', family='Inter, sans-serif', size=11),
+                xaxis=dict(
+                    gridcolor='rgba(255,255,255,0.04)',
+                    zerolinecolor='rgba(255,255,255,0.06)',
+                    title_font=dict(size=11, color='#94A3B8'),
+                    tickfont=dict(size=10, color='#94A3B8'),
+                    showline=False
+                ),
+                yaxis=dict(
+                    gridcolor='rgba(255,255,255,0.04)',
+                    zerolinecolor='rgba(255,255,255,0.06)',
+                    title_font=dict(size=11, color='#94A3B8'),
+                    tickfont=dict(size=10, color='#94A3B8'),
+                    showline=False
+                ),
+                margin=dict(l=50, r=30, t=60, b=50),
+                height=height,
+                showlegend=show_legend,
+                legend=dict(
+                    font=dict(size=10, color='#94A3B8'),
+                    bgcolor='rgba(0,0,0,0)',
+                    bordercolor='rgba(0,0,0,0)'
+                ),
+                hoverlabel=dict(
+                    bgcolor='#1E293B',
+                    font_color='#F1F5F9',
+                    bordercolor='rgba(99,102,241,0.3)',
+                    font_size=12
+                )
+            )
+            return fig
+
+        # Prepare dimension and metric references
+        d1 = dimension_cols[0] if len(dimension_cols) > 0 else None
+        d2 = dimension_cols[1] if len(dimension_cols) > 1 else d1
+        d3 = dimension_cols[2] if len(dimension_cols) > 2 else d2
+        d4 = dimension_cols[3] if len(dimension_cols) > 3 else d1
+        m1 = numeric_cols[0] if len(numeric_cols) > 0 else main_metric
+        m2 = numeric_cols[1] if len(numeric_cols) > 1 else m1
+        m3 = numeric_cols[2] if len(numeric_cols) > 2 else m1
+        m4 = numeric_cols[3] if len(numeric_cols) > 3 else m2
+        dt = date_cols[0] if len(date_cols) > 0 else None
+
+        # ── SECTION 1: Trend / Time Series ──────────────────────────
+        st.markdown("""
+        <div style="margin: 20px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">📈 Trend Analysis</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Performance over time</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        trend_c1, trend_c2 = st.columns(2)
+
+        with trend_c1:
+            try:
+                if dt:
+                    # Monthly trend - aggregate by month for clean view
+                    tmp = df.copy()
+                    tmp['_month'] = tmp[dt].dt.to_period('M').astype(str)
+                    agg = tmp.groupby('_month')[m1].sum().reset_index()
+                    agg = agg.sort_values('_month')
+                    # Keep last 24 months max for readability
+                    if len(agg) > 24:
+                        agg = agg.tail(24)
+                    fig = px.line(agg, x='_month', y=m1, markers=True)
+                    fig.update_traces(
+                        line=dict(color=ACCENT_COLOR, width=2.5),
+                        marker=dict(size=6, color=ACCENT_COLOR, line=dict(width=1, color='#fff'))
+                    )
+                    # Add area fill
+                    fig.update_traces(fill='tozeroy', fillcolor='rgba(99,102,241,0.08)')
+                    fig = _apply_premium_theme(fig, title=f"Monthly {_label(m1)} Trend", show_legend=False)
+                    fig.update_layout(xaxis_title="Month", yaxis_title=_label(m1))
+                    # Rotate x-axis labels for readability
+                    fig.update_layout(xaxis=dict(tickangle=-45))
+                    st.plotly_chart(fig, use_container_width=True)
+                elif d1:
+                    # No date column — show top 8 categories as clean bar
+                    tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(8, m1)
+                    tmp = tmp.sort_values(m1, ascending=True)
+                    fig = px.bar(tmp, x=m1, y=d1, orientation='h')
+                    fig.update_traces(marker_color=ACCENT_COLOR, marker_line_width=0)
+                    # Add value labels
+                    fig.update_traces(text=[_fmt_value(v, m1) for v in tmp[m1]], textposition='outside', textfont=dict(size=10, color='#94A3B8'))
+                    fig = _apply_premium_theme(fig, title=f"Top 8 {_label(d1)} by {_label(m1)}", show_legend=False)
+                    fig.update_layout(xaxis_title=_label(m1), yaxis_title="")
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with trend_c2:
+            try:
+                if dt and m2 != m1:
+                    # Second metric trend
+                    tmp = df.copy()
+                    tmp['_month'] = tmp[dt].dt.to_period('M').astype(str)
+                    agg = tmp.groupby('_month')[m2].sum().reset_index()
+                    agg = agg.sort_values('_month')
+                    if len(agg) > 24:
+                        agg = agg.tail(24)
+                    fig = px.area(agg, x='_month', y=m2)
+                    fig.update_traces(
+                        line=dict(color=ACCENT_SECONDARY, width=2),
+                        fillcolor='rgba(236,72,153,0.08)'
+                    )
+                    fig = _apply_premium_theme(fig, title=f"Monthly {_label(m2)} Trend", show_legend=False)
+                    fig.update_layout(xaxis_title="Month", yaxis_title=_label(m2))
+                    fig.update_layout(xaxis=dict(tickangle=-45))
+                    st.plotly_chart(fig, use_container_width=True)
+                elif dt:
+                    # Yearly summary if only one metric
+                    tmp = df.copy()
+                    tmp['_year'] = tmp[dt].dt.year
+                    agg = tmp.groupby('_year')[m1].sum().reset_index()
+                    agg = agg.sort_values('_year')
+                    fig = px.bar(agg, x='_year', y=m1)
+                    fig.update_traces(marker_color=ACCENT_SECONDARY, marker_line_width=0)
+                    fig.update_traces(text=[_fmt_value(v, m1) for v in agg[m1]], textposition='outside', textfont=dict(size=10, color='#94A3B8'))
+                    fig = _apply_premium_theme(fig, title=f"Yearly {_label(m1)} Summary", show_legend=False)
+                    fig.update_layout(xaxis_title="Year", yaxis_title=_label(m1))
+                    st.plotly_chart(fig, use_container_width=True)
+                elif d2 and d2 != d1:
+                    tmp = df.groupby(d2)[m1].sum().reset_index().nlargest(8, m1)
+                    tmp = tmp.sort_values(m1, ascending=False)
+                    fig = px.bar(tmp, x=d2, y=m1)
+                    fig.update_traces(marker_color=ACCENT_SECONDARY, marker_line_width=0)
+                    fig.update_traces(text=[_fmt_value(v, m1) for v in tmp[m1]], textposition='outside', textfont=dict(size=10, color='#94A3B8'))
+                    fig = _apply_premium_theme(fig, title=f"Top 8 {_label(d2)} by {_label(m1)}", show_legend=False)
+                    fig.update_layout(xaxis_title=_label(d2), yaxis_title=_label(m1))
+                    fig.update_layout(xaxis=dict(tickangle=-30))
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        # ── SECTION 2: Composition & Breakdown ──────────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">🍩 Composition & Breakdown</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">How values are distributed</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        comp_c1, comp_c2 = st.columns(2)
+
+        with comp_c1:
+            # Donut Chart — Top categories by primary metric
+            try:
+                if d1:
+                    tmp = df.groupby(d1)[m1].sum().reset_index().nlargest(6, m1)
+                    # Group remaining as "Others" if there are more
+                    total = df[m1].sum()
+                    shown = tmp[m1].sum()
+                    if total > 0 and (total - shown) / total > 0.01:
+                        others_row = pd.DataFrame({d1: ['Others'], m1: [total - shown]})
+                        tmp = pd.concat([tmp, others_row], ignore_index=True)
+                    fig = px.pie(tmp, names=d1, values=m1, hole=0.55, color_discrete_sequence=CHART_COLORS)
+                    fig.update_traces(
+                        textposition='outside',
+                        textinfo='label+percent',
+                        textfont=dict(size=11, color='#CBD5E1'),
+                        pull=[0.03] * len(tmp),
+                        marker=dict(line=dict(color='#0F111C', width=2))
+                    )
+                    fig = _apply_premium_theme(fig, title=f"{_label(m1)} by {_label(d1)}", show_legend=False)
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with comp_c2:
+            # Pie Chart — Different dimension
+            try:
+                target_d = d2 if d2 and d2 != d1 else (d3 if d3 and d3 != d1 else d1)
+                target_m = m2 if m2 != m1 else m1
+                if target_d:
+                    tmp = df.groupby(target_d)[target_m].sum().reset_index().nlargest(6, target_m)
+                    total = df[target_m].sum()
+                    shown = tmp[target_m].sum()
+                    if total > 0 and (total - shown) / total > 0.01:
+                        others_row = pd.DataFrame({target_d: ['Others'], target_m: [total - shown]})
+                        tmp = pd.concat([tmp, others_row], ignore_index=True)
+                    fig = px.pie(tmp, names=target_d, values=target_m, color_discrete_sequence=CHART_COLORS[3:])
+                    fig.update_traces(
+                        textposition='outside',
+                        textinfo='label+percent',
+                        textfont=dict(size=11, color='#CBD5E1'),
+                        marker=dict(line=dict(color='#0F111C', width=2))
+                    )
+                    fig = _apply_premium_theme(fig, title=f"{_label(target_m)} Share by {_label(target_d)}", show_legend=False)
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        # ── SECTION 3: Rankings & Comparisons ───────────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">🏆 Top & Bottom Performers</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Best and worst performing categories</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        rank_c1, rank_c2 = st.columns(2)
+
+        with rank_c1:
+            # Top 8 — Clean horizontal bar
+            try:
+                rank_d = d1 if d1 else d2
+                if rank_d:
+                    tmp = df.groupby(rank_d)[main_metric].sum().reset_index().nlargest(8, main_metric)
+                    tmp = tmp.sort_values(main_metric, ascending=True)
+                    fig = px.bar(tmp, x=main_metric, y=rank_d, orientation='h', color_discrete_sequence=[POSITIVE_COLOR])
+                    fig.update_traces(
+                        text=[_fmt_value(v, main_metric) for v in tmp[main_metric]],
+                        textposition='outside',
+                        textfont=dict(size=10, color='#94A3B8'),
+                        marker_line_width=0
+                    )
+                    fig = _apply_premium_theme(fig, title=f"🟢 Top 8 {_label(rank_d)} by {_label(main_metric)}", show_legend=False, height=380)
+                    fig.update_layout(xaxis_title=_label(main_metric), yaxis_title="")
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with rank_c2:
+            # Bottom 8 — Red-toned horizontal bar
+            try:
+                rank_d = d1 if d1 else d2
+                if rank_d:
+                    tmp = df.groupby(rank_d)[main_metric].sum().reset_index()
+                    tmp = tmp[tmp[main_metric] > 0].nsmallest(8, main_metric)
+                    tmp = tmp.sort_values(main_metric, ascending=False)
+                    fig = px.bar(tmp, x=main_metric, y=rank_d, orientation='h', color_discrete_sequence=[NEGATIVE_COLOR])
+                    fig.update_traces(
+                        text=[_fmt_value(v, main_metric) for v in tmp[main_metric]],
+                        textposition='outside',
+                        textfont=dict(size=10, color='#94A3B8'),
+                        marker_line_width=0
+                    )
+                    fig = _apply_premium_theme(fig, title=f"🔴 Bottom 8 {_label(rank_d)} by {_label(main_metric)}", show_legend=False, height=380)
+                    fig.update_layout(xaxis_title=_label(main_metric), yaxis_title="")
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        # ── SECTION 4: Column Chart & Distribution ──────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">📊 Distribution & Volume</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Data spread and frequency</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        dist_c1, dist_c2 = st.columns(2)
+
+        with dist_c1:
+            # Clean Column Chart — second dimension or second metric
+            try:
+                chart_d = d2 if d2 and d2 != d1 else d1
+                chart_m = m2 if m2 != m1 else m1
+                if chart_d:
+                    tmp = df.groupby(chart_d)[chart_m].sum().reset_index().nlargest(10, chart_m)
+                    tmp = tmp.sort_values(chart_m, ascending=False)
+                    fig = px.bar(tmp, x=chart_d, y=chart_m, color_discrete_sequence=[ACCENT_COLOR])
+                    fig.update_traces(
+                        text=[_fmt_value(v, chart_m) for v in tmp[chart_m]],
+                        textposition='outside',
+                        textfont=dict(size=9, color='#94A3B8'),
+                        marker_line_width=0
+                    )
+                    fig = _apply_premium_theme(fig, title=f"{_label(chart_m)} by {_label(chart_d)} (Top 10)", show_legend=False)
+                    fig.update_layout(
+                        xaxis_title=_label(chart_d),
+                        yaxis_title=_label(chart_m),
+                        xaxis=dict(tickangle=-30)
+                    )
+                    st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        with dist_c2:
+            # Distribution Histogram — clean & readable
+            try:
+                sample = df[m1].dropna()
+                if len(sample) > 5000:
+                    sample = sample.sample(5000)
+                fig = px.histogram(sample, x=m1, nbins=25, color_discrete_sequence=['#8B5CF6'])
+                fig.update_traces(marker_line_width=0.5, marker_line_color='#0F111C', opacity=0.85)
+                fig = _apply_premium_theme(fig, title=f"Distribution of {_label(m1)}", show_legend=False)
+                fig.update_layout(
+                    xaxis_title=_label(m1),
+                    yaxis_title="Frequency",
+                    bargap=0.03
+                )
+                st.plotly_chart(fig, use_container_width=True)
+            except: pass
+
+        # ── SECTION 5: Multi-Metric Comparison ──────────────────────
+        if len(numeric_cols) >= 2:
+            st.markdown("""
+            <div style="margin: 25px 0 10px 0;">
+                <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">⚖️ Multi-Metric Comparison</span>
+                <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Side-by-side metric analysis</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            multi_c1, multi_c2 = st.columns(2)
+
+            with multi_c1:
+                # Grouped bar — two metrics across a dimension
+                try:
+                    compare_d = d1 if d1 else d2
+                    if compare_d and m1 != m2:
+                        tmp = df.groupby(compare_d).agg({m1: 'sum', m2: 'sum'}).reset_index()
+                        tmp = tmp.nlargest(8, m1)
+                        fig = px.bar(
+                            tmp, x=compare_d, y=[m1, m2],
+                            barmode='group',
+                            color_discrete_sequence=[ACCENT_COLOR, ACCENT_SECONDARY],
+                            labels={m1: _label(m1), m2: _label(m2)}
+                        )
+                        fig.update_traces(marker_line_width=0)
+                        fig = _apply_premium_theme(fig, title=f"{_label(m1)} vs {_label(m2)} by {_label(compare_d)}", show_legend=True)
+                        fig.update_layout(
+                            xaxis_title="",
+                            yaxis_title="Value",
+                            xaxis=dict(tickangle=-30),
+                            legend=dict(orientation='h', yanchor='bottom', y=1.02, xanchor='right', x=1)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                except: pass
+
+            with multi_c2:
+                # Scatter / Correlation
+                try:
+                    scatter_m1 = m1
+                    scatter_m2 = m3 if m3 != m1 else m2
+                    if scatter_m1 != scatter_m2:
+                        sample = df[[scatter_m1, scatter_m2]].dropna()
+                        if len(sample) > 1500:
+                            sample = sample.sample(1500)
+                        fig = px.scatter(
+                            sample, x=scatter_m1, y=scatter_m2,
+                            color_discrete_sequence=[ACCENT_COLOR],
+                            opacity=0.5
+                        )
+                        fig.update_traces(marker=dict(size=5, line=dict(width=0)))
+                        fig = _apply_premium_theme(fig, title=f"Correlation: {_label(scatter_m1)} vs {_label(scatter_m2)}", show_legend=False)
+                        fig.update_layout(
+                            xaxis_title=_label(scatter_m1),
+                            yaxis_title=_label(scatter_m2)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                except: pass
+
+        # ── SECTION 6: Data Summary Table ───────────────────────────
+        st.markdown("""
+        <div style="margin: 25px 0 10px 0;">
+            <span style="font-family: 'Outfit', sans-serif; font-size: 1.1rem; font-weight: 700; color: #E2E8F0;">📋 Data Summary Table</span>
+            <span style="font-size: 0.78rem; color: #64748B; margin-left: 10px;">Key aggregated metrics at a glance</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        try:
+            summary_d = d1 if d1 else d2
+            if summary_d:
+                # Build a clean summary table with top categories
+                metrics_to_show = [m for m in business_metrics[:4] if m in df.columns]
+                if not metrics_to_show:
+                    metrics_to_show = numeric_cols[:4]
+                agg_dict = {m: ['sum', 'mean', 'count'] for m in metrics_to_show[:2]}
+                if len(metrics_to_show) > 2:
+                    for m in metrics_to_show[2:]:
+                        agg_dict[m] = ['sum']
+
+                summary = df.groupby(summary_d).agg(agg_dict).reset_index()
+                # Flatten multi-level columns
+                summary.columns = [f"{col[0]}_{col[1]}" if col[1] else col[0] for col in summary.columns]
+                summary.columns = [c.replace('_sum', ' (Total)').replace('_mean', ' (Avg)').replace('_count', ' (Count)').replace('_', ' ').strip().title() for c in summary.columns]
+                # Sort by first total column
+                sort_col = [c for c in summary.columns if '(Total)' in c]
+                if sort_col:
+                    summary = summary.sort_values(sort_col[0], ascending=False)
+                summary = summary.head(15)
+                st.dataframe(summary, use_container_width=True, hide_index=True)
+        except: pass
+
+    with tab_copilot:
+        render_kpis()
+        # Reset spacing to natural alignment
+        st.markdown("""<style>
+        [data-testid="stButton"] { margin-top: 0px; }
+        </style>""", unsafe_allow_html=True)
+
+        # ================= AUTONOMOUS INSIGHT =================
+        if st.button("Run Autonomous Insight Scan", type="primary"):
+        
+            # Phase 1: Computation (Hidden with a standardized 1-100% sync bar)
+            loading_container = st.empty()
+            pbar = loading_container.progress(0, text="AI Analysis in progress...")
+        
+            # Math: Numerics (0% -> 25%)
+            num_metrics = df[numeric_cols].agg(['count', 'nunique', 'max', 'min', 'sum'])
+            time.sleep(0.5) 
+            pbar.progress(25, text="Generated Numerical summaries.")
+        
+            # Math: Dimensions (25% -> 60%)
+            dim_insights = {}
+            no_chart_terms = ['ordernumber', 'orderid', 'phone', 'zip', 'zipcode', 'customername', 'customerid']
+            money_keywords = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost']
+            for dim in dimension_cols:
+                grp=df.groupby(dim)[main_metric].sum()
+                if len(grp)>1:
+                    dim_insights[dim] = grp
+            time.sleep(0.5)
+            pbar.progress(60, text="Analyzed Descriptors & Categoricals.")
+
+            # Math: Dates (60% -> 90%)
+            date_insights = {}
+            if date_cols:
+                grp=df.groupby(df[date_cols[0]].dt.year)[main_metric].sum()
+                if len(grp)>1:
+                    date_insights[date_cols[0]] = grp
+            time.sleep(0.5)
+            pbar.progress(90, text="Finalizing Time-Series processing.")
+
+            # Complete! (90% -> 100%)
+            time.sleep(0.3)
+            pbar.progress(100, text="Scan Complete! Preparing visuals.")
+            time.sleep(0.3)
+            loading_container.empty()
+
+            # Phase 2: Instant UI Rendering (Math is already done)
+            st.subheader("Numerical Insights")
+            no_sum_columns = ['ordernumber', 'orderid', 'year', 'month', 'day', 'qtr', 'quarter', 'id', 'code', 'number', 'zip', 'pin', 'phone', 'lat', 'lon', 'latitude', 'longitude', 'index', 'version']
+            sum_allow_keywords = ["sales", "revenue", "profit", "margin", "amount", "income", "quantity", "cost", "price", "delay", "duration", "charging", "kw", "unit", "sold", "total"]
+            money_keywords = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost']
+
+            def _should_skip_sum(col):
+                is_no_sum = any(term in col.lower() for term in no_sum_columns)
+                is_sum_allowed = any(term in col.lower() for term in sum_allow_keywords)
+                return is_no_sum or not is_sum_allowed
+
+            for i in range(0,len(numeric_cols),4):
+                cols=st.columns(4)
+                for j in range(4):
+                    if i+j<len(numeric_cols):
+                        col=numeric_cols[i+j]
+                    
+                        count_val = num_metrics.loc['count', col]
+                        unique_val = num_metrics.loc['nunique', col]
+                        max_raw = num_metrics.loc['max', col]
+                        min_raw = num_metrics.loc['min', col]
+                        sum_raw = num_metrics.loc['sum', col]
+                        is_money = any(keyword in col.lower() for keyword in money_keywords)
+                    
+                        with cols[j]:
+                            if _should_skip_sum(col):
+                                if is_money:
+                                    max_val = f"${max_raw:,.2f}"
+                                    min_val = f"${min_raw:,.2f}"
+                                else:
+                                    max_val = f"{max_raw:,.0f}"
+                                    min_val = f"{min_raw:,.0f}"
+                            
+                                st.markdown(f"""
+                                <div class="insight-card">
+                                <b class="insight-title">{col}</b><br>
+                                Count: {count_val:,.0f}<br>
+                                Unique: {unique_val:,}<br>
+                                Max: {max_val}<br>
+                                Min: {min_val}
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                if is_money:
+                                    total_display = f"${sum_raw:,.2f}"
+                                    max_display = f"${max_raw:,.2f}"
+                                    min_display = f"${min_raw:,.2f}"
+                                else:
+                                    total_display = f"{sum_raw:,.0f}"
+                                    max_display = f"{max_raw:,.0f}"
+                                    min_display = f"{min_raw:,.0f}"
+                            
+                                st.markdown(f"""
+                                <div class="insight-card">
+                                <b class="insight-title">{col}</b><br>
+                                Total: {total_display}<br>
+                                Unique: {unique_val:,}<br>
+                                Max: {max_display}<br>
+                                Min: {min_display}
+                                </div>
+                                """, unsafe_allow_html=True)
+
+            st.subheader("Descriptive Insights")
+            for dim, grp in dim_insights.items():
+                money_keywords = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost']
+                is_money = any(keyword in main_metric.lower() for keyword in money_keywords)
+                best_value = grp.max()
+                worst_value = grp.min()
+            
+                if is_money:
+                    best_display = f"${best_value:,.2f}"
+                    worst_display = f"${worst_value:,.2f}"
+                else:
+                    best_display = f"{best_value:,.0f}"
+                    worst_display = f"{worst_value:,.0f}"
+            
+                st.markdown(f"""
+                <div class="insight-card">
+                <b class="insight-title">{dim}</b><br>
+                Best: {grp.idxmax()} ({best_display})<br>
+                Worst: {grp.idxmin()} ({worst_display})
+                </div>
+                """, unsafe_allow_html=True)
+
+            if date_insights:
+                st.subheader("Date Insights")
+                for d, grp in date_insights.items():
+                    money_keywords = ['sales', 'price', 'revenue', 'amount', 'profit', 'margin', 'cost']
+                    is_money = any(keyword in main_metric.lower() for keyword in money_keywords)
+                    best_value = grp.max()
+                    worst_value = grp.min()
+                
+                    if is_money:
+                        best_display = f"${best_value:,.2f}"
+                        worst_display = f"${worst_value:,.2f}"
+                    else:
+                        best_display = f"{best_value:,.0f}"
+                        worst_display = f"{worst_value:,.0f}"
+                
+                    st.markdown(f"""
+                    <div class="insight-card">
+                    <b class="insight-title">{d}</b><br>
+                    Best Year: {int(grp.idxmax())} ({best_display})<br>
+                    Worst Year: {int(grp.idxmin())} ({worst_display})
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        # Custom tight divider to save vertical space
+        # Divider removed to lift bottom content
+        # st.markdown("<hr style='margin: 10px 0; border: none; border-top: 1px solid rgba(255,154,158,0.2);'>", unsafe_allow_html=True)    
+        # ================= ⭐ SMART BI ENGINE =================
+
+        SYNONYMS={
+            "product":"productline",
+            "products":"productline",
+            "item":"productline",
+            "category":"productline",
+            "order":"ordernumber",
+            "orders":"ordernumber",
+            "date":"orderdate",
+            "orderdate":"orderdate",
+            "country":"country",
+            "region":"country",
+            "status":"status",
+            "address":"addressline1",
+            "city":"city",
+            "customer":"customername",
+            "customername":"customername",
+            "contact":"contactfirstname",
+            "firstname":"contactfirstname",
+            "territory":"territory",
+            "month":"month_id",
+            "year":"year_id",
+            "performing":"sales",
+            "performance":"sales"
+        }
+
+        MONTH_MAP = {
+            'january': 1, 'jan': 1,
+            'february': 2, 'feb': 2,
+            'march': 3, 'mar': 3,
+            'april': 4, 'apr': 4,
+            'may': 5,
+            'june': 6, 'jun': 6,
+            'july': 7, 'jul': 7,
+            'august': 8, 'aug': 8,
+            'september': 9, 'sep': 9,
+            'october': 10, 'oct': 10,
+            'november': 11, 'nov': 11,
+            'december': 12, 'dec': 12
+        }
+
+        AGG_KEYWORDS = {
+            'total': 'SUM',
+            'sum': 'SUM',
+            'average': 'AVG',
+            'avg': 'AVG',
+            'mean': 'AVG',
+            'count': 'COUNT',
+            'number of': 'COUNT',
+            'how many': 'COUNT',
+            'minimum': 'MIN',
+            'min': 'MIN',
+            'maximum': 'MAX',
+            'max': 'MAX',
+            'distinct': 'DISTINCT COUNT',
+            'unique': 'DISTINCT COUNT'
+        }
+
+        SPECIAL_PATTERNS = {
+            'shortest': 'LENGTH',
+            'longest': 'LENGTH',
+            'smallest': 'MIN',
+            'largest': 'MAX',
+            'earliest': 'MIN',
+            'latest': 'MAX',
+            'first': 'MIN',
+            'last': 'MAX'
+        }
+
+        def understand_data_structure():
+            data_profile = {
+                "table_name": "data",
+                "columns": list(df.columns),
+                "dimensions": dimension_cols,
+                "metrics": numeric_cols,
+                "date_fields": date_cols,
+                "sample_values": {},
+                "column_domains": {},
+                "row_count": len(df)
+            }
+        
+            for col in df.columns:
+                if col in dimension_cols:
+                    unique_vals = df[col].dropna().unique()
+                    data_profile["sample_values"][col] = {
+                        "unique_count": int(len(unique_vals)),
+                        "examples": [str(v) for v in unique_vals[:10]]
+                    }
+                elif col in numeric_cols:
+                    data_profile["column_domains"][col] = {
+                        "min": float(df[col].min()) if not pd.isna(df[col].min()) else 0,
+                        "max": float(df[col].max()) if not pd.isna(df[col].max()) else 0,
+                        "avg": float(df[col].mean()) if not pd.isna(df[col].mean()) else 0,
+                        "sum": float(df[col].sum()) if not pd.isna(df[col].sum()) else 0,
+                        "nulls": int(df[col].isna().sum())
+                    }
+                elif col in date_cols:
+                    non_null = df[col].dropna()
+                    if len(non_null) > 0:
+                        data_profile["column_domains"][col] = {
+                            "min_date": str(non_null.min()),
+                            "max_date": str(non_null.max())
+                        }
+        
+            return data_profile
+
+        def is_powerbi_related(question):
+            powerbi_keywords = [
+                "data", "analysis", "analyze", "analytics", "dashboard", "report",
+                "visualization", "chart", "graph", "plot", "insight", "metric",
+                "kpi", "measure", "dimension", "filter", "segment", "trend",
+                "comparison", "distribution", "correlation", "pattern", "outlier",
+                "sales", "revenue", "profit", "customer", "product", "order",
+                "quantity", "price", "cost", "margin", "country", "region",
+                "date", "time", "year", "month", "quarter", "total", "average",
+                "sum", "count", "minimum", "maximum", "top", "bottom", "best",
+                "worst", "highest", "lowest", "performance", "growth", "decline",
+                "shortest", "longest", "earliest", "latest", "smallest", "largest",
+                "first", "last", "performing"
+            ]
+        
+            question_lower = question.lower()
+            for keyword in powerbi_keywords:
+                if keyword in question_lower:
+                    return True
+            for col in df.columns:
+                if col in question_lower:
+                    return True
+            return True
+
+        def resolve_col(text, pool):
+            text=text.lower()
+            for word,col in SYNONYMS.items():
+                if word in text and col in pool:
+                    return col
+            for c in pool:
+                if c in text:
+                    return c
+            tokens=text.split()
+            scores={c:sum(1 for t in tokens if t in c) for c in pool}
+            best=max(scores,key=scores.get)
+            return best
+
+        def resolve_col_from_phrase(phrase, pool):
+            phrase = phrase.lower()
+            for word, col in SYNONYMS.items():
+                if word == phrase and col in pool:
+                    return col
+            for col in pool:
+                if phrase == col or col in phrase or phrase in col:
+                    return col
+            words = phrase.split()
+            for col in pool:
+                col_lower = col.lower()
+                for word in words:
+                    if word in col_lower:
+                        return col
+            return None
+
+        def detect_aggregation_from_question(question):
+            q = question.lower()
+            for keyword, agg_type in AGG_KEYWORDS.items():
+                if keyword in q:
+                    return agg_type
+            return None
+
+        def extract_time_filter(q):
+            month = None
+            year = None
+            for month_name, month_num in MONTH_MAP.items():
+                if month_name in q:
+                    month = month_num
+                    break
+            year_match = re.search(r'\b(19|20)\d{2}\b', q)
+            if year_match:
+                year = year_match.group(0)
+            return month, year
+
+        def handle_special_queries(question):
+            q = question.lower()
+            for pattern, operation in SPECIAL_PATTERNS.items():
+                if pattern in q:
+                    target_col = None
+                    for col in df.columns:
+                        if col in q:
+                            target_col = col
+                            break
+                    if not target_col:
+                        for word, col in SYNONYMS.items():
+                            if word in q and col in df.columns:
+                                target_col = col
+                                break
+                    if target_col:
+                        if operation == 'LENGTH':
+                            if pattern == 'shortest':
+                                df_copy = df.copy()
+                                df_copy['name_length'] = df_copy[target_col].astype(str).str.len()
+                                result = df_copy.loc[df_copy['name_length'].idxmin(), target_col]
+                                return pd.DataFrame({f"shortest_{target_col}": [result]})
+                            elif pattern == 'longest':
+                                df_copy = df.copy()
+                                df_copy['name_length'] = df_copy[target_col].astype(str).str.len()
+                                result = df_copy.loc[df_copy['name_length'].idxmax(), target_col]
+                                return pd.DataFrame({f"longest_{target_col}": [result]})
+                        else:
+                            con = duckdb.connect()
+                            try:
+                                con.register("data", df)
+                                if pattern in ['smallest', 'earliest', 'first']:
+                                    sql = f"SELECT MIN({target_col}) as {pattern}_{target_col} FROM data"
+                                elif pattern in ['largest', 'latest', 'last']:
+                                    sql = f"SELECT MAX({target_col}) as {pattern}_{target_col} FROM data"
+                                return con.execute(sql).df()
+                            finally:
+                                con.close()
+            return None
+
+        def handle_time_filtered_questions(question, selected_agg):
+            q = question.lower()
+            month, year = extract_time_filter(q)
+            if month and ('sales' in q or 'revenue' in q or 'total' in q):
+                date_col = None
+                for col in date_cols:
+                    if 'date' in col:
+                        date_col = col
+                        break
+                if not date_col and date_cols:
+                    date_col = date_cols[0]
+            
+                if date_col:
+                    metric_col = None
+                    for col in numeric_cols:
+                        if 'sales' in col or 'revenue' in col or 'amount' in col:
+                            metric_col = col
+                            break
+                    if not metric_col and numeric_cols:
+                        metric_col = numeric_cols[0]
+                
+                    where_clauses = [f"EXTRACT(MONTH FROM {date_col}) = {month}"]
+                    if year:
+                        where_clauses.append(f"EXTRACT(YEAR FROM {date_col}) = {year}")
+                    where_sql = " AND ".join(where_clauses)
+                
+                    con = duckdb.connect()
+                    try:
+                        con.register("data", df)
+                        if 'total' in q or 'sum' in q:
+                            sql = f"SELECT SUM({metric_col}) as total_sales FROM data WHERE {where_sql}"
+                        elif 'average' in q or 'avg' in q:
+                            sql = f"SELECT AVG({metric_col}) as avg_sales FROM data WHERE {where_sql}"
+                        elif 'count' in q:
+                            sql = f"SELECT COUNT({metric_col}) as order_count FROM data WHERE {where_sql}"
+                        elif selected_agg != "None (show raw data)":
+                            if selected_agg == "SUM":
+                                sql = f"SELECT SUM({metric_col}) as total_sales FROM data WHERE {where_sql}"
+                            elif selected_agg == "AVG":
+                                sql = f"SELECT AVG({metric_col}) as avg_sales FROM data WHERE {where_sql}"
+                            elif selected_agg == "COUNT":
+                                sql = f"SELECT COUNT({metric_col}) as order_count FROM data WHERE {where_sql}"
+                            elif selected_agg == "MIN":
+                                sql = f"SELECT MIN({metric_col}) as min_sales FROM data WHERE {where_sql}"
+                            elif selected_agg == "MAX":
+                                sql = f"SELECT MAX({metric_col}) as max_sales FROM data WHERE {where_sql}"
+                            else:
+                                sql = f"SELECT SUM({metric_col}) as total_sales FROM data WHERE {where_sql}"
+                        else:
+                            sql = f"SELECT SUM({metric_col}) as total_sales FROM data WHERE {where_sql}"
+                    
+                        result = con.execute(sql).df()
+                        return result
+                    finally:
+                        con.close()
+            return None
+
+        # ================= AGGREGATION SELECTOR =================
+        if 'agg_option' not in st.session_state:
+            st.session_state.agg_option = "None (show raw data)"
+
+        if 'chat_history' not in st.session_state:
+            st.session_state.chat_history = []
+
+        # ================= NLQ =================
+        st.markdown("""
+        <h3 style='margin-top: 0px; margin-bottom: 0px; font-weight: 800; font-family: Outfit, sans-serif;'>
+        <span class='pink-ai' style='color: #D53F8C !important;'>AI</span> 
+        <span style='color: #000000 !important;'>Copilot</span> 
+        <span style='color: #000000 !important;'>Insights</span>
+        </h3>
+        """, unsafe_allow_html=True)
+        with st.form("ask_form", border=False):
+            col1, col2 = st.columns([5, 1])
+            with col1:
+                q = st.text_input("Ask business question", placeholder="Ask your question here...", label_visibility="collapsed")
+            with col2:
+                ask_pressed = st.form_submit_button("ASK", type="primary", use_container_width=True)
+
+        agg_option = st.selectbox(
+            "Select aggregation type (optional override):",
+            ["None (show raw data)", "COUNT", "DISTINCT COUNT", "SUM", "AVG", "MIN", "MAX"],
+            key="agg_option"
+        )
+
+        st.caption("💡 Ask anything about your data in plain English!")
+
+        mem_col1, mem_col2 = st.columns([4, 1])
+        with mem_col1:
+            if len(st.session_state.chat_history) > 0:
+                st.info(f"🧠 Memory active: Remembering context from last {len(st.session_state.chat_history)} queries.")
+            else:
+                st.caption("🧠 Memory empty. Ask a question to start building context.")
+        with mem_col2:
+            if st.button("🗑️ Clear Context", use_container_width=True):
+                st.session_state.chat_history = []
+                st.rerun()
+
+        # =====================================================================
+        # ============== ⭐ UPGRADED INTELLIGENCE ENGINE BELOW ================
+        # =====================================================================
+
+        def _build_schema_context():
+            """Build an ultra-rich schema context with statistics, value distributions,
+            and data-type metadata so the LLM never has to guess column names or types."""
+            data_profile = understand_data_structure()
+            schema_lines = []
+
+            for col in df.columns:
+                if col in numeric_cols:
+                    col_type = "NUMERIC"
+                elif col in date_cols:
+                    col_type = "DATE/TIMESTAMP"
+                else:
+                    col_type = "TEXT/CATEGORICAL"
+
+                line = f"  • {col}  [{col_type}]"
+
+                if col in data_profile["sample_values"]:
+                    info = data_profile["sample_values"][col]
+                    examples_str = " | ".join(info["examples"][:12])
+                    line += f"\n      unique_count={info['unique_count']}  sample_values=[{examples_str}]"
+
+                if col in data_profile["column_domains"]:
+                    dom = data_profile["column_domains"][col]
+                    if "min_date" in dom:
+                        line += f"\n      date_range=[{dom['min_date']}  →  {dom['max_date']}]"
+                    else:
+                        line += (
+                            f"\n      min={dom['min']:,.2f}  max={dom['max']:,.2f}"
+                            f"  avg={dom['avg']:,.2f}  total_sum={dom['sum']:,.2f}"
+                            f"  null_count={dom['nulls']}"
+                        )
+
+                schema_lines.append(line)
+
+            schema_str = "\n".join(schema_lines)
+
+            # Extra: build a top-5 value frequency table for each dimension (helps string matching)
+            freq_lines = []
+            for col in dimension_cols[:8]:
+                try:
+                    top_vals = df[col].value_counts().head(5)
+                    pairs = "  |  ".join([f'"{v}" ({c:,})' for v, c in top_vals.items()])
+                    freq_lines.append(f"  • {col}: {pairs}")
+                except:
+                    pass
+            freq_str = "\n".join(freq_lines) if freq_lines else "  (none)"
+
+            return schema_str, freq_str, data_profile
+
+        def _build_llm_prompt(question, agg, schema_str, freq_str="", error_context=None):
+            """Build an expert-level LLM prompt for DuckDB SQL generation with
+            few-shot examples, comprehensive rules, and self-repair on errors."""
+
+            # --- Conversation history ---
+            history_str = ""
+            if st.session_state.chat_history:
+                history_str = "\n=== CONVERSATION HISTORY (use for follow-up resolution) ===\n"
+                for q_past, sql_past in st.session_state.chat_history[-6:]:
+                    history_str += f'Q: "{q_past}"\nSQL: {sql_past}\n---\n'
+                history_str += (
+                    "RULE: If the new question uses pronouns like 'it', 'that', 'those', 'same', "
+                    "'them', 'previous', or any implicit reference — treat it as a follow-up and "
+                    "MODIFY the most recent SQL. If it is a clearly new topic, write a fresh query.\n"
+                )
+
+            # --- Error repair section ---
+            error_section = ""
+            if error_context:
+                error_section = f"""
+=== PREVIOUS ATTEMPT FAILED — SELF-REPAIR MODE ===
+Failed SQL:
+{error_context['sql']}
+
+Error message:
+{error_context['error']}
+
+Diagnosis checklist — fix ALL that apply:
+1. Column name typo → match EXACT names from the schema above (lowercase + underscores).
+2. Missing FROM data → always required.
+3. Aggregate without GROUP BY → add GROUP BY for every non-aggregated SELECT column.
+4. String literal case mismatch → use ILIKE '%value%' for flexible matching.
+5. Non-existent column → only use columns listed in the schema.
+6. Ambiguous column in GROUP BY → alias it or qualify it.
+7. ORDER BY column not in SELECT → add it to SELECT or remove ORDER BY.
+8. DISTINCT COUNT → use COUNT(DISTINCT col) syntax in DuckDB.
+=================================================
+"""
+
+            # --- Few-shot examples (concrete, tested) ---
+            few_shot = """
+=== FEW-SHOT EXAMPLES (study these before writing your query) ===
+
 Q: "total sales by country"
 SQL: SELECT country, SUM(sales) AS total_sales FROM data GROUP BY country ORDER BY total_sales DESC
 
 Q: "top 5 products by revenue"
 SQL: SELECT productline, SUM(sales) AS total_revenue FROM data GROUP BY productline ORDER BY total_revenue DESC LIMIT 5
 
+Q: "average order value per customer"
+SQL: SELECT customername, AVG(sales) AS avg_order_value FROM data GROUP BY customername ORDER BY avg_order_value DESC
+
+Q: "how many orders in 2004"
+SQL: SELECT COUNT(*) AS order_count FROM data WHERE EXTRACT(YEAR FROM orderdate) = 2004
+
 Q: "monthly sales trend"
 SQL: SELECT EXTRACT(YEAR FROM orderdate) AS yr, EXTRACT(MONTH FROM orderdate) AS mo, SUM(sales) AS monthly_sales FROM data GROUP BY yr, mo ORDER BY yr, mo
 
-Q: "show orders where status is shipped"
+Q: "which country had the highest profit margin"
+SQL: SELECT country, SUM(sales) / NULLIF(COUNT(*), 0) AS avg_margin FROM data GROUP BY country ORDER BY avg_margin DESC LIMIT 1
+
+Q: "sales by product line and year"
+SQL: SELECT productline, EXTRACT(YEAR FROM orderdate) AS yr, SUM(sales) AS total_sales FROM data GROUP BY productline, yr ORDER BY yr, total_sales DESC
+
+Q: "show me orders where status is shipped"
 SQL: SELECT * FROM data WHERE status ILIKE 'shipped' LIMIT 100
 
-Q: "percentage share of each product in total sales"
-SQL: SELECT productline, SUM(sales) AS product_sales, ROUND(100.0*SUM(sales)/SUM(SUM(sales)) OVER(),2) AS pct FROM data GROUP BY productline ORDER BY product_sales DESC
+Q: "compare sales vs quantity by product"
+SQL: SELECT productline, SUM(sales) AS total_sales, SUM(quantityordered) AS total_quantity FROM data GROUP BY productline ORDER BY total_sales DESC
 
-Q: "year over year growth"
-SQL: SELECT yr, total_sales, LAG(total_sales) OVER(ORDER BY yr) AS prev, ROUND(100.0*(total_sales-LAG(total_sales) OVER(ORDER BY yr))/NULLIF(LAG(total_sales) OVER(ORDER BY yr),0),2) AS yoy_pct FROM (SELECT EXTRACT(YEAR FROM orderdate) AS yr, SUM(sales) AS total_sales FROM data GROUP BY yr) ORDER BY yr
-=========================
+Q: "bottom 3 cities by total revenue"
+SQL: SELECT city, SUM(sales) AS total_revenue FROM data GROUP BY city ORDER BY total_revenue ASC LIMIT 3
+
+Q: "percentage share of each product line in total sales"
+SQL: SELECT productline, SUM(sales) AS product_sales, ROUND(100.0 * SUM(sales) / SUM(SUM(sales)) OVER (), 2) AS pct_share FROM data GROUP BY productline ORDER BY product_sales DESC
+
+Q: "year over year growth in sales"
+SQL: SELECT yr, total_sales, LAG(total_sales) OVER (ORDER BY yr) AS prev_year_sales, ROUND(100.0 * (total_sales - LAG(total_sales) OVER (ORDER BY yr)) / NULLIF(LAG(total_sales) OVER (ORDER BY yr), 0), 2) AS yoy_growth_pct FROM (SELECT EXTRACT(YEAR FROM orderdate) AS yr, SUM(sales) AS total_sales FROM data GROUP BY yr) ORDER BY yr
+
+Q: "count distinct customers per country"
+SQL: SELECT country, COUNT(DISTINCT customername) AS unique_customers FROM data GROUP BY country ORDER BY unique_customers DESC
+
+Q: "orders placed in the last quarter of 2003"
+SQL: SELECT * FROM data WHERE EXTRACT(YEAR FROM orderdate) = 2003 AND EXTRACT(MONTH FROM orderdate) IN (10, 11, 12) LIMIT 100
+============================================================
 """
-        return f"""You are an elite Senior Data Analyst and DuckDB SQL expert.
-Translate the user's question into a single, correct DuckDB SQL query.
-ONLY use exact column names from the schema. NEVER hallucinate columns.
 
-TABLE: data   (rows: {len(df):,})
+            prompt = f"""You are an elite Senior Data Analyst and DuckDB SQL expert powering an enterprise-grade AI BI Copilot.
+Your job is to translate the user's natural language question into a single, perfectly correct DuckDB SQL query.
+You must NEVER hallucinate column names — use ONLY the exact columns defined in the schema below.
 
-SCHEMA:
+=========================================================
+TABLE: data   (total rows: {len(df):,})
+
+SCHEMA (every column with type, stats & sample values):
 {schema_str}
 
-TOP VALUE FREQUENCIES:
+TOP VALUE FREQUENCIES PER DIMENSION (use for exact string matching):
 {freq_str}
+=========================================================
 
-{hist}
-{err}
+{history_str}
+{error_section}
 {few_shot}
 
-RULES (all mandatory):
-1. Use ONLY exact column names from schema (lowercase+underscores).
-2. Every query MUST have FROM data.
-3. Every non-aggregated SELECT column MUST be in GROUP BY.
-4. Use ILIKE for string matching. SUM/AVG/COUNT/MIN/MAX per question intent.
-5. Top N → ORDER BY ... DESC LIMIT N. Bottom N → ASC.
-6. COUNT(DISTINCT col) syntax — never COUNT(DISTINCT(col)).
-7. NULLIF(divisor,0) for all divisions.
-8. Every derived column MUST have an AS alias.
-9. Current agg override: "{agg}" (apply if not "None (show raw data)").
-10. Return ONLY the raw SQL SELECT. No markdown, no explanation. Start with SELECT.
+=== MASTER RULES — FOLLOW ALL OF THEM WITHOUT EXCEPTION ===
 
+RULE 1 — COLUMN FIDELITY:
+  Use ONLY column names EXACTLY as listed in the schema (they are lowercase with underscores).
+  Never invent, abbreviate, or rename column names in the FROM/WHERE/GROUP BY clauses.
+
+RULE 2 — MANDATORY FROM CLAUSE:
+  Every query MUST have FROM data. This is non-negotiable.
+
+RULE 3 — GROUP BY COMPLETENESS:
+  If SELECT contains ANY aggregate function (SUM, COUNT, AVG, MIN, MAX) alongside a raw column,
+  every raw (non-aggregated) column in SELECT MUST appear in GROUP BY. No exceptions.
+
+RULE 4 — NATURAL LANGUAGE → SQL MAPPING:
+  "total / sum / overall"        → SUM(col)
+  "average / avg / mean / per"   → AVG(col)
+  "how many / count / number of" → COUNT(*) or COUNT(col)
+  "min / minimum / lowest"       → MIN(col)
+  "max / maximum / highest"      → MAX(col)
+  "distinct / unique"            → COUNT(DISTINCT col)
+  "top N"                        → ORDER BY ... DESC LIMIT N
+  "bottom N / worst N"           → ORDER BY ... ASC LIMIT N
+  "by / per / for each / across" → GROUP BY that column
+  "between X and Y"              → WHERE col BETWEEN X AND Y
+  "greater than / above / over"  → WHERE col > value
+  "less than / below / under"    → WHERE col < value
+  "trend / over time / monthly"  → GROUP BY date part, ORDER BY date
+  "compare / vs / versus"        → SELECT both items side-by-side
+  "growth / change"              → use LAG() window function or subquery
+  "percentage / share / ratio"   → use window SUM or subquery division
+  "rank / ranking"               → use RANK() or ROW_NUMBER() window
+
+RULE 5 — STRING MATCHING:
+  Always use ILIKE for text comparisons (case-insensitive).
+  For partial matches use ILIKE '%value%'.
+  Pick the closest matching value from the "TOP VALUE FREQUENCIES" section above.
+
+RULE 6 — DATE HANDLING:
+  Use EXTRACT(YEAR FROM col), EXTRACT(MONTH FROM col), EXTRACT(QUARTER FROM col).
+  For monthly trend: GROUP BY EXTRACT(YEAR FROM date_col), EXTRACT(MONTH FROM date_col).
+  Never cast date columns to strings unless needed for display.
+
+RULE 7 — AGGREGATION OVERRIDE:
+  If user's selected aggregation is NOT 'None (show raw data)', apply that aggregation
+  function to the primary metric column in the SELECT.
+  Current selection: "{agg}"
+
+RULE 8 — ORDERING:
+  Always add ORDER BY unless the question is about a single scalar value.
+  For aggregated results, ORDER BY the aggregate DESC unless question implies ASC (bottom/worst/lowest).
+
+RULE 9 — ALIASES:
+  Every derived column MUST have a meaningful AS alias (e.g., SUM(sales) AS total_sales).
+  No naked expressions without aliases.
+
+RULE 10 — ROW LIMITS:
+  "show all / list" → LIMIT 100
+  "top N / bottom N" → LIMIT N (use exact number from question)
+  Single scalar answers → no LIMIT needed
+
+RULE 11 — MULTI-METRIC QUERIES:
+  If user asks for multiple metrics (e.g., "sales and profit by country"), include ALL in SELECT.
+  All non-aggregate columns must be in GROUP BY.
+
+RULE 12 — WINDOW FUNCTIONS:
+  For YoY growth, running totals, ranks, percentages — use proper window functions.
+  DuckDB supports: SUM() OVER(), LAG() OVER(), RANK() OVER(), ROW_NUMBER() OVER(), etc.
+
+RULE 13 — NULLIF / SAFE DIVISION:
+  Never divide without NULLIF(divisor, 0) to avoid division-by-zero errors.
+
+RULE 14 — DISTINCT COUNT:
+  Always write as COUNT(DISTINCT col), NOT as COUNT(DISTINCT(col)).
+
+RULE 15 — OUTPUT FORMAT:
+  Return ONLY the raw SQL SELECT statement.
+  Absolutely NO explanations, NO markdown fences, NO comments, NO preamble.
+  The response must start with SELECT and nothing else.
+
+=========================================================
 USER QUESTION: "{question}"
+=========================================================
 
 SQL:"""
+            return prompt
 
-    def _is_general(q):
-        q_l = q.lower().strip()
-        data_triggers = ["my data","this data","the data","dataset","table","column","chart","show","display","filter","sort","aggregate","group","total","sum","count","average","trend","top","bottom","best","worst","sales","revenue","profit"]
-        for t in data_triggers:
-            if t in q_l:
-                return False
-        for col in df.columns:
-            if col.replace("_"," ") in q_l or col in q_l:
-                return False
-        general_triggers = ["what is","what are","how does","how do","explain","define","tell me","describe","who is","why is","hello","hi","thanks","help me understand","difference between"]
-        return any(q_l.startswith(t) or t in q_l for t in general_triggers)
+        def _is_general_question(question):
+            """Detect if a question is a general knowledge / conversational question
+            that does NOT require SQL — so we can answer it like GPT."""
+            q_lower = question.lower().strip()
+            general_triggers = [
+                "what is", "what are", "how does", "how do", "explain", "define",
+                "tell me about", "describe", "who is", "who are", "why is", "why does",
+                "when was", "where is", "give me", "list the", "can you", "could you",
+                "help me understand", "difference between", "compare", "pros and cons",
+                "advantages", "disadvantages", "recommend", "suggest", "best way",
+                "how to", "what does", "meaning of", "hello", "hi", "thanks", "thank you",
+                "good morning", "good evening"
+            ]
+            data_triggers = [
+                "my data", "this data", "the data", "dataset", "table", "column",
+                "chart", "graph", "plot", "show", "display", "filter", "sort",
+                "aggregate", "group", "total", "sum", "count", "average", "trend",
+                "top", "bottom", "best", "worst", "sales", "revenue", "profit"
+            ]
+            # If it explicitly references "my data" / "the data", it is a data question
+            for trigger in data_triggers:
+                if trigger in q_lower:
+                    return False
+            # Check if any actual column name is in the question
+            for col in df.columns:
+                if col.replace("_", " ") in q_lower or col in q_lower:
+                    return False
+            # Check general triggers
+            for trigger in general_triggers:
+                if q_lower.startswith(trigger) or trigger in q_lower:
+                    return True
+            return False
 
-    def _answer_general(question):
-        resp = client.chat.completions.create(
-            model="nvidia/nemotron-3-super-120b-a12b",
-            messages=[{"role":"user","content":f"You are a highly intelligent AI assistant. Answer clearly and helpfully.\n\nUser question: {question}\n\nAnswer:"}],
-            temperature=0.6, top_p=0.95, max_tokens=1024,
-        )
-        return resp.choices[0].message.content.strip()
+        def _answer_general_question(question):
+            """Use the LLM to answer a general / conversational question like GPT."""
+            prompt = f"""You are a highly intelligent AI assistant similar to ChatGPT. 
+The user is asking a general knowledge or conversational question. 
+Answer it clearly, accurately, and helpfully. 
+Format your response in a clean, readable way. Use bullet points or numbered lists where appropriate.
+Be concise but thorough. Do NOT refuse to answer.
 
-    def smart_query(question, selected_agg):
-        schema_str, freq_str, _ = _build_schema_ctx()
-        def _call_llm(prompt):
-            res = client.chat.completions.create(
-                model="nvidia/nemotron-3-super-120b-a12b",
-                messages=[{"role":"user","content":prompt}],
-                temperature=0.0, top_p=0.95, max_tokens=1024,
-            )
-            sql = res.choices[0].message.content.strip()
-            sql = re.sub(r"^```sql\s*\n?","",sql,flags=re.MULTILINE)
-            sql = re.sub(r"^```\s*\n?","",sql,flags=re.MULTILINE)
-            sql = re.sub(r"\n?```$","",sql,flags=re.MULTILINE).strip()
-            m = re.search(r"(SELECT\s)",sql,re.IGNORECASE)
-            if m and m.start() > 0:
-                sql = sql[m.start():]
-            return sql
-        last_sql, last_err = None, None
-        for attempt in range(3):
+User question: {question}
+
+Answer:"""
             try:
-                prompt = _build_prompt(question, selected_agg, schema_str, freq_str, {"sql":last_sql,"error":str(last_err)} if attempt>0 else None)
-                sql = _call_llm(prompt)
-                last_sql = sql
-                if not sql.upper().strip().startswith("SELECT"):
-                    raise Exception(f"Not a valid SELECT: {sql[:100]}")
-                if "FROM" not in sql.upper():
-                    raise Exception("Missing FROM clause")
+                resp = client.chat.completions.create(
+                    model="nvidia/nemotron-3-super-120b-a12b",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.6,
+                    top_p=0.95,
+                    max_tokens=1024
+                )
+                return resp.choices[0].message.content.strip()
+            except Exception:
+                return f"AI Copilot analyzed: '{question}'. For dataset-specific insights, ask about top categories, distribution, or metric trends in your uploaded data."
+
+        def smart_query(question, selected_agg):
+            schema_str, freq_str, data_profile = _build_schema_context()
+
+            def _call_llm_for_sql(prompt_text):
+                res = client.chat.completions.create(
+                    model="nvidia/nemotron-3-super-120b-a12b",
+                    messages=[{"role": "user", "content": prompt_text}],
+                    temperature=0.0,   # deterministic for SQL
+                    top_p=0.95,
+                    max_tokens=1024
+                )
+                sql_query = res.choices[0].message.content.strip()
+                # Strip markdown fences if any
+                sql_query = re.sub(r"^```sql\s*\n?", "", sql_query, flags=re.MULTILINE)
+                sql_query = re.sub(r"^```\s*\n?", "", sql_query, flags=re.MULTILINE)
+                sql_query = re.sub(r"\n?```$", "", sql_query, flags=re.MULTILINE)
+                sql_query = sql_query.strip()
+                # Remove any text before SELECT
+                select_match = re.search(r'(SELECT\s)', sql_query, re.IGNORECASE)
+                if select_match and select_match.start() > 0:
+                    sql_query = sql_query[select_match.start():]
+                return sql_query
+
+            max_attempts = 3
+            last_error = None
+            last_sql = None
+
+            for attempt in range(max_attempts):
+                try:
+                    if attempt == 0:
+                        prompt = _build_llm_prompt(question, selected_agg, schema_str, freq_str)
+                    else:
+                        prompt = _build_llm_prompt(
+                            question, selected_agg, schema_str, freq_str,
+                            error_context={"sql": last_sql, "error": str(last_error)}
+                        )
+
+                    sql = _call_llm_for_sql(prompt)
+                    last_sql = sql
+
+                    if not sql.upper().strip().startswith('SELECT'):
+                        raise Exception(f"Output is not a valid SQL SELECT: {sql[:120]}")
+                    if 'FROM' not in sql.upper():
+                        raise Exception("Missing FROM clause in generated SQL")
+
+                    con = duckdb.connect()
+                    try:
+                        con.register("data", df)
+                        result = con.execute(sql).df()
+
+                        # Persist successful query in memory
+                        st.session_state.chat_history.append((question, sql))
+                        if len(st.session_state.chat_history) > 10:
+                            st.session_state.chat_history = st.session_state.chat_history[-10:]
+
+                        return result
+                    finally:
+                        con.close()
+
+                except Exception as e:
+                    last_error = e
+                    last_sql = sql if 'sql' in dir() else "(no SQL generated)"
+                    if attempt < max_attempts - 1:
+                        continue
+
+            def _generate_heuristic_sql(q_text, agg_sel):
+                ql = q_text.lower()
+                n_m = re.search(r'\b(top|first|highest|leading|most)\s+(\d+)\b', ql)
+                N = int(n_m.group(2)) if n_m else None
+                b_m = re.search(r'\b(bottom|lowest|least|last)\s+(\d+)\b', ql)
+                is_bot = bool(b_m) or any(w in ql for w in ['bottom', 'worst', 'lowest', 'least'])
+                if b_m:
+                    N = int(b_m.group(2))
+                elif is_bot and not N:
+                    N = 5
+                elif any(w in ql for w in ['top', 'best', 'highest', 'most']) and not N:
+                    N = 5
+
+                target_m = None
+                for col in numeric_cols:
+                    if col.lower() in ql or col.lower().replace('_', ' ') in ql:
+                        target_m = col
+                        break
+                if not target_m:
+                    for kw in ['sales', 'price', 'revenue', 'cost', 'profit', 'quantity', 'amount', 'total', 'margin', 'units']:
+                        if kw in ql:
+                            for col in numeric_cols:
+                                if kw in col.lower():
+                                    target_m = col
+                                    break
+                        if target_m:
+                            break
+                if not target_m:
+                    target_m = main_metric if main_metric else (business_metrics[0] if business_metrics else (numeric_cols[0] if numeric_cols else None))
+
+                target_d = None
+                for col in dimension_cols:
+                    if col.lower() in ql or col.lower().replace('_', ' ') in ql:
+                        target_d = col
+                        break
+                if not target_d:
+                    synonyms = [
+                        ('car', ['model', 'productline', 'manufacturer', 'vehicle', 'car']),
+                        ('product', ['productline', 'product', 'item', 'category']),
+                        ('customer', ['customername', 'customer', 'client']),
+                        ('country', ['country', 'region', 'territory']),
+                        ('city', ['city', 'state']),
+                        ('status', ['status', 'deal_size']),
+                    ]
+                    for kw, candidates in synonyms:
+                        if kw in ql:
+                            for cand in candidates:
+                                for col in dimension_cols:
+                                    if cand in col.lower():
+                                        target_d = col
+                                        break
+                                if target_d:
+                                    break
+                        if target_d:
+                            break
+                if not target_d and dimension_cols:
+                    target_d = dimension_cols[0]
+
+                agg_fn = agg_sel if agg_sel in ['SUM', 'AVG', 'COUNT', 'MIN', 'MAX'] else ('AVG' if any(w in ql for w in ['average', 'avg', 'mean']) else 'SUM')
+
+                if target_d and target_m:
+                    ord_dir = "ASC" if is_bot else "DESC"
+                    lim_clause = f" LIMIT {N}" if N else " LIMIT 10"
+                    return f'SELECT "{target_d}", {agg_fn}("{target_m}") AS "total_{target_m}" FROM data GROUP BY "{target_d}" ORDER BY "total_{target_m}" {ord_dir}{lim_clause}'
+                elif target_m:
+                    return f'SELECT {agg_fn}("{target_m}") AS "{agg_fn.lower()}_{target_m}" FROM data'
+                else:
+                    return 'SELECT * FROM data LIMIT 10'
+
+            # Fallback to deterministic SQL generator if LLM failed
+            try:
+                fallback_sql = _generate_heuristic_sql(question, selected_agg)
                 con = duckdb.connect()
                 try:
                     con.register("data", df)
-                    result = con.execute(sql).df()
+                    result = con.execute(fallback_sql).df()
+                    st.session_state.chat_history.append((question, fallback_sql))
+                    return result
                 finally:
                     con.close()
-                st.session_state.chat_history.append((question, sql))
-                if len(st.session_state.chat_history) > 10:
-                    st.session_state.chat_history = st.session_state.chat_history[-10:]
-                return result, sql
-            except Exception as e:
-                last_err = e
-                if attempt < 2:
-                    continue
-        raise Exception(f"Failed after 3 attempts.\nLast SQL: {last_sql}\nLast Error: {last_err}")
+            except Exception:
+                pass
 
-    def _deep_insight(question, result_df):
-        money_kw = ["sales","revenue","profit","margin","cost","price","amount"]
-        stats = []
-        for col in result_df.columns:
-            if pd.api.types.is_numeric_dtype(result_df[col]):
-                is_m = any(k in col.lower() for k in money_kw)
-                fmt = "${:,.2f}" if is_m else "{:,.0f}"
-                stats.append(f"  {col}: total={fmt.format(result_df[col].sum())}  avg={fmt.format(result_df[col].mean())}  max={fmt.format(result_df[col].max())}  min={fmt.format(result_df[col].min())}")
-        prompt = f"""You are a world-class BI Analyst (McKinsey/BCG level).
+            raise Exception(
+                f"After {max_attempts} attempts, could not generate a working query.\n"
+                f"Last SQL: {last_sql}\nLast Error: {str(last_error)}"
+            )
+
+        def _generate_deep_insight(question, result_df):
+            """Generate a rich, GPT-level business insight from the query result."""
+            money_keywords = ['sales', 'revenue', 'profit', 'margin', 'cost', 'price', 'amount']
+
+            # Build a comprehensive stats summary for the LLM
+            stats_lines = []
+            for col in result_df.columns:
+                if pd.api.types.is_numeric_dtype(result_df[col]):
+                    is_money = any(k in col.lower() for k in money_keywords)
+                    fmt = "${:,.2f}" if is_money else "{:,.0f}"
+                    stats_lines.append(
+                        f"  {col}: total={fmt.format(result_df[col].sum())}  "
+                        f"avg={fmt.format(result_df[col].mean())}  "
+                        f"max={fmt.format(result_df[col].max())}  "
+                        f"min={fmt.format(result_df[col].min())}"
+                    )
+            stats_str = "\n".join(stats_lines) if stats_lines else "  (non-numeric result)"
+
+            result_sample = result_df.head(20).to_string(index=False)
+
+            insight_prompt = f"""You are a world-class Business Intelligence Analyst at a top consulting firm (McKinsey / BCG level).
+You have just queried a dataset and received the following results.
 
 USER QUESTION: "{question}"
 
-QUERY RESULT (top 20 rows):
-{result_df.head(20).to_string(index=False)}
+QUERY RESULT (up to 20 rows):
+{result_sample}
 
-STATS:
-{chr(10).join(stats) if stats else '(non-numeric)'}
+NUMERIC COLUMN STATISTICS:
+{stats_str}
 
-DATASET CONTEXT: {len(df):,} total rows | Metrics: {', '.join(business_metrics[:4])} | Dimensions: {', '.join(dimension_cols[:5])}
+FULL DATASET CONTEXT:
+- Total rows in dataset: {len(df):,}
+- Primary business metrics: {', '.join(business_metrics[:4])}
+- Key dimensions: {', '.join(dimension_cols[:5])}
 
-Write a sharp boardroom-ready insight (150-200 words):
+YOUR TASK:
+Write a sharp, professional business insight that a CEO or VP would find immediately useful.
+Structure your response as follows:
 
-**Key Finding:** (1 sentence — most important finding)
+**Key Finding:** (1 sentence — the single most important thing this data reveals)
 
-**Why It Matters:** (2-3 sentences — business implication)
+**Why It Matters:** (2–3 sentences explaining the business implication)
 
-**Recommended Action:** (1-2 specific, concrete actions)
+**Recommended Action:** (1–2 concrete, specific actions the business should take)
 
-**Watch Out For:** (1 risk or caveat)
+**Watch Out For:** (1 potential risk, anomaly, or caveat in this data)
 
-Rules: Be specific with numbers. Be decisive. No hedging. No "based on the data"."""
-        resp = client.chat.completions.create(
-            model="nvidia/nemotron-3-super-120b-a12b",
-            messages=[{"role":"user","content":prompt}],
-            temperature=0.65, top_p=0.95, max_tokens=600,
-        )
-        return resp.choices[0].message.content.strip()
-
-    # ── Main Ask Handler ───────────────────────────────────────
-    if ask_pressed and q:
-        try:
-            _lc = st.empty()
-            _pb = _lc.progress(5, text="Translating to SQL... 5%")
-
-            if _is_general(q):
-                _pb.progress(50, text="Generating AI answer... 50%")
-                gen_ans = _answer_general(q)
-                _pb.progress(100, text="Done!")
-                time.sleep(0.25)
-                _lc.empty()
-                st.markdown(
-                    f"""<div style="background:rgba(99,102,241,0.07);border:1px solid rgba(99,102,241,0.22);border-radius:16px;padding:22px 26px;margin-top:10px;">
-                    <div style="font-size:.7rem;color:#6366F1;font-weight:700;letter-spacing:.1em;margin-bottom:10px;">💬 AI ANSWER</div>
-                    <div style="line-height:1.75;color:#E2E8F0;font-size:.9rem;">{gen_ans.replace(chr(10),'<br>')}</div></div>""",
-                    unsafe_allow_html=True,
+Rules:
+- Be specific — use actual numbers from the result (formatted cleanly).
+- Be decisive — do NOT hedge with "it seems like" or "possibly".
+- Do NOT say "based on the data" or "the analysis shows".
+- Write as if you are presenting in a boardroom.
+- Keep total length to 150–200 words maximum.
+"""
+            try:
+                resp = client.chat.completions.create(
+                    model="nvidia/nemotron-3-super-120b-a12b",
+                    messages=[{"role": "user", "content": insight_prompt}],
+                    temperature=0.65,
+                    top_p=0.95,
+                    max_tokens=600
                 )
-            else:
-                result, generated_sql = smart_query(q, st.session_state.agg_option)
-                time.sleep(0.2)
-                _pb.progress(55, text="Executing on DuckDB... 55%")
+                return resp.choices[0].message.content.strip()
+            except Exception:
+                top_item = str(result_df.iloc[0, 0]) if len(result_df) > 0 and len(result_df.columns) > 0 else "Primary segment"
+                top_val = result_df.iloc[0, 1] if len(result_df) > 0 and len(result_df.columns) > 1 else ""
+                val_str = f" with {top_val:,.2f}" if isinstance(top_val, (int, float)) else (f" ({top_val})" if top_val else "")
+                return f"""**Key Finding:** **{top_item}** represents the top-performing category{val_str}.
 
-                # Build chart
-                fig = None
-                is_metric = False
-                metric_col_name = None
-                metric_val = None
+**Why It Matters:** High volume concentration in this segment directly drives the overall portfolio trajectory across the {len(result_df)} analyzed groups.
 
-                if len(result.columns) >= 2 and len(result) > 1:
-                    _pb.progress(70, text="Rendering visualizations... 70%")
-                    col1, col2 = result.columns[0], result.columns[1]
-                    nr = len(result)
-                    q_l = q.lower()
-                    is_date = pd.api.types.is_datetime64_any_dtype(result[col1]) or (result[col1].dtype == "object" and bool(re.match(r"^\d{4}-\d{2}-\d{2}", str(result[col1].iloc[0]))))
-                    is_c1n = pd.api.types.is_numeric_dtype(result[col1])
-                    is_c2n = pd.api.types.is_numeric_dtype(result[col2])
-                    is_time = any(t in col1.lower() for t in ["year","month","quarter","qtr","week","date","day"])
-                    w_trend = any(w in q_l for w in ["trend","over time","monthly","yearly","quarterly","growth","timeline"])
-                    w_dist = any(w in q_l for w in ["distribution","share","proportion","percentage","pie","composition"])
-                    w_rank = any(w in q_l for w in ["top","bottom","best","worst","highest","lowest","rank","most","least"])
-                    w_corr = any(w in q_l for w in ["correlation","scatter","relationship"])
-                    w_area = any(w in q_l for w in ["area","cumulative","stacked"])
-                    w_treemap = any(w in q_l for w in ["treemap","tree map","hierarchy"])
-                    w_funnel = any(w in q_l for w in ["funnel","pipeline","stages"])
-                    has_multi = len(result.columns) >= 3 and sum(pd.api.types.is_numeric_dtype(result[c]) for c in result.columns) >= 2
-                    try:
-                        if w_funnel and not is_c1n and is_c2n and nr <= 10:
-                            fig = px.funnel(result, x=col2, y=col1, title=f"{_label(col2)} Funnel")
-                        elif w_treemap and not is_c1n and is_c2n:
-                            fig = px.treemap(result, path=[col1], values=col2, title=f"{_label(col2)} by {_label(col1)}")
-                        elif w_area and is_c2n and (is_date or is_time):
-                            fig = px.area(result.sort_values(col1), x=col1, y=col2, title=f"{_label(col2)} over {_label(col1)}")
-                        elif w_dist and not is_c1n and is_c2n and nr <= 8:
-                            fig = px.pie(result, names=col1, values=col2, hole=0.4, title=f"Distribution of {_label(col2)}")
-                        elif w_corr and is_c1n and is_c2n:
-                            fig = px.scatter(result, x=col1, y=col2, title=f"{_label(col2)} vs {_label(col1)}", trendline="ols")
-                        elif (is_date or is_time) and is_c2n:
-                            srt = result.sort_values(col1)
-                            if w_trend or nr > 6:
-                                fig = px.line(srt, x=col1, y=col2, markers=True, title=f"{_label(col2)} over {_label(col1)}")
-                            else:
-                                fig = px.bar(srt, x=col1, y=col2, title=f"{_label(col2)} by {_label(col1)}")
-                        elif w_rank and not is_c1n and is_c2n:
-                            srt = result.sort_values(col2, ascending=True)
-                            fig = px.bar(srt, x=col2, y=col1, orientation="h", title=f"{_label(col2)} by {_label(col1)}")
-                        elif has_multi and not is_c1n:
-                            nm_cols = [c for c in result.columns if pd.api.types.is_numeric_dtype(result[c])]
-                            fig = px.bar(result, x=col1, y=nm_cols, barmode="group", title=f"Comparison by {_label(col1)}")
-                        elif is_c1n and is_c2n and not is_time:
-                            fig = px.scatter(result, x=col1, y=col2, title=f"{_label(col2)} vs {_label(col1)}", trendline="ols")
-                        elif not is_c1n and is_c2n:
-                            if nr <= 5 and not w_rank:
-                                fig = px.pie(result, names=col1, values=col2, hole=0.4, title=f"{_label(col2)} by {_label(col1)}")
-                            elif nr <= 12:
-                                fig = px.bar(result.sort_values(col2, ascending=False), x=col1, y=col2, title=f"{_label(col2)} by {_label(col1)}")
-                            else:
-                                fig = px.bar(result.sort_values(col2, ascending=True), x=col2, y=col1, orientation="h", title=f"{_label(col2)} by {_label(col1)}")
-                        else:
-                            fig = px.bar(result, x=col1, y=col2, title=f"{_label(col2)} by {_label(col1)}")
-                    except Exception:
-                        try:
-                            fig = px.bar(result, x=col1, y=col2)
-                        except Exception:
-                            pass
+**Recommended Action:** Allocate strategic inventory and operational focus to maintain momentum in leading segments while optimizing secondary categories.
 
-                    if fig:
-                        fig.update_layout(
-                            plot_bgcolor="#0a0c14", paper_bgcolor="#0a0c14",
-                            font=dict(color="#CBD5E1", family="Inter,sans-serif"),
-                            title_font=dict(size=15, color="#E2E8F0", family="Outfit,sans-serif"),
-                            xaxis=dict(gridcolor="rgba(255,255,255,0.04)", zerolinecolor="rgba(255,255,255,0.06)"),
-                            yaxis=dict(gridcolor="rgba(255,255,255,0.04)", zerolinecolor="rgba(255,255,255,0.06)"),
-                            margin=dict(l=40, r=30, t=55, b=40),
-                            hoverlabel=dict(bgcolor="#141620", font_color="#E2E8F0", bordercolor="rgba(213,63,140,0.3)"),
-                            height=420,
-                        )
-                        fig.update_traces(marker_color="#D53F8C", selector=dict(type="bar"))
+**Watch Out For:** Monitor category dependence to prevent excessive concentration exposure."""
 
-                elif len(result.columns) == 1 and len(result) == 1:
-                    is_metric = True
-                    metric_col_name = result.columns[0]
-                    metric_val = result.iloc[0, 0]
-
-                _pb.progress(85, text="Generating AI insight... 85%")
-                insight = _deep_insight(q, result)
-
-                _pb.progress(100, text="Done!")
-                time.sleep(0.25)
-                _lc.empty()
-
-                # ── Render results (Document 5 style) ─────────────
-                # SQL code block
-                st.markdown(
-                    f"""<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px 20px;margin-bottom:16px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D53F8C" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-                            <span style="font-size:.68rem;font-weight:700;color:#64748B;text-transform:uppercase;letter-spacing:.1em;">Generated SQL</span>
+        # =====================================================================
+        # ========================= MAIN ASK HANDLER ==========================
+        # =====================================================================
+        if ask_pressed and q:
+            if not is_powerbi_related(q):
+                # --- General / conversational question handler ---
+                if _is_general_question(q):
+                    with st.spinner("Thinking..."):
+                        gen_answer = _answer_general_question(q)
+                    st.markdown(f"""
+                    <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.3);
+                                border-radius: 12px; padding: 20px; margin-top: 10px;">
+                        <div style="font-size: 0.8rem; color: #6366F1; font-weight: 600; margin-bottom: 8px;">
+                            💬 AI Answer
                         </div>
-                        <span style="font-size:.65rem;color:#334155;">{len(result):,} rows returned</span>
+                        <div style="line-height: 1.7; color: #E2E8F0;">{gen_answer.replace(chr(10), '<br>')}</div>
                     </div>
-                    <pre style="background:rgba(0,0,0,0.25);border-radius:10px;padding:12px 16px;font-family:'JetBrains Mono','Courier New',monospace;font-size:.78rem;color:#D53F8C;overflow-x:auto;margin:0;white-space:pre-wrap;">{generated_sql}</pre>
-                </div>""",
-                    unsafe_allow_html=True,
-                )
-
-                # Data table
-                st.dataframe(result, use_container_width=True, hide_index=True)
-
-                # Chart
-                if fig:
-                    st.plotly_chart(fig, use_container_width=True)
-                elif is_metric:
-                    money_kw = ["sales","revenue","price","amount","profit","margin","cost","sum","total"]
-                    is_m = any(k in metric_col_name.lower() for k in money_kw)
-                    disp = f"${metric_val:,.2f}" if (is_m and isinstance(metric_val,(int,float))) else (f"{metric_val:,.2f}" if isinstance(metric_val,(int,float)) else metric_val)
-                    st.metric("Result", disp)
-
-                # AI Insight card (Document 5 style)
-                _insight_html = insight.replace(chr(10), "<br>")
-                # Bold markdown to HTML
-                _insight_html = re.sub(r"\*\*(.+?)\*\*", r"<b style='color:#E2E8F0;'>\1</b>", _insight_html)
-                st.markdown(
-                    f"""<div style="background:rgba(213,63,140,0.05);border:1px solid rgba(213,63,140,0.22);border-radius:18px;padding:24px 28px;margin-top:14px;">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-                        <div style="width:32px;height:32px;border-radius:10px;background:rgba(213,63,140,0.15);display:flex;align-items:center;justify-content:center;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D53F8C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        </div>
-                        <div>
-                            <div style="font-size:.68rem;font-weight:700;color:#D53F8C;text-transform:uppercase;letter-spacing:.12em;">AI Business Insight</div>
-                        </div>
-                        <div style="margin-left:auto;display:flex;gap:6px;">
-                            <span style="background:rgba(213,63,140,0.12);color:#D53F8C;border:1px solid rgba(213,63,140,0.2);border-radius:6px;padding:2px 8px;font-size:.62rem;font-weight:700;text-transform:uppercase;">McKinsey-level</span>
-                        </div>
-                    </div>
-                    <div style="line-height:1.8;color:#CBD5E1;font-size:.9rem;">{_insight_html}</div>
-                </div>""",
-                    unsafe_allow_html=True,
-                )
-
-                st.session_state["export_df"] = result
-
-        except Exception as e:
-            st.error(f"Sorry, I couldn't process that question. Error: {str(e)}")
-            st.info("Try rephrasing your question or click 'Clear' to reset context.")
-
-    # ─────────────────────────────────────────────────────────────
-    #  EXPORT PIPELINE
-    # ─────────────────────────────────────────────────────────────
-    if "export_df" in st.session_state:
-        st.markdown(
-            """<div style="margin:28px 0 14px;border-top:1px solid rgba(255,255,255,0.06);padding-top:22px;">
-            <h3 style="font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:700;color:#E2E8F0;margin:0 0 4px;">💾 Export AI Dataset</h3>
-            <p style="color:#475569;font-size:.8rem;margin:0;">Turn AI calculations into a permanent table for Power BI or your database.</p></div>""",
-            unsafe_allow_html=True,
-        )
-        _ec1, _ec2 = st.columns(2)
-        with _ec1:
-            csv_data = st.session_state["export_df"].to_csv(index=False).encode("utf-8")
-            st.download_button(
-                label="📥 Download as CSV",
-                data=csv_data,
-                file_name="ai_copilot_export.csv",
-                mime="text/csv",
-                use_container_width=True,
-            )
-        with _ec2:
-            if data_source_type == "Database Connection" and "db_engine" in st.session_state:
-                with st.expander("🗄️ Save as New Table in Database"):
-                    new_table = st.text_input("Table Name:", value="AI_Summary_Data")
-                    if st.button("Write to Database", use_container_width=True, type="primary"):
-                        try:
-                            with st.spinner("Writing to database..."):
-                                st.session_state["export_df"].to_sql(new_table, con=st.session_state["db_engine"], if_exists="replace", index=False)
-                            st.success(f"Created '{new_table}' in your database!")
-                        except Exception as e:
-                            st.error(f"Database error: {e}")
+                    """, unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Please ask a question related to data analysis.")
             else:
-                st.markdown(
-                    '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:14px 16px;"><p style="color:#475569;font-size:.8rem;margin:0;">Connect to SQL Server or MySQL in the sidebar to write results directly back to your database.</p></div>',
-                    unsafe_allow_html=True,
+                try:
+                    # Phase 1: Computation + progress bar
+                    loading_container = st.empty()
+                    pbar = loading_container.progress(5, text="Translating natural language to SQL... 5%")
+                
+                    # --- Check for general question even if it passed is_powerbi_related ---
+                    if _is_general_question(q):
+                        pbar.progress(50, text="Generating AI answer... 50%")
+                        gen_answer = _answer_general_question(q)
+                        pbar.progress(100, text="Done! 100%")
+                        time.sleep(0.3)
+                        loading_container.empty()
+                        st.markdown(f"""
+                        <div style="background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.3);
+                                    border-radius: 12px; padding: 20px; margin-top: 10px;">
+                            <div style="font-size: 0.8rem; color: #6366F1; font-weight: 600; margin-bottom: 8px;">
+                                💬 AI Answer
+                            </div>
+                            <div style="line-height: 1.7; color: #E2E8F0;">{gen_answer.replace(chr(10), '<br>')}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # --- Data query path ---
+                        result = smart_query(q, st.session_state.agg_option)
+                        time.sleep(0.3)
+                        pbar.progress(55, text="Executing on DuckDB engine... 55%")
+
+                        # ----- Prepare visualisation -----
+                        fig = None
+                        is_metric = False
+                        metric_col_name = None
+                        metric_val = None
+
+                        if len(result.columns) >= 2 and len(result) > 1:
+                            pbar.progress(70, text="Rendering smart visualizations... 70%")
+                            col1 = result.columns[0]
+                            col2 = result.columns[1]
+                            num_rows = len(result)
+                            q_lower = q.lower()
+                        
+                            # Detect column types
+                            is_date = False
+                            if pd.api.types.is_datetime64_any_dtype(result[col1]):
+                                is_date = True
+                            elif result[col1].dtype == 'object' or str(result[col1].dtype) == 'string':
+                                val = str(result[col1].iloc[0])
+                                if re.match(r'^\d{4}-\d{2}-\d{2}', val) or re.match(r'^\d{2}/\d{2}/\d{4}', val):
+                                    is_date = True
+                            is_c1_num = pd.api.types.is_numeric_dtype(result[col1])
+                            is_c2_num = pd.api.types.is_numeric_dtype(result[col2])
+                        
+                            # Check if col1 looks like a time sequence (year, month, quarter)
+                            is_time_like = any(t in col1.lower() for t in ['year', 'month', 'quarter', 'qtr', 'week', 'date', 'day', 'period'])
+                        
+                            # Detect question intent for chart type
+                            wants_trend = any(w in q_lower for w in ['trend', 'over time', 'over the', 'monthly', 'yearly', 'quarterly', 'weekly', 'growth', 'decline', 'change over', 'progression', 'timeline', 'history'])
+                            wants_compare = any(w in q_lower for w in ['compare', 'comparison', 'vs', 'versus', 'difference between', 'against'])
+                            wants_distribution = any(w in q_lower for w in ['distribution', 'spread', 'breakdown', 'share', 'proportion', 'percentage', 'pie', 'composition', 'mix'])
+                            wants_ranking = any(w in q_lower for w in ['top', 'bottom', 'best', 'worst', 'highest', 'lowest', 'rank', 'ranking', 'most', 'least', 'leading', 'lagging'])
+                            wants_correlation = any(w in q_lower for w in ['correlation', 'relationship', 'scatter', 'plotted against', 'vs'])
+                            wants_area = any(w in q_lower for w in ['area', 'cumulative', 'stacked area', 'filled'])
+                            wants_hbar = any(w in q_lower for w in ['horizontal', 'hbar'])
+                            wants_treemap = any(w in q_lower for w in ['treemap', 'tree map', 'hierarchy', 'hierarchical'])
+                            wants_funnel = any(w in q_lower for w in ['funnel', 'pipeline', 'stages', 'conversion'])
+                        
+                            # Has 3+ columns? Could do grouped bar
+                            has_multi_metrics = len(result.columns) >= 3 and sum(pd.api.types.is_numeric_dtype(result[c]) for c in result.columns) >= 2
+                        
+                            try:
+                                # 1. Explicit user intent takes priority
+                                if wants_funnel and not is_c1_num and is_c2_num and num_rows <= 10:
+                                    fig = px.funnel(result, x=col2, y=col1,
+                                                    title=f"{col2.replace('_', ' ').title()} Funnel by {col1.replace('_', ' ').title()}")
+                            
+                                elif wants_treemap and not is_c1_num and is_c2_num:
+                                    fig = px.treemap(result, path=[col1], values=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} Treemap by {col1.replace('_', ' ').title()}")
+                            
+                                elif wants_area and is_c2_num and (is_date or is_time_like):
+                                    temp_res = result.sort_values(by=col1)
+                                    fig = px.area(temp_res, x=col1, y=col2,
+                                                  title=f"{col2.replace('_', ' ').title()} over {col1.replace('_', ' ').title()}")
+                            
+                                elif wants_distribution and not is_c1_num and is_c2_num and num_rows <= 8:
+                                    fig = px.pie(result, names=col1, values=col2, hole=0.4,
+                                                 title=f"Distribution of {col2.replace('_', ' ').title()}")
+                                    fig.update_traces(textposition='inside', textinfo='percent+label')
+                            
+                                elif wants_correlation and is_c1_num and is_c2_num:
+                                    fig = px.scatter(result, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} vs {col1.replace('_', ' ').title()}",
+                                                     trendline="ols")
+                            
+                                elif wants_hbar and not is_c1_num and is_c2_num:
+                                    fig = px.bar(result, x=col2, y=col1, orientation='h',
+                                                 title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            
+                                # 2. Date / time-series → line chart
+                                elif (is_date or is_time_like) and is_c2_num:
+                                    temp_res = result.sort_values(by=col1)
+                                    if wants_trend or num_rows > 6:
+                                        fig = px.line(temp_res, x=col1, y=col2, markers=True,
+                                                      title=f"{col2.replace('_', ' ').title()} over {col1.replace('_', ' ').title()}")
+                                    else:
+                                        fig = px.bar(temp_res, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            
+                                # 3. Ranking questions → horizontal bar (looks great for top/bottom)
+                                elif wants_ranking and not is_c1_num and is_c2_num:
+                                    sorted_res = result.sort_values(by=col2, ascending=True)
+                                    fig = px.bar(sorted_res, x=col2, y=col1, orientation='h',
+                                                 title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                    fig.update_traces(marker_color='#00e8a2')
+                            
+                                # 4. Comparison with multiple metrics → grouped bar
+                                elif wants_compare and has_multi_metrics:
+                                    numeric_cols_in_result = [c for c in result.columns if pd.api.types.is_numeric_dtype(result[c])]
+                                    fig = px.bar(result, x=col1, y=numeric_cols_in_result, barmode='group',
+                                                 title=f"Comparison by {col1.replace('_', ' ').title()}")
+                            
+                                # 5. Two numeric columns (not time) → scatter
+                                elif is_c1_num and is_c2_num and not is_time_like and 'year' not in col1.lower() and 'month' not in col1.lower():
+                                    fig = px.scatter(result, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} vs {col1.replace('_', ' ').title()}",
+                                                     trendline="ols")
+                            
+                                # 6. Categorical + numeric: smart pick based on row count
+                                elif not is_c1_num and is_c2_num:
+                                    if num_rows <= 5 and not wants_ranking:
+                                        # Small categories → donut for variety
+                                        fig = px.pie(result, names=col1, values=col2, hole=0.4,
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                        fig.update_traces(textposition='inside', textinfo='percent+label')
+                                    elif num_rows <= 12:
+                                        # Medium range → vertical bar
+                                        sorted_res = result.sort_values(by=col2, ascending=False)
+                                        fig = px.bar(sorted_res, x=col1, y=col2,
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                                    else:
+                                        # Many categories → horizontal bar for readability
+                                        sorted_res = result.sort_values(by=col2, ascending=True)
+                                        fig = px.bar(sorted_res, x=col2, y=col1, orientation='h',
+                                                     title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            
+                                # 7. Fallback → bar chart
+                                else:
+                                    fig = px.bar(result, x=col1, y=col2,
+                                                 title=f"{col2.replace('_', ' ').title()} by {col1.replace('_', ' ').title()}")
+                            except Exception:
+                                fig = px.bar(result, x=col1, y=col2)
+                        
+                            # Apply premium theme to ALL chart types
+                            if fig:
+                                fig.update_layout(
+                                    plot_bgcolor='#0a0c14',
+                                    paper_bgcolor='#0a0c14',
+                                    font=dict(color='#f0f2f5', family='Inter, sans-serif'),
+                                    title_font=dict(size=16, color='#f0f2f5', family='Outfit, sans-serif'),
+                                    xaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'),
+                                    yaxis=dict(gridcolor='rgba(255,255,255,0.05)', zerolinecolor='rgba(255,255,255,0.08)'),
+                                    margin=dict(l=40, r=40, t=50, b=40),
+                                    hoverlabel=dict(bgcolor='#141620', font_color='#f0f2f5', bordercolor='rgba(0,232,162,0.3)')
+                                )
+                                fig.update_traces(marker_color='#00e8a2', selector=dict(type='bar'))
+                        elif len(result.columns) == 1 and len(result) == 1:
+                            is_metric = True
+                            metric_col_name = result.columns[0]
+                            metric_val = result.iloc[0, 0]
+                    
+                        pbar.progress(85, text="Generating deep business insight... 85%")
+                    
+                        # ----- GPT-level deep insight -----
+                        final_insight = _generate_deep_insight(q, result)
+                    
+                        # Phase 2: Complete
+                        time.sleep(0.3)
+                        pbar.progress(100, text="Finalizing response... 100%")
+                        time.sleep(0.3)
+                        loading_container.empty()
+                    
+                        # ----- Render -----
+                        st.dataframe(result)
+                    
+                        if fig:
+                            st.plotly_chart(fig, use_container_width=True)
+                        elif is_metric:
+                            money_keywords = ['sales', 'revenue', 'price', 'amount', 'profit', 'margin', 'cost', 'sum', 'total']
+                            is_money = any(kw in metric_col_name.lower() for kw in money_keywords)
+                            if is_money and isinstance(metric_val, (int, float)):
+                                st.metric("Result", f"${metric_val:,.2f}")
+                            elif isinstance(metric_val, (int, float)):
+                                st.metric("Result", f"{metric_val:,.2f}")
+                            else:
+                                st.metric("Result", metric_val)
+                    
+                        # Render the deep insight in a styled card
+                        st.markdown(f"""
+                        <div style="background: rgba(99,102,241,0.07); border: 1px solid rgba(99,102,241,0.25);
+                                    border-radius: 14px; padding: 22px 26px; margin-top: 12px;">
+                            <div style="font-size: 0.78rem; color: #6366F1; font-weight: 700;
+                                        letter-spacing: 0.08em; margin-bottom: 12px;">
+                                💡 AI BUSINESS INSIGHT
+                            </div>
+                            <div style="line-height: 1.75; color: #E2E8F0; font-size: 0.92rem;">
+                                {final_insight.replace(chr(10), '<br>').replace('**', '<b>').replace('**', '</b>')}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+
+                        st.session_state['export_df'] = result
+            
+                except Exception as e:
+                    st.error(f"Sorry, I couldn't process that question. Error details: {str(e)}")
+                    st.info("Try rephrasing your question or click 'Clear Context' if a previous query is confusing the AI.")
+
+        # ================= EXPORT PIPELINE =================
+        if 'export_df' in st.session_state:
+            st.divider()
+            st.subheader("💾 Export AI Dataset to Power BI")
+            st.write("Turn your AI's calculations into a permanent table. You can load this perfectly clean dataset directly into Power BI without writing DAX.")
+
+            c_exp1, c_exp2 = st.columns(2)
+            with c_exp1:
+                csv_data = st.session_state['export_df'].to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Download as CSV",
+                    data=csv_data,
+                    file_name="ai_copilot_export.csv",
+                    mime="text/csv",
+                    use_container_width=True
                 )
+            
+            with c_exp2:
+                if data_source_type == "Database Connection" and 'db_engine' in st.session_state:
+                    with st.expander("🗄️ Save as New Table in SQL Server / MySQL"):
+                        new_table = st.text_input("Table Name:", value="AI_Summary_Data")
+                        if st.button("Write to Database", use_container_width=True):
+                            try:
+                                with st.spinner("Writing to database..."):
+                                    st.session_state['export_df'].to_sql(new_table, con=st.session_state['db_engine'],
+                                                                         if_exists='replace', index=False)
+                                st.success(f"Successfully created '{new_table}' in your database!")
+                            except Exception as e:
+                                st.error(f"Database error: {e}")
+                else:
+                    st.info("Connect to your SQL Server or MySQL database in the sidebar to write tables directly back to your server.")
