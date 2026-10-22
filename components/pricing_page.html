@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Plans | AI BI Copilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --accent-pink: #D53F8C;
+            --bg-deep: #0B0E14;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: #ffffff;
+        }
+
+        .glass-header {
+            background: rgba(11, 14, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 600px;
+            background: radial-gradient(circle at center, rgba(213, 63, 140, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .pricing-card {
+            transition: all 0.4s;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 40px;
+            padding: 40px;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(213, 63, 140, 0.4);
+        }
+
+        .pricing-card-highlight {
+            border: 2px solid #D53F8C !important;
+            background: rgba(213, 63, 140, 0.05) !important;
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .feature-row {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .faq-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="relative min-h-screen flex flex-col">
+        <div class="hero-glow"></div>
+        <header class="glass-header">
+            <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between"><a href="?action=home"
+                    class="flex items-center gap-2">
+                    <div class="w-10 h-10 rounded-xl bg-pink-accent flex items-center justify-center"><iconify-icon
+                            icon="lucide:layers" class="text-2xl text-white"></iconify-icon></div><span
+                        class="text-xl font-extrabold"><span class="text-pink-accent">AI</span> BI Copilot</span>
+                </a>
+                <nav class="hidden md:flex items-center gap-10 text-sm text-gray-400"><a href="?action=home"
+                        class="hover:text-white">Features</a><a href="?action=pricing"
+                        class="text-pink-accent font-bold">Pricing</a><a href="#"
+                        class="hover:text-white">Documentation</a><a href="?action=signin" class="hover:text-white">Sign
+                        In</a></nav>
+                <div><a href="?action=get_started"
+                        class="bg-pink-accent hover:bg-pink-600 px-6 py-2.5 rounded-full text-sm font-bold">Get
+                        Started</a></div>
+            </div>
+        </header>
+        <main class="flex-1 pt-32 pb-20">
+            <div class="max-w-7xl mx-auto px-6 text-center space-y-6">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-500 text-[10px] font-extrabold uppercase tracking-[0.2em]">
+                    <iconify-icon icon="lucide:shield-check"></iconify-icon>Transparent Pricing</div>
+                <h1 class="text-5xl md:text-7xl font-extrabold">Choose the plan that<br><span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">fits your
+                        needs</span></h1>
+                <p class="text-lg text-gray-400 max-w-2xl mx-auto">Join over 5,000+ data analysts. Unlock powerful AI
+                    insights and automate your business intelligence today.</p>
+            </div>
+            <div class="max-w-7xl mx-auto px-6 mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+                <div class="pricing-card p-10 flex flex-col space-y-8">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Tier 1</p>
+                        <h3 class="text-3xl font-bold">Monthly</h3>
+                        <div class="flex items-baseline gap-1 mt-2"><span class="text-5xl font-extrabold">$5</span><span
+                                class="text-gray-400">/month</span></div>
+                        <p class="text-sm text-gray-400 mt-2">Perfect for exploring AI capabilities.</p>
+                    </div><a href="?sub_action=trial"
+                        class="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-center font-bold">Start Free
+                        Trial</a>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>24-hour free
+                            trial access</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Upload
+                            CSV/Excel (up to 50MB)</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Connect to 1
+                            Database (SQL/MySQL)</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Basic Data
+                            Visualization</li>
+                    </ul>
+                </div>
+                <div class="pricing-card pricing-card-highlight p-12 flex flex-col space-y-8 relative">
+                    <div
+                        class="absolute -top-5 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full bg-pink-accent text-xs font-bold uppercase tracking-[0.2em] shadow-lg shadow-pink-900/40">
+                        Most Popular</div>
+                    <div>
+                        <p class="text-xs font-bold text-pink-400 uppercase tracking-widest">Tier 2</p>
+                        <h3 class="text-3xl font-bold">Quarterly</h3>
+                        <div class="flex items-baseline gap-1 text-pink-accent mt-2"><span
+                                class="text-6xl font-extrabold">$29</span><span class="text-pink-400/70">/quarter</span>
+                        </div>
+                        <p class="text-sm text-gray-300 mt-2">Advanced insights for growing businesses.</p>
+                    </div><a href="?sub_action=activate&key=DEMO_KEY"
+                        class="w-full py-5 rounded-2xl bg-pink-accent hover:bg-pink-600 text-center font-extrabold text-lg"><iconify-icon
+                            icon="lucide:zap" class="mr-2 inline-block"></iconify-icon>Get Quarterly Plan</a>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3 text-sm text-gray-100"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Everything in
+                            Monthly</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-100"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Connect to 3
+                            Databases</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-100"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Unlimited Live
+                            Dashboards</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-100"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Power BI Live
+                            Scanner</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-100"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Priority AI
+                            Processing</li>
+                    </ul>
+                </div>
+                <div class="pricing-card p-10 flex flex-col space-y-8">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Tier 3</p>
+                        <h3 class="text-3xl font-bold">Yearly</h3>
+                        <div class="flex items-baseline gap-1 mt-2"><span
+                                class="text-5xl font-extrabold">$59</span><span class="text-gray-400">/year</span></div>
+                        <p class="text-sm text-gray-400 mt-2">The ultimate suite for data teams.</p>
+                    </div><a href="?sub_action=activate&key=DEMO_KEY"
+                        class="w-full py-4 rounded-2xl bg-white/5 hover:bg-white/10 text-center font-bold">Get Yearly
+                        Plan</a>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Everything in
+                            Quarterly</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Unlimited
+                            Database Connections</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Advanced AI
+                            Autonomy Scanner</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>Custom SQL
+                            Query Templates</li>
+                        <li class="flex items-start gap-3 text-sm text-gray-300"><iconify-icon
+                                icon="lucide:check-circle" class="text-pink-accent mt-0.5"></iconify-icon>24/7
+                            Enterprise Support</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-6 pb-32 pt-20">
+                <div class="text-center space-y-4 mb-16">
+                    <h2 class="text-4xl font-bold tracking-tight">Full Feature Comparison</h2>
+                    <p class="text-gray-400">Drill down into the specifics of every plan.</p>
+                </div>
+                <div class="overflow-hidden rounded-[2rem] border border-white/5 bg-white/[0.01]">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-white/[0.03]">
+                            <tr>
+                                <th class="p-6 text-sm font-bold uppercase text-gray-400">Core Features</th>
+                                <th class="p-6 text-sm font-bold uppercase text-gray-400">Monthly</th>
+                                <th class="p-6 text-sm font-bold uppercase text-pink-accent">Quarterly</th>
+                                <th class="p-6 text-sm font-bold uppercase text-gray-400">Yearly</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="feature-row">
+                                <td class="p-6 text-sm font-medium">CSV / Excel Uploads</td>
+                                <td class="p-6 text-sm text-gray-400">50 MB Limit</td>
+                                <td class="p-6 text-sm">250 MB Limit</td>
+                                <td class="p-6 text-sm">Unlimited</td>
+                            </tr>
+                            <tr class="feature-row">
+                                <td class="p-6 text-sm font-medium">Database Connections</td>
+                                <td class="p-6 text-sm text-gray-400">1 Instance</td>
+                                <td class="p-6 text-sm">3 Instances</td>
+                                <td class="p-6 text-sm">Unlimited</td>
+                            </tr>
+                            <tr class="feature-row">
+                                <td class="p-6 text-sm font-medium">Live Power BI Scanner</td>
+                                <td class="p-6 text-sm text-gray-400">-</td>
+                                <td class="p-6 text-sm text-pink-accent"><iconify-icon
+                                        icon="lucide:check"></iconify-icon></td>
+                                <td class="p-6 text-sm text-pink-accent"><iconify-icon
+                                        icon="lucide:check"></iconify-icon></td>
+                            </tr>
+                            <tr class="feature-row">
+                                <td class="p-6 text-sm font-medium">Natural Language Query</td>
+                                <td class="p-6 text-sm text-gray-400">100 / month</td>
+                                <td class="p-6 text-sm">Unlimited</td>
+                                <td class="p-6 text-sm">Unlimited</td>
+                            </tr>
+                            <tr class="feature-row">
+                                <td class="p-6 text-sm font-medium">Team Collaboration</td>
+                                <td class="p-6 text-sm text-gray-400">-</td>
+                                <td class="p-6 text-sm">-</td>
+                                <td class="p-6 text-sm text-pink-accent"><iconify-icon
+                                        icon="lucide:check"></iconify-icon></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="max-w-4xl mx-auto px-6 pb-32">
+                <div class="text-center space-y-4 mb-16">
+                    <h2 class="text-4xl font-bold tracking-tight">Common Questions</h2>
+                    <p class="text-gray-400">Everything you need to know about our service.</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="faq-item p-8 space-y-2">
+                        <h4 class="text-xl font-bold">How does the free trial work?</h4>
+                        <p class="text-gray-400">Every new account gets 24 hours of full access to all Tier 1 features.
+                            No credit card required.</p>
+                    </div>
+                    <div class="faq-item p-8 space-y-2">
+                        <h4 class="text-xl font-bold">Can I cancel my subscription anytime?</h4>
+                        <p class="text-gray-400">Yes, absolutely. You can cancel at any time through your account
+                            settings.</p>
+                    </div>
+                    <div class="faq-item p-8 space-y-2">
+                        <h4 class="text-xl font-bold">Is my data secure?</h4>
+                        <p class="text-gray-400">End-to-end encryption, SOC2 and GDPR compliant.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-6 py-10">
+                <div
+                    class="p-12 rounded-[48px] bg-gradient-to-br from-[#1A1D23] to-[#0B0E14] border border-white/5 text-center space-y-6">
+                    <h2 class="text-3xl md:text-5xl font-bold">Ready to unlock the full potential of your data?</h2>
+                    <p class="text-gray-400">Get started with a free trial today.</p>
+                    <div class="flex justify-center gap-4"><a href="?sub_action=trial"
+                            class="px-8 py-4 bg-pink-accent rounded-2xl font-bold text-lg">Start Free Trial</a><a
+                            href="?action=signin"
+                            class="px-8 py-4 bg-white/5 border border-white/10 rounded-2xl font-bold text-lg">Sign
+                            In</a></div>
+                </div>
+            </div>
+        </main>
+        <footer class="bg-[#06080C] py-20 border-t border-white/5">
+            <div class="max-w-7xl mx-auto px-6 text-center text-gray-500 text-xs">© 2024 AI BI Copilot. All rights
+                reserved.</div>
+        </footer>
+    </div>
+</body>
+
+</html>

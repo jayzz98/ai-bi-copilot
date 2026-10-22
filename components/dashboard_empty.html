@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI BI Copilot | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --accent-pink: #D53F8C;
+            --bg-deep: #0B0E14;
+            --sidebar-bg: #0E1117;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: #ffffff;
+            margin: 0;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .active-nav-bg {
+            background: linear-gradient(90deg, rgba(213, 63, 140, 0.1) 0%, rgba(213, 63, 140, 0) 100%);
+            border-left: 3px solid #D53F8C;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.5;
+            }
+
+            50% {
+                transform: scale(1.05);
+                opacity: 0.2;
+            }
+
+            100% {
+                transform: scale(0.9);
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes fade-in-up {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .float-anim {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 3s ease-in-out infinite;
+        }
+
+        .fade-in-up {
+            animation: fade-in-up 0.6s ease-out forwards;
+        }
+
+        .fade-in-up-d1 {
+            animation: fade-in-up 0.6s ease-out 0.1s forwards;
+            opacity: 0;
+        }
+
+        .fade-in-up-d2 {
+            animation: fade-in-up 0.6s ease-out 0.2s forwards;
+            opacity: 0;
+        }
+
+        .fade-in-up-d3 {
+            animation: fade-in-up 0.6s ease-out 0.3s forwards;
+            opacity: 0;
+        }
+
+        .fade-in-up-d4 {
+            animation: fade-in-up 0.6s ease-out 0.4s forwards;
+            opacity: 0;
+        }
+
+        .connection-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+        }
+
+        .connection-card:hover {
+            background: rgba(213, 63, 140, 0.05);
+            border-color: rgba(213, 63, 140, 0.3);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px -10px rgba(213, 63, 140, 0.15);
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 48px 32px;
+            background: rgba(255, 255, 255, 0.01);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-zone:hover {
+            border-color: #D53F8C;
+            background: rgba(213, 63, 140, 0.05);
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(213, 63, 140, 0.15);
+            color: #D53F8C;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .kpi-ghost {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .kpi-ghost-bar {
+            height: 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.04);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen bg-[#0B0E14]">
+
+        <!-- SIDEBAR -->
+        <aside class="w-72 border-r border-white/5 flex flex-col bg-[#0E1117]">
+            <div class="p-6 flex items-center gap-3 mb-6">
+                <div class="w-9 h-9 rounded-lg bg-[#D53F8C] flex items-center justify-center">
+                    <iconify-icon icon="lucide:layers" class="text-xl text-white"></iconify-icon>
+                </div>
+                <span class="text-lg font-bold tracking-tight">
+                    <span class="text-[#D53F8C]">AI</span> BI Copilot
+                </span>
+            </div>
+
+            <div class="px-6 mb-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">Data Source</div>
+
+            <nav class="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
+                <a href="#" class="flex items-center gap-3 px-6 py-3 text-sm font-medium text-white active-nav-bg">
+                    <iconify-icon icon="lucide:file-text" class="text-lg text-[#D53F8C]"></iconify-icon> CSV Upload
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    <iconify-icon icon="lucide:database" class="text-lg"></iconify-icon> Database
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    <iconify-icon icon="lucide:bar-chart-3" class="text-lg"></iconify-icon> Power BI
+                </a>
+
+                <!-- Upload Drop Zone -->
+                <div class="px-6 py-4">
+                    <div
+                        class="p-4 rounded-xl border border-dashed border-white/10 bg-white/[0.02] flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-[#D53F8C]/40 transition-colors group">
+                        <iconify-icon icon="lucide:upload-cloud"
+                            class="text-2xl text-gray-500 group-hover:text-[#D53F8C]"></iconify-icon>
+                        <span class="text-xs text-gray-400">Drop files here</span>
+                        <span class="text-[10px] text-gray-600">CSV or Excel</span>
+                    </div>
+                </div>
+
+                <!-- No files uploaded yet -->
+                <div class="px-6 py-2">
+                    <div
+                        class="flex items-center gap-2 p-3 rounded-lg bg-white/[0.02] border border-dashed border-white/5">
+                        <iconify-icon icon="lucide:file-question" class="text-gray-600 text-lg"></iconify-icon>
+                        <span class="text-[11px] text-gray-600">No files uploaded yet</span>
+                    </div>
+                </div>
+
+                <div class="px-6 pt-8 pb-4 text-[10px] font-bold uppercase tracking-widest text-gray-500">Navigation
+                </div>
+
+                <a href="#" class="flex items-center gap-3 px-6 py-3 text-sm font-medium text-white active-nav-bg">
+                    <iconify-icon icon="lucide:layout-dashboard" class="text-lg text-[#D53F8C]"></iconify-icon>
+                    Dashboard
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    <iconify-icon icon="lucide:credit-card" class="text-lg"></iconify-icon> Subscription
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 px-6 py-3 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                    <iconify-icon icon="lucide:settings" class="text-lg"></iconify-icon> Settings
+                </a>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="p-6 border-t border-white/5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-10 h-10 rounded-full bg-[#D53F8C] flex items-center justify-center text-sm font-bold">
+                            JK</div>
+                        <div>
+                            <div class="text-sm font-bold">Jay Kadao</div>
+                            <div class="text-[10px] text-pink-400 font-medium flex items-center gap-1">
+                                <iconify-icon icon="lucide:gem" class="text-[8px]"></iconify-icon> Premium
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="text-gray-500 hover:text-white transition-colors">
+                        <iconify-icon icon="lucide:log-out" class="text-xl"></iconify-icon>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col overflow-hidden relative">
+            <!-- Header -->
+            <header class="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-[#0B0E14]">
+                <div>
+                    <h1 class="text-xl font-bold">Data Workspace</h1>
+                    <p class="text-xs text-gray-500">Connect your data to get started with AI-powered insights</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button
+                        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm font-medium text-gray-500 cursor-not-allowed opacity-40"
+                        disabled>
+                        <iconify-icon icon="lucide:download"></iconify-icon> Export
+                    </button>
+                    <button
+                        class="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 text-sm font-bold text-gray-500 cursor-not-allowed opacity-40"
+                        disabled>
+                        <iconify-icon icon="lucide:search"></iconify-icon> AI Scan
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar">
+                <!-- Ghost KPI Row -->
+                <div class="px-8 pt-8 pb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                        <div class="kpi-ghost fade-in-up">
+                            <div class="flex items-center justify-between">
+                                <div class="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center">
+                                    <iconify-icon icon="lucide:bar-chart-2"
+                                        class="text-xl text-gray-700"></iconify-icon>
+                                </div>
+                                <span class="text-[10px] text-gray-700 font-bold">—</span>
+                            </div>
+                            <div class="kpi-ghost-bar w-16"></div>
+                            <div class="kpi-ghost-bar w-24"></div>
+                        </div>
+                        <div class="kpi-ghost fade-in-up-d1">
+                            <div class="flex items-center justify-between">
+                                <div class="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center">
+                                    <iconify-icon icon="lucide:shopping-bag"
+                                        class="text-xl text-gray-700"></iconify-icon>
+                                </div>
+                                <span class="text-[10px] text-gray-700 font-bold">—</span>
+                            </div>
+                            <div class="kpi-ghost-bar w-20"></div>
+                            <div class="kpi-ghost-bar w-28"></div>
+                        </div>
+                        <div class="kpi-ghost fade-in-up-d2">
+                            <div class="flex items-center justify-between">
+                                <div class="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center">
+                                    <iconify-icon icon="lucide:trending-up"
+                                        class="text-xl text-gray-700"></iconify-icon>
+                                </div>
+                                <span class="text-[10px] text-gray-700 font-bold">—</span>
+                            </div>
+                            <div class="kpi-ghost-bar w-14"></div>
+                            <div class="kpi-ghost-bar w-20"></div>
+                        </div>
+                        <div class="kpi-ghost fade-in-up-d3">
+                            <div class="flex items-center justify-between">
+                                <div class="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center">
+                                    <iconify-icon icon="lucide:users" class="text-xl text-gray-700"></iconify-icon>
+                                </div>
+                                <span class="text-[10px] text-gray-700 font-bold">—</span>
+                            </div>
+                            <div class="kpi-ghost-bar w-12"></div>
+                            <div class="kpi-ghost-bar w-24"></div>
+                        </div>
+                    </div>
+                    <p class="text-center text-[10px] text-gray-600 mt-3 uppercase tracking-widest font-bold">KPI
+                        metrics will populate when data is loaded</p>
+                </div>
+
+                <!-- Empty State Hero -->
+                <div class="flex flex-col items-center justify-center px-8 pt-8 pb-4 fade-in-up-d1">
+                    <div class="relative mb-8">
+                        <div class="absolute -inset-8 rounded-full bg-[#D53F8C]/5 pulse-ring"></div>
+                        <div class="absolute -inset-4 rounded-full bg-[#D53F8C]/8 pulse-ring"
+                            style="animation-delay: 0.5s;"></div>
+                        <div
+                            class="w-28 h-28 rounded-[28px] bg-gradient-to-br from-[#D53F8C]/20 to-purple-500/10 border border-[#D53F8C]/20 flex items-center justify-center float-anim relative z-10">
+                            <iconify-icon icon="lucide:database" class="text-5xl text-[#D53F8C]"></iconify-icon>
+                        </div>
+                    </div>
+
+                    <h2 class="text-3xl font-extrabold tracking-tight mb-3 text-[#E2E8F0]">No Data Connected Yet</h2>
+                    <p class="text-gray-400 text-base max-w-lg text-center leading-relaxed mb-2">
+                        Upload a CSV file, connect to a SQL database, or scan your Power BI file to unlock AI-powered
+                        insights.
+                    </p>
+                </div>
+
+                <!-- Connection Cards -->
+                <div class="px-8 pb-6 fade-in-up-d2">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-4xl mx-auto">
+                        <!-- CSV Card -->
+                        <div class="connection-card group">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-11 h-11 rounded-xl bg-pink-500/10 flex items-center justify-center">
+                                    <iconify-icon icon="lucide:file-spreadsheet"
+                                        class="text-2xl text-[#D53F8C]"></iconify-icon>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold">CSV / Excel</h4>
+                                    <span
+                                        class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Upload</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-4">Drag & drop any .csv or .xlsx file. AI
+                                auto-detects columns, metrics, and data types.</p>
+                            <div class="flex items-center gap-2 text-[10px] font-bold">
+                                <div class="w-2 h-2 rounded-full bg-gray-600"></div>
+                                <span class="text-gray-500 uppercase tracking-widest">Not connected</span>
+                            </div>
+                        </div>
+
+                        <!-- Database Card -->
+                        <div class="connection-card group">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-11 h-11 rounded-xl bg-blue-500/10 flex items-center justify-center">
+                                    <iconify-icon icon="lucide:database" class="text-2xl text-blue-400"></iconify-icon>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold">SQL Database</h4>
+                                    <span
+                                        class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Connect</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-4">Connect to SQL Server or MySQL. Enter
+                                credentials in the sidebar to load tables directly.</p>
+                            <div class="flex items-center gap-2 text-[10px] font-bold">
+                                <div class="w-2 h-2 rounded-full bg-gray-600"></div>
+                                <span class="text-gray-500 uppercase tracking-widest">Not connected</span>
+                            </div>
+                        </div>
+
+                        <!-- Power BI Card -->
+                        <div class="connection-card group">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-11 h-11 rounded-xl bg-yellow-500/10 flex items-center justify-center">
+                                    <iconify-icon icon="lucide:bar-chart-3"
+                                        class="text-2xl text-yellow-400"></iconify-icon>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold">Power BI</h4>
+                                    <span
+                                        class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Scan</span>
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-400 leading-relaxed mb-4">Auto-detect running Power BI Desktop
+                                and extract data from active tables. Local only.</p>
+                            <div class="flex items-center gap-2 text-[10px] font-bold">
+                                <div class="w-2 h-2 rounded-full bg-gray-600"></div>
+                                <span class="text-gray-500 uppercase tracking-widest">Not connected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Zone -->
+                <div class="px-8 pb-6 fade-in-up-d3">
+                    <div class="upload-zone max-w-4xl mx-auto">
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-[#D53F8C]/10 flex items-center justify-center">
+                                <iconify-icon icon="lucide:upload-cloud" class="text-4xl text-[#D53F8C]"></iconify-icon>
+                            </div>
+                            <div class="text-center">
+                                <p class="font-bold text-[#E2E8F0] text-base mb-1">Drag CSV or Excel files here to begin
+                                </p>
+                                <p class="text-sm text-gray-500">or click to select from your computer</p>
+                            </div>
+                            <div class="flex items-center gap-6 mt-2">
+                                <span
+                                    class="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                    <iconify-icon icon="lucide:check" class="text-green-600"></iconify-icon> .csv
+                                </span>
+                                <span
+                                    class="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                    <iconify-icon icon="lucide:check" class="text-green-600"></iconify-icon> .xlsx
+                                </span>
+                                <span
+                                    class="flex items-center gap-1.5 text-[10px] text-gray-500 uppercase tracking-widest font-bold">
+                                    <iconify-icon icon="lucide:check" class="text-green-600"></iconify-icon> .xls
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How It Works Steps -->
+                <div class="px-8 pb-6 fade-in-up-d4">
+                    <div class="max-w-4xl mx-auto">
+                        <h3 class="text-center text-sm font-bold text-gray-500 uppercase tracking-widest mb-6">How It
+                            Works</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="step-number">1</div>
+                                    <h4 class="text-sm font-bold text-[#E2E8F0]">Upload Data</h4>
+                                </div>
+                                <p class="text-xs text-gray-500 leading-relaxed">Drop your CSV/Excel file or connect to
+                                    a database via the sidebar.</p>
+                            </div>
+                            <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="step-number">2</div>
+                                    <h4 class="text-sm font-bold text-[#E2E8F0]">Auto-Process</h4>
+                                </div>
+                                <p class="text-xs text-gray-500 leading-relaxed">AI detects metrics, dimensions, dates,
+                                    and cleans your data automatically.</p>
+                            </div>
+                            <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="step-number">3</div>
+                                    <h4 class="text-sm font-bold text-[#E2E8F0]">Ask Questions</h4>
+                                </div>
+                                <p class="text-xs text-gray-500 leading-relaxed">Type natural language queries like "top
+                                    10 products by revenue".</p>
+                            </div>
+                            <div class="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col gap-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="step-number">4</div>
+                                    <h4 class="text-sm font-bold text-[#E2E8F0]">Get Insights</h4>
+                                </div>
+                                <p class="text-xs text-gray-500 leading-relaxed">View instant charts, KPIs, dashboards,
+                                    and AI-generated business insights.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Empty Table Placeholder -->
+                <div class="px-8 pb-10 fade-in-up-d4">
+                    <div class="max-w-4xl mx-auto p-6 rounded-2xl bg-white/[0.02] border border-white/5">
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center gap-3">
+                                <iconify-icon icon="lucide:table" class="text-lg text-gray-600"></iconify-icon>
+                                <h3 class="text-sm font-bold text-gray-500">Data Preview</h3>
+                            </div>
+                            <span class="text-[10px] text-gray-600 uppercase tracking-widest font-bold">0 rows</span>
+                        </div>
+                        <!-- Ghost Table Header -->
+                        <div class="grid grid-cols-5 gap-4 pb-4 border-b border-white/5">
+                            <div class="kpi-ghost-bar h-3 w-20"></div>
+                            <div class="kpi-ghost-bar h-3 w-24"></div>
+                            <div class="kpi-ghost-bar h-3 w-16"></div>
+                            <div class="kpi-ghost-bar h-3 w-20"></div>
+                            <div class="kpi-ghost-bar h-3 w-14"></div>
+                        </div>
+                        <!-- Ghost Rows -->
+                        <div class="space-y-4 pt-4">
+                            <div class="grid grid-cols-5 gap-4 opacity-30">
+                                <div class="kpi-ghost-bar h-3 w-16"></div>
+                                <div class="kpi-ghost-bar h-3 w-28"></div>
+                                <div class="kpi-ghost-bar h-3 w-12"></div>
+                                <div class="kpi-ghost-bar h-3 w-16"></div>
+                                <div class="kpi-ghost-bar h-3 w-10"></div>
+                            </div>
+                            <div class="grid grid-cols-5 gap-4 opacity-20">
+                                <div class="kpi-ghost-bar h-3 w-14"></div>
+                                <div class="kpi-ghost-bar h-3 w-24"></div>
+                                <div class="kpi-ghost-bar h-3 w-18"></div>
+                                <div class="kpi-ghost-bar h-3 w-14"></div>
+                                <div class="kpi-ghost-bar h-3 w-12"></div>
+                            </div>
+                            <div class="grid grid-cols-5 gap-4 opacity-10">
+                                <div class="kpi-ghost-bar h-3 w-18"></div>
+                                <div class="kpi-ghost-bar h-3 w-20"></div>
+                                <div class="kpi-ghost-bar h-3 w-14"></div>
+                                <div class="kpi-ghost-bar h-3 w-20"></div>
+                                <div class="kpi-ghost-bar h-3 w-16"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center pt-6">
+                            <p class="text-xs text-gray-600">Your data table will appear here after connecting a data
+                                source</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Assistant (Disabled State) -->
+            <div
+                class="fixed bottom-8 right-8 w-[380px] flex flex-col rounded-3xl bg-[#14171D] border border-white/10 overflow-hidden opacity-50 pointer-events-none">
+                <div class="p-4 flex items-center justify-between border-b border-white/5 bg-[#1C1F26]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                            <iconify-icon icon="lucide:bot" class="text-lg text-gray-500"></iconify-icon>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-gray-400">AI Assistant</div>
+                            <div
+                                class="text-[10px] text-gray-600 font-bold flex items-center gap-1.5 uppercase tracking-widest">
+                                <div class="w-1.5 h-1.5 rounded-full bg-gray-600"></div> Waiting for data
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button class="text-gray-600"><iconify-icon icon="lucide:maximize-2"></iconify-icon></button>
+                        <button class="text-gray-600"><iconify-icon icon="lucide:x"></iconify-icon></button>
+                    </div>
+                </div>
+                <div class="h-40 flex flex-col items-center justify-center p-6 bg-[#0B0E14]/50 gap-3">
+                    <iconify-icon icon="lucide:message-square-dashed" class="text-3xl text-gray-700"></iconify-icon>
+                    <p class="text-center text-xs text-gray-600 leading-relaxed">Upload or connect data to<br>enable
+                        AI-powered questions</p>
+                </div>
+                <div class="p-4 bg-[#1C1F26]">
+                    <div class="relative">
+                        <input type="text" placeholder="Connect data first..."
+                            class="w-full bg-[#0B0E14] border border-white/5 rounded-xl py-3 pl-4 pr-12 text-xs text-gray-600 cursor-not-allowed"
+                            disabled>
+                        <button
+                            class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-600 cursor-not-allowed"
+                            disabled>
+                            <iconify-icon icon="lucide:send"></iconify-icon>
+                        </button>
+                    </div>
+                    <div class="text-center text-[8px] text-gray-700 uppercase tracking-widest font-bold mt-3">Data
+                        required to enable</div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

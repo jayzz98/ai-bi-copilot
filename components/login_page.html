@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In | AI BI Copilot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --accent-pink: #D53F8C;
+            --bg-deep: #0B0E14;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-deep);
+            color: #ffffff;
+        }
+
+        .glass-header {
+            background: rgba(11, 14, 20, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: -20%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle at center, rgba(213, 63, 140, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 32px;
+        }
+
+        .input-field {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            width: 100%;
+            color: white;
+        }
+
+        .input-field:focus {
+            border-color: #D53F8C;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(213, 63, 140, 0.1);
+        }
+
+        .btn-primary {
+            background: #D53F8C;
+            padding: 16px;
+            border-radius: 16px;
+            font-weight: bold;
+            width: 100%;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #B83280;
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="relative min-h-screen flex flex-col">
+        <div class="hero-glow"></div>
+        <header class="glass-header">
+            <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between"><a href="?action=home"
+                    class="flex items-center gap-2">
+                    <div class="w-10 h-10 rounded-xl bg-pink-accent flex items-center justify-center"><iconify-icon
+                            icon="lucide:layers" class="text-2xl text-white"></iconify-icon></div><span
+                        class="text-xl font-extrabold"><span class="text-pink-accent">AI</span> BI Copilot</span>
+                </a>
+                <nav class="hidden md:flex items-center gap-10 text-sm text-gray-400"><a href="?action=home"
+                        class="hover:text-white">Features</a><a href="?action=pricing"
+                        class="hover:text-white">Pricing</a><a href="#" class="hover:text-white">Documentation</a><a
+                        href="?action=signin" class="text-white font-bold">Sign In</a></nav>
+                <div><a href="?action=get_started"
+                        class="bg-pink-accent hover:bg-pink-600 px-6 py-2.5 rounded-full text-sm font-bold">Get
+                        Started</a></div>
+            </div>
+        </header>
+        <main class="flex-1 flex items-center justify-center pt-32 pb-20 px-6">
+            <div class="w-full max-w-md">
+                <div class="text-center mb-8">
+                    <div
+                        class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-white/5 border border-white/10 mb-4">
+                        <iconify-icon icon="lucide:layers" class="text-3xl text-pink-accent"></iconify-icon></div>
+                    <h1 class="text-3xl md:text-4xl font-extrabold">Welcome back</h1>
+                    <p class="text-gray-400 text-sm md:text-base">Sign in to continue to your workspace</p>
+                </div>
+                <div class="login-card p-8 md:p-10 shadow-2xl">
+                    <form action="?auth_action=login" method="get" class="space-y-6">
+                        <div><label class="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Email
+                                address</label><input type="email" name="email" placeholder="you@company.com" required
+                                class="input-field"></div>
+                        <div>
+                            <div class="flex justify-between mb-2"><label
+                                    class="text-xs font-bold uppercase tracking-widest text-gray-400">Password</label><a
+                                    href="#" class="text-xs font-bold text-pink-accent hover:text-pink-400">Forgot
+                                    password?</a></div><input type="password" name="password"
+                                placeholder="Enter your password" required class="input-field">
+                        </div>
+                        <div class="flex items-center gap-3"><input type="checkbox" id="remember" class="w-4 h-4"><label
+                                for="remember" class="text-sm text-gray-400">Remember me</label></div><button
+                            type="submit" class="btn-primary">Sign In</button>
+                    </form>
+                    <div class="mt-10">
+                        <div class="relative flex items-center justify-center mb-8">
+                            <div class="absolute w-full h-px bg-white/5"></div><span
+                                class="relative px-4 bg-[#0B0E14]/50 text-[10px] font-extrabold text-gray-500 uppercase tracking-[0.2em]">Or
+                                continue with</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4"><button
+                                class="flex items-center justify-center gap-3 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold"><iconify-icon
+                                    icon="logos:google-icon" class="text-lg"></iconify-icon> Google</button><button
+                                class="flex items-center justify-center gap-3 py-3 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 text-sm font-semibold"><iconify-icon
+                                    icon="logos:microsoft-icon" class="text-lg"></iconify-icon> Microsoft</button></div>
+                    </div>
+                </div>
+                <div class="mt-8 text-center">
+                    <p class="text-gray-400 text-sm">Don't have an account? <a href="?auth_action=signup"
+                            class="text-pink-accent font-bold hover:underline">Create one</a></p>
+                </div>
+                <div class="mt-12 text-center text-[10px] text-gray-500 font-medium uppercase tracking-[0.15em]">By
+                    signing in, you agree to our <a href="#" class="hover:text-white">Terms of Service</a> and <a
+                        href="#" class="hover:text-white">Privacy Policy</a></div>
+            </div>
+        </main>
+        <footer class="py-10 border-t border-white/5 text-center text-gray-600 text-xs">© 2024 AI BI Copilot. Secure
+            environment powered by enterprise AI.</footer>
+    </div>
+</body>
+
+</html>
